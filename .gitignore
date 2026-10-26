@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.wrangler/
+.dev.vars
+.brandkit/
+*.log
+.DS_Store
+.env
+.tmp/
