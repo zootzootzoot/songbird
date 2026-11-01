@@ -82,20 +82,14 @@ def _fields(s: str) -> dict:
     return out
 
 
-def sam_segment(img: Image.Image, phrase: str) -> list[dict]:
-    """All matches of `phrase`: [{'box': (x1,y1,x2,y2) px, 'conf': float, 'mask': bool HxW at photo size}]."""
-    body = {"model": config.SAM, "metadata": {"include_confidence": "true"},
-            "input": [{"type": "message", "role": "user", "content": [
-                {"type": "input_text", "text": phrase},
-                {"type": "input_image", "image_url": data_url(img, max_side=max(img.size))}]}]}
-    j = _post("/responses", body)
-    text = "".join(c.get("text", "") for o in j.get("output", []) for c in o.get("content", []) or [])
-    W, H = img.size
-    found = []
+def _sam_records(text: str, W: int, H: int) -> dict[int, list[dict]]:
+    """Parse SAM output text into {frame: [{'id', 'box' px, 'conf', 'mask' bool HxW at W x H}]}."""
+    frames: dict[int, list[dict]] = {}
     for line in text.splitlines():
         m = re.match(r"^<([0-9]+)f(?:;[^>]*)?>(.*)$", line.strip())
         if not m:
             continue
+        fi = int(m.group(1))
         for rec in _REC.finditer(m.group(2)):
             toks = {name: _fields(f) for name, f in _TOK.findall(rec.group(2))}
             if "box" not in toks or "mask" not in toks:
@@ -117,9 +111,66 @@ def sam_segment(img: Image.Image, phrase: str) -> list[dict]:
                 full[oy:oy + hh, ox:ox + ww] = local[:hh, :ww]
             if (int(fw), int(fh)) != (W, H):
                 full = np.array(Image.fromarray(full.astype(np.uint8) * 255).resize((W, H), Image.NEAREST)) > 127
-            found.append({"box": (x1 * sx, y1 * sy, x2 * sx, y2 * sy),
-                          "conf": float(b.get("c", mk.get("c", 0.5))), "mask": full})
-    return found
+            frames.setdefault(fi, []).append({"id": rec.group(1), "box": (x1 * sx, y1 * sy, x2 * sx, y2 * sy),
+                                              "conf": float(b.get("c", mk.get("c", 0.5))), "mask": full})
+    return frames
+
+
+def _sam_text(phrase: str, media: dict, extra: dict | None = None) -> str:
+    body = {"model": config.SAM, "metadata": {"include_confidence": "true", **(extra or {})},
+            "input": [{"type": "message", "role": "user", "content": [{"type": "input_text", "text": phrase}, media]}]}
+    j = _post("/responses", body)
+    return "".join(c.get("text", "") for o in j.get("output", []) for c in o.get("content", []) or [])
+
+
+def sam_segment(img: Image.Image, phrase: str) -> list[dict]:
+    """All matches of `phrase`: [{'box': (x1,y1,x2,y2) px, 'conf': float, 'mask': bool HxW at photo size}]."""
+    text = _sam_text(phrase, {"type": "input_image", "image_url": data_url(img, max_side=max(img.size))})
+    W, H = img.size
+    return [r for recs in _sam_records(text, W, H).values() for r in recs]
+
+
+def video_cutout(frames: list[Image.Image], clip_mp4: bytes, phrase: str, max_side: int = 360):
+    """SAM 3.1 tracks the hero through a short clip → (animated RGBA frames cropped to the union box, box).
+
+    The object SAM is most confident about in the first frames it appears is followed through the clip.
+    """
+    W, H = frames[0].size
+    text = _sam_text(phrase, {"type": "input_video", "video_url": "data:video/mp4;base64," + base64.b64encode(clip_mp4).decode()},
+                     {"mask_encoding": "one_bit"})
+    recs = _sam_records(text, W, H)
+    if not recs:
+        return None
+    score: dict[str, float] = {}
+    for fi in sorted(recs)[:5]:
+        for r in recs[fi]:
+            score[r["id"]] = max(score.get(r["id"], 0), r["conf"] * float(r["mask"].sum()) ** 0.5)
+    hero = max(score, key=score.get)
+    masks = {fi: next((r["mask"] for r in rs if r["id"] == hero), None) for fi, rs in recs.items()}
+    masks = {fi: m for fi, m in masks.items() if m is not None and m.sum() > 32}
+    if len(masks) < max(3, len(frames) // 3):
+        return None
+    union = np.zeros((H, W), dtype=bool)
+    for m in masks.values():
+        union |= m
+    ys, xs = np.nonzero(union)
+    pad = int(0.02 * max(W, H))
+    x1, y1 = max(0, xs.min() - pad), max(0, ys.min() - pad)
+    x2, y2 = min(W, xs.max() + pad + 1), min(H, ys.max() + pad + 1)
+    out, last = [], None
+    for fi, fr in enumerate(frames):
+        m = masks.get(fi, last)
+        if m is None:
+            continue
+        last = m
+        a = Image.fromarray(m.astype(np.uint8) * 255).filter(ImageFilter.GaussianBlur(0.8))
+        rgba = fr.convert("RGB").copy()
+        rgba.putalpha(a)
+        c = rgba.crop((x1, y1, x2, y2))
+        if max(c.size) > max_side:
+            c.thumbnail((max_side, max_side))
+        out.append(c)
+    return out, (x1 / W, y1 / H, x2 / W, y2 / H)
 
 
 def cutout(img: Image.Image, phrase: str, max_objects: int = 3) -> tuple[Image.Image, tuple] | None:

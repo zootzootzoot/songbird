@@ -19,7 +19,7 @@ Server: FastAPI on `http://127.0.0.1:8787`. The web app talks to it only through
 
 | Method | Path | Body / result |
 |---|---|---|
-| `POST` | `/api/tapes` | `multipart/form-data`: `photos` (3–6 image files, in the order the user loaded them), optional `name` (who the song is for, e.g. `maya`), optional `note` (one line about the day). → `{ "id": "t_ab12cd" }` |
+| `POST` | `/api/tapes` | `multipart/form-data`: `photos` (3–6 files, in the order the user loaded them: images, or short video clips; the server keeps 3 s from the middle of a clip), optional `name` (who the song is for, e.g. `maya`), optional `note` (one line about the day). → `{ "id": "t_ab12cd" }` |
 | `POST` | `/api/transcribe` | `multipart/form-data`: `audio` (a browser recording, webm/ogg/mp4/wav, ≤ 60 s) → `{ "text": "she named the snail gary" }` via Muse Voice Transcribe. The deck uses it to fill the `note` before the lever is pulled. |
 | `GET` | `/api/tapes/{id}/events` | Server-Sent Events, see below. Replays every event so far on connect, then streams. Ends after `done` or `error`. |
 | `GET` | `/api/tapes/{id}` | `Tape` JSON (404 until done) |
@@ -36,7 +36,8 @@ type Stage = "looking" | "cutting" | "writing" | "composing" | "singing" | "mixi
 
 { type: "stage",   stage: Stage, label: string }                // label: short lowercase machine line, e.g. "looking at the pictures"
 { type: "seen",    photo: number, hero: string, seen: string }  // per photo, as Muse Spark finds it
-{ type: "cut",     photo: number, cutout: string | null, box: [number,number,number,number] | null }  // SAM result (normalized 0..1 box)
+{ type: "cut",     photo: number, cutout: string | null, box: [number,number,number,number] | null,   // SAM result (normalized 0..1 box)
+                   motion: string | null, motionBox: [number,number,number,number] | null, clip: string | null }  // videos only
 { type: "order",   order: number[] }                            // the order the song visits the photos
 { type: "title",   title: string }
 { type: "line",    index: number, text: string, photo: number | null }   // each lyric line as it is written
@@ -72,6 +73,9 @@ type Photo = {
   box: [number, number, number, number] | null;   // normalized x1,y1,x2,y2 of the hero in the photo
   hero: string;                 // SAM noun phrase, e.g. "snail"
   seen: string;                 // what Muse Spark saw, one short clause
+  motion: string | null;        // videos only: animated WebP sticker, SAM 3.1 tracking the hero through the clip
+  motionBox: [number, number, number, number] | null;  // union box of the moving sticker in the frame
+  clip: string | null;          // videos only: the 3 s clip (mp4, muted) the still came from
 };
 
 type Line = {

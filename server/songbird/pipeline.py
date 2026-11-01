@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime as dt
+import io
 import json
 import shutil
 import subprocess
@@ -48,14 +49,45 @@ def new_tape(images: list[bytes], name: str | None, note: str | None, spoken: bo
     d = config.TAPES / tid
     d.mkdir(parents=True, exist_ok=True)
     photos = []
+    job.clips = {}  # upload index -> (clip mp4 bytes, frames) for videos
     for i, raw in enumerate(images):
-        im = ImageOps.exif_transpose(Image.open(__import__("io").BytesIO(raw))).convert("RGB")
-        im.thumbnail((1600, 1600))
+        try:
+            im = ImageOps.exif_transpose(Image.open(io.BytesIO(raw))).convert("RGB")
+            im.thumbnail((1600, 1600))
+        except Exception:  # not a picture: a short video clip
+            im, clip, frames = _read_clip(raw, d / f"upload-{i}")
+            job.clips[i] = (clip, frames)
         photos.append(im)
     job.spoken = spoken and bool((note or "").strip())
     threading.Thread(target=_run, args=(job, d, photos, (name or "").strip() or None, (note or "").strip() or None),
                      daemon=True).start()
     return job
+
+
+def _read_clip(raw: bytes, stem: Path, seconds: float = 3.0, fps: int = 12, side: int = 640):
+    """A video upload → (a sharp still from its middle, a short 640px clip for SAM, that clip's frames)."""
+    src = stem.with_suffix(".src")
+    src.write_bytes(raw)
+    probe = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(src)],
+                           capture_output=True, text=True)
+    try:
+        dur = float(probe.stdout.strip())
+    except ValueError:
+        raise ValueError("unreadable upload")
+    start = max(0.0, dur / 2 - seconds / 2)
+    clip = stem.with_suffix(".mp4")
+    vf = f"fps={fps},scale='if(gt(iw,ih),{side},-2)':'if(gt(iw,ih),-2,{side})'"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", f"{start:.2f}", "-t", f"{seconds}", "-i", str(src), "-an",
+                    "-vf", vf, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", str(clip)], check=True)
+    still = subprocess.run(["ffmpeg", "-v", "error", "-ss", f"{start + seconds / 2:.2f}", "-i", str(src), "-frames:v", "1",
+                            "-vf", "scale='min(1600,iw)':-2", "-f", "image2pipe", "-vcodec", "png", "-"],
+                           capture_output=True, check=True).stdout
+    raw_frames = subprocess.run(["ffmpeg", "-v", "error", "-i", str(clip), "-f", "image2pipe", "-vcodec", "png", "-"],
+                                capture_output=True, check=True).stdout
+    sig = b"\x89PNG\r\n\x1a\n"
+    frames = [Image.open(io.BytesIO(sig + part)).convert("RGB") for part in raw_frames.split(sig)[1:]]
+    src.unlink(missing_ok=True)
+    return Image.open(io.BytesIO(still)).convert("RGB"), clip.read_bytes(), frames
 
 
 def _run(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: str | None):
@@ -108,6 +140,8 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     job.stage("cutting", "cutting out the best bits", 0.16)
     pool = ThreadPoolExecutor(max_workers=4)
     cuts: dict[int, tuple] = {}
+    motion: dict[int, tuple] = {}
+    clips: dict[int, str] = {}
 
     def cut(orig: int):
         p = look["photos"][orig]
@@ -127,7 +161,24 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             cuts[k] = (f"/tapes/{job.id}/cut-{k}.png", [round(float(x), 4) for x in box])
         else:
             cuts[k] = (None, None)
-        job.emit("cut", photo=k, cutout=cuts[k][0], box=cuts[k][1])
+        if orig in job.clips:  # a video: SAM 3.1 follows the hero through the clip → a moving sticker
+            clip, frames = job.clips[orig]
+            (d / f"clip-{k}.mp4").write_bytes(clip)
+            clips[k] = f"/tapes/{job.id}/clip-{k}.mp4"
+            for phrase in (p["hero"], p["hero_alt"]):
+                try:
+                    mv = meta.video_cutout(frames, clip, phrase)
+                except Exception:
+                    traceback.print_exc()
+                    mv = None
+                if mv:
+                    fr, mbox = mv
+                    fr[0].save(d / f"move-{k}.webp", save_all=True, append_images=fr[1:], duration=round(1000 / 12),
+                               loop=0, quality=82, method=4)
+                    motion[k] = (f"/tapes/{job.id}/move-{k}.webp", [round(float(x), 4) for x in mbox])
+                    break
+        job.emit("cut", photo=k, cutout=cuts[k][0], box=cuts[k][1],
+                 motion=motion.get(k, (None,))[0], motionBox=motion.get(k, (None, None))[1], clip=clips.get(k))
 
     cut_futs = [pool.submit(cut, i) for i in range(len(photos))]
 
@@ -223,11 +274,13 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         "palette": look.get("palette", [])[:4],
         "photos": [{"src": f"/tapes/{job.id}/photo-{k}.jpg", "cutout": cuts.get(k, (None, None))[0],
                     "box": cuts.get(k, (None, None))[1], "hero": look["photos"][orig]["hero"],
+                    "motion": motion.get(k, (None,))[0], "motionBox": motion.get(k, (None, None))[1],
+                    "clip": clips.get(k),
                     "seen": look["photos"][orig]["seen"]} for k, orig in enumerate(order)],
         "lines": score["lines"],
         "credits": [
             {"role": "looked at the pictures", "model": "Muse Spark 1.3"},
-            {"role": "cut out the stickers", "model": "SAM 3.1"},
+            {"role": "cut out the stickers" + (" and followed the moving ones" if motion else ""), "model": "SAM 3.1"},
             {"role": "wrote the words", "model": used_writer},
             {"role": "painted the cover", "model": "Muse Image 1.0"} if cover else None,
             {"role": "wrote the tune", "model": "songbird composer"},

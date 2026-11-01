@@ -64,7 +64,7 @@ def _allow(ip: str) -> str | None:
 async def create(request: Request, photos: list[UploadFile] = File(...), name: str | None = Form(None), note: str | None = Form(None),
                  note_spoken: bool = Form(False)):
     if not 3 <= len(photos) <= 6:
-        raise HTTPException(400, "feed the deck 3 to 6 pictures")
+        raise HTTPException(400, "feed the deck 3 to 6 pictures or short clips")
     if not config.META_KEY:
         raise HTTPException(503, "the deck has no Meta key")
     ip = request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "?")
@@ -74,8 +74,8 @@ async def create(request: Request, photos: list[UploadFile] = File(...), name: s
     blobs = []
     for p in photos:
         b = await p.read()
-        if len(b) > 25 * 1024 * 1024:
-            raise HTTPException(413, "one of the pictures is too big")
+        if len(b) > 90 * 1024 * 1024:
+            raise HTTPException(413, "one of those is too big (keep videos short)")
         blobs.append(b)
     name = (name or "")[:24]
     note = (note or "")[:160]
