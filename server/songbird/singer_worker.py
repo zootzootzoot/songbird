@@ -65,14 +65,15 @@ send({"id": None, "event": "ready"})
 
 
 def sing(job):
-    torch.manual_seed(int(job.get("seed", 7)))
     segs = job["segments"]
+    seg_dir = job.get("seg_dir")  # also keep each line's take on its own (for listening back)
     end = max(s["offset"] + s["time"][1] / 1000 for s in segs) + 1
     track = np.zeros(int(end * SR), dtype=np.float32)
     fade = int(0.08 * SR)
     for k, s in enumerate(segs):
         t = time.time()
-        meta = {key: v for key, v in s.items() if key != "offset"}
+        meta = {key: v for key, v in s.items() if key not in ("offset", "seed", "take")}
+        torch.manual_seed(int(s.get("seed", job.get("seed", 7))) + 1000 * k)
         with torch.no_grad():
             y = model.infer({"prompt": prompt, "target": dp.process(meta, None)}, auto_shift=False,
                             pitch_shift=int(job.get("pitch", 0)), n_steps=config.infer.n_steps, cfg=config.infer.cfg,
@@ -80,12 +81,16 @@ def sing(job):
         y = y.squeeze().float().cpu().numpy()
         y[:fade] *= np.linspace(0, 1, fade)
         y[-fade:] *= np.linspace(1, 0, fade)
+        if seg_dir:
+            Path(seg_dir).mkdir(parents=True, exist_ok=True)
+            sf.write(str(Path(seg_dir) / f"{s['index']}-{s.get('take', 0)}.wav"), y, SR)
         i = max(0, int(s["offset"] * SR))
         n = min(len(y), len(track) - i)
         track[i:i + n] += y[:n]
         send({"id": job["id"], "event": "line", "index": k, "seconds": round(time.time() - t, 2)})
-    Path(job["out"]).parent.mkdir(parents=True, exist_ok=True)
-    sf.write(job["out"], track, SR)
+    if job.get("out"):
+        Path(job["out"]).parent.mkdir(parents=True, exist_ok=True)
+        sf.write(job["out"], track, SR)
     send({"id": job["id"], "event": "done", "out": job["out"], "duration": round(len(track) / SR, 3)})
 
 

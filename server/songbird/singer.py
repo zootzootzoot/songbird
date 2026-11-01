@@ -53,7 +53,8 @@ class Singer:
                 cb(msg)
         self.ready.clear()
 
-    def sing(self, segments: list[dict], out: str, on_line=None, seed: int = 7, pitch: int = 0, timeout: float = 600) -> dict:
+    def sing(self, segments: list[dict], out: str | None, on_line=None, seed: int = 7, pitch: int = 0, timeout: float = 600,
+             seg_dir: str | None = None) -> dict:
         if not (self.proc and self.proc.poll() is None):
             self.start()
         if not self.ready.wait(180):
@@ -73,7 +74,7 @@ class Singer:
             self._listeners[jid] = cb
             try:
                 assert self.proc and self.proc.stdin
-                self.proc.stdin.write(json.dumps({"id": jid, "segments": segments, "out": out, "seed": seed, "pitch": pitch}) + "\n")
+                self.proc.stdin.write(json.dumps({"id": jid, "segments": segments, "out": out, "seed": seed, "pitch": pitch, "seg_dir": seg_dir}) + "\n")
                 self.proc.stdin.flush()
                 if not done.wait(timeout):
                     raise RuntimeError("singing timed out")
