@@ -84,7 +84,9 @@ Rules, all of them matter because a machine will sing this exactly as written:
 - refrain: one gentle line, 7 to 9 syllables, sung after every couplet{name_rule}. Simple words, sleepy, sayable by a toddler.
 - last_line: the song's final line, 7 to 10 syllables, sung once at the very end; it lands the day softly.
 - Only real, common English words (no made-up words, no numerals, no abbreviations). Lowercase except names.
-- Speak to the child as "you". Warm, a little funny, never saccharine.
+- Speak to the child as "you", but vary how lines open: at most half the verse lines may start with "you"; let the
+  snail, the rain or the dog be the subject sometimes. Warm, a little funny, never saccharine. A small surprise or
+  a tender joke in at least one line (the dog "on the night shift", the snail "who took the long way home").
 - Craft: write like the best picture-book poets (Margaret Wise Brown, Julia Donaldson). Every line is a complete,
   natural sentence or clause with its articles ("the duck", not "duck"); no telegraphic word-salad, no forced
   inversions, no comma-spliced fragments. Each couplet uses a DIFFERENT rhyme sound, on two different words.

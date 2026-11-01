@@ -8,7 +8,9 @@ __pycache__/
 .venv/
 film/out/
 film/tools/build/
-server/data/tapes/*
-!server/data/tapes/.gitkeep
+server/data/*
+!server/data/tapes/
 .claude/settings.local.json
 film/
+server/data/tapes/*
+!server/data/tapes/.gitkeep

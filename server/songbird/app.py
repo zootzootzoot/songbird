@@ -6,18 +6,23 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import threading
 import time
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from . import config, meta, pipeline
 from .singer import singer
 
 app = FastAPI(title="songbird")
+app.add_middleware(CORSMiddleware, allow_origins=["https://zootzootzoot.github.io", "http://localhost:5173",
+                                                  "http://127.0.0.1:5173", "http://localhost:4173"],
+                   allow_methods=["GET", "POST"], allow_headers=["*"])
 config.TAPES.mkdir(parents=True, exist_ok=True)
 SAMPLES = config.DATA / "samples.json"   # ids of finished tapes shown on the shelf
 WEB = config.ROOT / "web" / "dist"
@@ -149,12 +154,43 @@ def samples():
 
 app.mount("/tapes", StaticFiles(directory=str(config.TAPES)), name="tapes")
 
+def _page(request: Request, tid: str | None):
+    """index.html, with link-preview tags for a tape so a shared link unfurls with its cover."""
+    html = (WEB / "index.html").read_text(encoding="utf-8")
+    tape = pipeline.load_tape(tid) if tid and re.fullmatch(r"t_[0-9a-f]{8}", tid) else None
+    if tape:
+        base = str(request.base_url).rstrip("/")
+        proto = request.headers.get("x-forwarded-proto")
+        if proto:
+            base = base.replace("http://", proto + "://", 1)
+        esc = lambda s: (s or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
+        title = f"{tape['title']} · songbird"
+        desc = f"a bedtime song {tape['dedication']}. {tape.get('liner', '')}"
+        img = base + (tape.get("cover") or tape["photos"][0]["src"])
+        tags = (f'<meta property="og:title" content="{esc(title)}">'
+                f'<meta property="og:description" content="{esc(desc)}">'
+                f'<meta property="og:image" content="{esc(img)}">'
+                f'<meta property="og:type" content="music.song">'
+                f'<meta property="og:audio" content="{esc(base + tape["audio"])}">'
+                f'<meta name="twitter:card" content="summary_large_image">'
+                f'<meta name="twitter:title" content="{esc(title)}">'
+                f'<meta name="twitter:description" content="{esc(desc)}">'
+                f'<meta name="twitter:image" content="{esc(img)}">')
+        html = re.sub(r"<title>.*?</title>", f"<title>{esc(title)}</title>", html, count=1, flags=re.S)
+        html = html.replace("</head>", tags + "</head>", 1)
+    return HTMLResponse(html)
+
+
 if WEB.exists():
     app.mount("/assets", StaticFiles(directory=str(WEB / "assets")), name="assets")
 
+    @app.get("/t/{tid}")
+    def tape_page(tid: str, request: Request):
+        return _page(request, tid)
+
     @app.get("/{path:path}")
-    def spa(path: str):
+    def spa(path: str, request: Request):
         f = WEB / path
         if path and f.is_file() and WEB in f.resolve().parents:
             return FileResponse(f)
-        return FileResponse(WEB / "index.html")
+        return _page(request, request.query_params.get("tape"))
