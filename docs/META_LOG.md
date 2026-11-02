@@ -40,3 +40,8 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
    scores; in free text it was coherent and sharp. We switched the A&R step to a fixed plain-text format we parse.
 8. **Sample content.** Two of the sample days (city, beach) were generated with Muse Image as candid phone-style
    photos, so the shelf could be tested on varied days without using anyone's real family photos.
+9. **First full release on the new pipeline (SB-0001, Nov 1).** Muse Wonder called the city day a "1974
+   philadelphia soul symphonic epic" and cast the band ("the pigeon: seed inspector", "the red balloon: high harmony,
+   tied to the chair"). ACE-Step recorded two takes; Muse Spark 1.2 listened and kept take 0 (voice 6, words 8) over
+   take 1 (voice 3): *"honey this ain't philly soul it's hold music with a robot doing karaoke night."* Muse Image
+   painted the sleeve from SAM's cutouts of the boots, pigeons, ice cream and balloon. Total ≈ 2.5 minutes.
