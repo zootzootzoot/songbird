@@ -30,14 +30,16 @@ n_lines = sum(len(s["lines"]) for s in song["sections"])
 duration = max(60.0, min(150.0, n_lines * 8 * 60 / song["bpm"] + 14))
 dit, lm = AceStepHandler(), LLMHandler()
 dit.initialize_service(project_root=str(ACE), config_path=os.environ.get("ACE_DIT", "acestep-v15-turbo"), device="cuda")
-lm.initialize(checkpoint_dir=str(ACE / "checkpoints"), lm_model_path=os.environ.get("ACE_LM", "acestep-5Hz-lm-1.7B"),
-              backend="pt", device="cuda")
+if os.environ.get("NO_LM") != "1":  # without it the DiT plays from our bpm/key/duration alone
+    lm.initialize(checkpoint_dir=str(ACE / "checkpoints"), lm_model_path=os.environ.get("ACE_LM", "acestep-5Hz-lm-1.7B"),
+                  backend="pt", device="cuda")
 for name in names:
     thinking, with_key, extra = VARIANTS[name]
     out = SERVER / "data" / "key_trial" / tid / (name + os.environ.get("TAG", ""))
     seeds = SEEDS.get(name, [11, 112])
     t = time.time()
-    params = GenerationParams(caption=song["caption"], lyrics=lyrics, vocal_language="en", bpm=song["bpm"],
+    cap = song["caption"] if song["caption"].lower().startswith(song.get("style", "~")) else f"{song.get('style')}, {song['caption']}"
+    params = GenerationParams(caption=os.environ.get("CAPTION") or cap, lyrics=lyrics, vocal_language="en", bpm=song["bpm"],
                               keyscale=song["key"] if with_key else "", duration=duration, thinking=thinking,
                               inference_steps=int(os.environ.get("STEPS", 8)),
                               use_cot_caption=False, **extra)

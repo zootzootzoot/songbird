@@ -195,7 +195,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         drafts.append({"round": r, "t": round(time.time() - t0, 2), "genre": s.get("genre"),
                        "lyrics": producer.lyrics_text(s), "issues": issues})
         if issues:
-            job.emit("stage", stage="producing", label="the label sent it back. " +
+            job.emit("stage", stage="producing", label="the checker binned a demo. " +
                      ("one note" if len(issues) == 1 else f"{len(issues)} notes"))
 
     used_writer = "Muse Wonder 1.0"
@@ -232,8 +232,13 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     # 4. record (ACE-Step 1.5) -----------------------------------------------------------------
     job.stage("recording", "rolling tape", 0.45)
     lyrics = producer.lyrics_text(song)
+    caption, style = song["caption"].strip().rstrip("."), song.get("style", "")
+    if not caption.lower().startswith(style.lower()):  # the style word leads and closes: it steers the band most
+        caption = f"{style}, {caption}"
+    if not caption.lower().endswith(style.lower()):
+        caption = f"{caption}, {style}"
     duration = max(60.0, min(150.0, len(sheet) * 8 * 60 / bpm + 14))
-    taken = band.record(caption=song["caption"], lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
+    taken = band.record(caption=caption, lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
                         out_dir=str(d / "takes"), takes=TAKES, seed=int(time.time()) % 10000,
                         on_take=lambda m: job.emit("take", index=m["index"],
                                                    audio=f"/tapes/{job.id}/takes/take-{m['index']}.mp3",
@@ -283,7 +288,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         "artist": f"{name.lower()} & the small days" if name else "the small days",
         "name": name.lower() if name else None,
         "dedication": (f"{name.lower()}'s " if name else "") + _date_words(today),
-        "genre": song["genre"].lower(), "why": song["why"], "caption": song["caption"],
+        "genre": song["genre"].lower(), "why": song["why"], "caption": caption, "style": song.get("style"),
         "liner": song["liner"],
         "note": note,
         "bpm": bpm, "key": (taken[best].get("tuning") or {}).get("bandKey") or song["key"],

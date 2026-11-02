@@ -47,7 +47,8 @@ LM = os.environ.get("ACE_LM", "acestep-5Hz-lm-1.7B")
 THINK = os.environ.get("ACE_THINK", "0") == "1"
 dit, lm = AceStepHandler(), LLMHandler()
 dit.initialize_service(project_root=str(ACE), config_path=DIT, device="cuda")
-lm.initialize(checkpoint_dir=str(CK), lm_model_path=LM, backend="pt", device="cuda")
+if LM != "none":  # the LM only plans metadata now, and we hand the DiT bpm, key and length ourselves
+    lm.initialize(checkpoint_dir=str(CK), lm_model_path=LM, backend="pt", device="cuda")
 send({"id": None, "event": "ready"})
 
 

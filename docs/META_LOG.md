@@ -57,3 +57,22 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     recording got **6x faster** (12 s for two takes instead of 80 s). The split-and-measure step now ships as the
     label's tuner: the band records four takes, Demucs cuts the off-key ones, and Spark 1.2 judges taste among the rest.
     First release through it (SB-0002): four takes at 85-90% in key; Spark kept take 3 (voice 7, words 8).
+11. **Muse Wonder's effort setting (Nov 2).** Every release spent 47-60 s on a first draft that came back with no
+    lyrics at all, then another 40-60 s on a send-back round whose rewritten "why" leaked meta-talk ("unfollow
+    whatever I said about this before"). Probing the first draft directly: at `reasoning_effort` high and medium,
+    Wonder returned the single with an empty `sections` array every time; at low it wrote the whole song first time in
+    22-28 s (4 of 4 on four different days passed the checker). It still drops the sections about 1 time in 4, so the
+    producer now writes two demos in parallel and the checker keeps the cleaner one. Producing went from ~100 s to
+    ~30 s, and a whole release from 2 min 41 s to 1 min 35 s.
+12. **Checking that Spark 1.2 really listens (Nov 2).** One prompt made Spark 1.2 claim it "cannot hear audio", so we
+    tested its ears with controls before trusting any verdict: silence scored 0/0/0 ("no tape in the machine"), white
+    noise was "static having a nervous breakdown", and asked to transcribe a take with no lyric sheet it heard "Aiden
+    needs pale dough at dawn" for "Ada kneads pale dough at dawn". Real ears, real mishearings. The refusal was the
+    prompt's wording, not the model.
+13. **Spark 1.2, listening blind, showed the band could not play the genres the producer ordered (Nov 2).** With the
+    lyrics and the brief removed (and on Demucs's band-only stem), Spark named what it actually heard: the "1971
+    düsseldorf krautrock" take was "1960s bossa nova, soft brushed groove"; four "1986 arena hair metal" takes were all
+    "modern country-pop, early 2020s Suno-style". That sent us into ACE-Step's own training vocabulary: "krautrock",
+    "philly soul" and "tropicalia" appear zero times, synth-pop 6,634 times. The producer now picks a playable `style`
+    from the band's repertoire (60 styles the band knows) and leads the session notes with it.
+
