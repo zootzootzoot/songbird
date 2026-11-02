@@ -10,23 +10,21 @@ from __future__ import annotations
 
 import base64
 import json
+import random
 import re
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 
 from . import compose, meta
 
-# What the session band (ACE-Step 1.5) can actually play: styles that appear hundreds to thousands of times in its
-# training tags (acestep/genres_vocab.txt). "krautrock", "philly soul", "tropicalia" and "yacht rock" appear zero times;
-# asked for krautrock, the band played what Muse Spark 1.2 heard blind as "1960s bossa nova".
+# What the session band (ACE-Step 1.5) can actually play. We started from styles that appear hundreds to thousands of
+# times in its training tags (acestep/genres_vocab.txt; "krautrock" and "philly soul" appear zero times), then
+# auditioned the band in all 63 of them with one neutral lyric and had Muse Spark 1.2 score each clip
+# (scripts/audition.py, judge_audition.py). These are the ones it played convincingly (genre >= 4.5 / 10): opera,
+# gospel, trap, k-pop, bluegrass and prog all came out as "elevator music".
 REPERTOIRE = [
-    "synth-pop", "new wave", "post-punk", "punk", "garage rock", "surf rock", "rockabilly", "rock and roll", "doo-wop",
-    "soul", "funk", "disco", "italo disco", "r&b", "new jack swing", "hip hop", "g-funk", "trap", "phonk", "house",
-    "techno", "eurodance", "synthwave", "vaporwave", "chiptune", "hyperpop", "dream pop", "shoegaze", "indie rock",
-    "psychedelic rock", "progressive rock", "hard rock", "power metal", "power ballad", "emo", "reggae", "ska",
-    "afrobeat", "bossa nova", "salsa", "cumbia", "flamenco", "tango", "polka", "sea shanty", "bluegrass", "country",
-    "big band", "swing", "ragtime", "lounge", "jazz fusion", "acid jazz", "gospel", "opera", "orchestral",
-    "video game", "k-pop", "j-pop", "city pop", "dubstep", "drum and bass", "a cappella",
+    "synthwave", "funk", "italo disco", "indie rock", "hard rock", "big band", "soul", "bossa nova", "rock and roll",
+    "rockabilly", "eurodance", "power ballad", "surf rock", "synth-pop", "chiptune", "punk", "ska", "tango", "salsa",
 ]
 
 PRODUCE_SCHEMA = {
@@ -67,20 +65,20 @@ The whole day: {day}
 Make the single. Rules, every one matters:
 - Pick the genre with total conviction, the way a genius producer would: specific, with an era and a scene, and
   surprising but RIGHT for this day. Find the one detail that decides it, and say so in "why". The range is the whole
-  history of recorded music: a goose ambush is 1986 hair metal; a rainy car ride is 1983 synth-pop; a bath is 1963
-  surf rock; a snail is 1971 krautrock; a birthday is a 1990s stadium anthem; a nap is 1958 cool jazz; a grocery run
-  is 1992 boom-bap; a lost tooth is 1977 punk; a beach is 1968 tropicalia; a cake is 1975 glam rock; a museum is 1969
-  baroque pop. Never "lullaby", never generic "pop" or "acoustic". The label has already released too much philly soul
-  and disco: do not pick them. The bigger the gap between how small the day was and how seriously the genre treats it,
+  history of recorded music. These are only examples of the move, never reuse them: a goose ambush is 1986 hair metal;
+  a rainy car ride is 1983 synth-pop; a bath is 1963 surf rock; a birthday is a 1990s eurodance anthem; a nap is 1962
+  bossa nova; a grocery run is 1979 funk; a lost tooth is 1977 punk; a cake is 1978 italo disco; a museum is 1940s
+  big band. Never "lullaby", never generic "pop" or "acoustic". The label has already released too much philly soul,
+  disco and krautrock: do not pick them. The bigger the gap between how small the day was and how seriously the genre treats it,
   the better, as long as it is warm, never mean.
-- The session band only plays what is in its repertoire. "style" is the one repertoire style your genre is played
-  in (hair metal -> hard rock; motorik -> techno; a 1958 nap -> swing). Name the genre with all the conviction you
-  like, but it must be something that style can honestly carry.
+- The session players who showed up today can play: {players}. "style" is the one of those your genre is played in
+  (hair metal -> hard rock; 1950s jump blues -> rock and roll; 1984 miami -> synthwave). Pick the one this day deserves, name the
+  genre with all the conviction you like, but it must be something that style can honestly carry.
 - caption: production notes the session band will read, 25 to 45 words. Start with the style word, then plain
   comma-separated sound words: the sub-genre, the era, energy (loud, aggressive, swinging, laid-back...), the genre's
-  signature instruments and playing ("shredding guitar solo", "walking upright bass", "808 bass", "horn stabs"), the
-  drum feel, then the cast vocal in full: gender, texture and delivery ("raspy high male belting lead vocal",
-  "smooth baritone crooner", "female diva vocal with gospel runs"). End with the style word again. No place names,
+  signature instruments and playing ("walking upright bass", "808 bass", "horn stabs", "twangy reverb guitar"), the
+  drum feel, then the vocal cast for this genre in full: gender, texture and delivery ("smooth baritone crooner",
+  "female diva vocal with gospel runs", "laid-back male rapper", "snotty shouted punk vocal"; invent the right one). End with the style word again. No place names,
   no stories, no "warm" or "clear": the band only understands sound words, and gentle words make it play gently.
 - Lyrics: a real song structure: Verse 1, Chorus, Verse 2, Chorus, Bridge or Verse 3 (optional), Chorus. 4 lines per
   verse, 2 to 4 lines per chorus (the chorus repeats word for word). 16 to 22 lines in total.
@@ -137,14 +135,19 @@ def write(look: dict, order: list[int], name: str | None, note: str | None, on_t
     seen = [look["photos"][i] for i in order]
     photos = "\n".join(f"{k}. hero: {p['hero']}. {p['seen']}. details: {'; '.join(p['details'])}. {p['time_of_day']}."
                        for k, p in enumerate(seen))
+    # ten styles per session, so the label's releases range across its whole repertoire instead of settling on
+    # whatever the prompt's examples suggest (left to itself, 3 of 4 days became hard rock)
+    players = random.sample(REPERTOIRE, 10)
+    schema = json.loads(json.dumps(PRODUCE_SCHEMA))
+    schema["properties"]["style"]["enum"] = players
     prompt = PRODUCE_PROMPT.format(
-        who=f" for {name}" if name else "", photos=photos, day=look.get("day", ""),
+        players=", ".join(players), who=f" for {name}" if name else "", photos=photos, day=look.get("day", ""),
         note=f'The parent added: "{note}" (use it, it matters more than anything in the photos).\n' if note else "")
     messages = [{"role": "user", "content": prompt}]
     # at effort "high" or "medium" Wonder returned the single with no sections at all (4/4 times); at "low" it writes
     # the whole song first time in ~25 s, but still drops the sections about 1 time in 4. So it writes two demos at
     # once and the checker keeps the cleaner one; a send-back round only happens if both fail.
-    draft = lambda: meta.spark_json(messages, PRODUCE_SCHEMA, "single", effort="low", model=model)
+    draft = lambda: meta.spark_json(messages, schema, "single", effort="low", model=model)
     best, best_n = None, 1e9
     for r in range(rounds):
         n = 2 if r == 0 else 1

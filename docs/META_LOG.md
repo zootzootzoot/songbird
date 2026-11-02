@@ -75,4 +75,18 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     "modern country-pop, early 2020s Suno-style". That sent us into ACE-Step's own training vocabulary: "krautrock",
     "philly soul" and "tropicalia" appear zero times, synth-pop 6,634 times. The producer now picks a playable `style`
     from the band's repertoire (60 styles the band knows) and leads the session notes with it.
+14. **Spark 1.2 found the words that make the band commit (Nov 2).** Even in a style it knew, the band played every
+    genre gently: the producer's notes asked for "a clear, full, confident lead vocal" every time, which is a generic
+    pop singer. Same song, same seeds, only the session notes changed to cast the vocal for the genre ("raspy high
+    male belting lead vocal", "shredding guitar solo", "glam metal"): Spark's genre score went from 1-2 to 9, 8, 3, 9
+    ("you got the hairspray and the guitars right"). The producer now casts the vocal for every genre and leads and
+    closes its notes with the style word.
+15. **Spark 1.2 auditioned the session band in 63 styles (Nov 2).** Instead of guessing what the band could play, it
+    recorded one 40-second clip per style with the same neutral lyric (two seeds each, 124 clips, ~4 s of GPU per
+    clip) and Spark 1.2 scored every one. Synthwave (8.0), funk (7.0), italo disco (7.0), hard rock and big band (6.5)
+    convinced it; opera ("a mall dj doing karaoke on a tuesday"), gospel, trap, k-pop, bluegrass and progressive rock
+    scored 1-2, which matched our two weakest releases (bluegrass, prog) exactly. The repertoire is now the 19 styles
+    Spark believed, and each session the producer gets a random ten of them, so the label's catalogue stays varied.
+    First releases after: "1979 two-tone ska revival" (kept take voice 7, words 8, genre 7), "1987 arena power ballad",
+    "1930s golden-age argentine tango".
 

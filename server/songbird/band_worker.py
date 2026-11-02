@@ -43,7 +43,7 @@ import tuner  # noqa: E402
 
 CK = ACE / "checkpoints"
 DIT = os.environ.get("ACE_DIT", "acestep-v15-turbo")
-LM = os.environ.get("ACE_LM", "acestep-5Hz-lm-1.7B")
+LM = os.environ.get("ACE_LM", "none")
 THINK = os.environ.get("ACE_THINK", "0") == "1"
 dit, lm = AceStepHandler(), LLMHandler()
 dit.initialize_service(project_root=str(ACE), config_path=DIT, device="cuda")

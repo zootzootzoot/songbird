@@ -43,8 +43,13 @@ for name in names:
                               keyscale=song["key"] if with_key else "", duration=duration, thinking=thinking,
                               inference_steps=int(os.environ.get("STEPS", 8)),
                               use_cot_caption=False, **extra)
-    res = generate_music(dit, lm, params, GenerationConfig(batch_size=len(seeds), audio_format="mp3",
-                                                           use_random_seed=False, seeds=seeds), save_dir=str(out))
+    groups = [[x] for x in seeds] if os.environ.get("ONE") == "1" else [seeds]  # XL on 16 GB: one take at a time
+    audios = []
+    for g in groups:
+        res = generate_music(dit, lm, params, GenerationConfig(batch_size=len(g), audio_format="mp3",
+                                                               use_random_seed=False, seeds=g), save_dir=str(out))
+        audios += res.audios
+    res.audios = audios
     print(name, "took", round(time.time() - t, 1), "s", flush=True)
     for k, a in enumerate(res.audios):
         meta = a.get("params") if isinstance(a.get("params"), dict) else {}
