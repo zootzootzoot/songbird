@@ -1,9 +1,14 @@
-"""One tape, start to finish. Runs in a thread; every step is published as an event for the deck to show."""
+"""One release, start to finish. Runs in a thread; every step is published as an event for the deck to show.
+
+look (Muse Spark 1.3) → cut (SAM 3.1) ∥ produce (Muse Wonder) → record 2 takes (ACE-Step 1.5) ∥ sleeve (Muse Image)
+→ listen back (Muse Spark 1.2, audio in) → keep the best take → press.
+"""
 from __future__ import annotations
 
 import datetime as dt
 import io
 import json
+import re
 import shutil
 import subprocess
 import threading
@@ -11,15 +16,16 @@ import time
 import traceback
 import uuid
 from concurrent.futures import ThreadPoolExecutor
+from difflib import SequenceMatcher
 from pathlib import Path
 
 from PIL import Image, ImageOps
 
-from . import compose, config, meta, writer
-from .singer import singer
+from . import compose, config, meta, producer, writer
+from .band import band
 
 JOBS: dict[str, "Job"] = {}
-GPU = threading.Lock()  # one tape on the machine at a time; later ones wait their turn
+GPU = threading.Lock()  # one release on the machine at a time; later ones wait their turn
 
 
 class Job:
@@ -91,40 +97,38 @@ def _read_clip(raw: bytes, stem: Path, seconds: float = 3.0, fps: int = 12, side
 
 
 def _run(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: str | None):
-    stage = "looking"
     try:
         if GPU.locked():
-            job.emit("stage", stage="looking", label="another tape is recording. waiting for the deck")
+            job.emit("stage", stage="looking", label="another release is in the studio. waiting our turn")
         with GPU:
-            _make(job, d, photos, name, note, lambda s: None)
+            _make(job, d, photos, name, note)
     except Exception as e:
         traceback.print_exc()
         (d / "error.txt").write_text(traceback.format_exc(), encoding="utf-8")
-        job.emit("error", message=_human(e), stage=stage)
+        job.emit("error", message=_human(e))
 
 
 def _human(e: Exception) -> str:
     s = str(e)
     if "401" in s or "403" in s:
-        return "the deck could not reach its helpers (the Meta key was refused)"
-    if "singer" in s:
-        return "the singer lost its voice. try again in a minute"
+        return "the label could not reach its people (the Meta key was refused)"
+    if "band" in s or "session" in s:
+        return "the session band walked out. try again in a minute"
     return "the tape jammed. " + s[:160]
 
 
-def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: str | None, _):
+def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: str | None):
     t0 = time.time()
     log = {"timings": {}}
 
     def mark(k):
         log["timings"][k] = round(time.time() - t0, 2)
 
-    # warm the singer while Meta does its part
-    if singer.available:
-        threading.Thread(target=singer.start, daemon=True).start()
+    if band.available:  # wake the session band while Meta does its part
+        threading.Thread(target=band.start, daemon=True).start()
 
-    # 1. look ------------------------------------------------------------------------------
-    job.stage("looking", "looking at the pictures", 0.04)
+    # 1. look (Muse Spark 1.3) ---------------------------------------------------------------
+    job.stage("looking", "looking at today", 0.04)
     look = writer.look(photos)
     mark("look")
     order = look["order"]
@@ -134,10 +138,10 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     for orig, p in enumerate(look["photos"]):
         job.emit("seen", photo=pos[orig], hero=p["hero"], seen=p["seen"])
     job.emit("order", order=list(range(len(order))))
-    job.emit("progress", value=0.14)
+    job.emit("progress", value=0.1)
 
-    # 2. cut (SAM 3.1) and write (Muse Wonder) at the same time -------------------------------
-    job.stage("cutting", "cutting out the best bits", 0.16)
+    # 2. cut (SAM 3.1) while the producer works (Muse Wonder) ---------------------------------
+    job.stage("cutting", "casting the band", 0.12)
     pool = ThreadPoolExecutor(max_workers=4)
     cuts: dict[int, tuple] = {}
     motion: dict[int, tuple] = {}
@@ -182,77 +186,75 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
 
     cut_futs = [pool.submit(cut, i) for i in range(len(photos))]
 
-    job.stage("writing", "writing the words down", 0.22)
-    song = None
-    used_writer = "Muse Wonder 1.0"
+    job.stage("producing", "the producer is thinking", 0.2)
     drafts = log["drafts"] = []
 
     def on_try(r, s, issues):
-        drafts.append({"round": r, "t": round(time.time() - t0, 2), "verses": [v["text"] for v in s["verses"]],
-                       "refrain": s["refrain"], "last_line": s["last_line"], "issues": issues})
+        drafts.append({"round": r, "t": round(time.time() - t0, 2), "genre": s.get("genre"),
+                       "lyrics": producer.lyrics_text(s), "issues": issues})
         if issues:
-            job.emit("stage", stage="writing", label="checking the words fit the tune. fixing " +
-                     ("one line" if len(issues) == 1 else f"{len(issues)} lines"))
+            job.emit("stage", stage="producing", label="the label sent it back. " +
+                     ("one note" if len(issues) == 1 else f"{len(issues)} notes"))
+
+    used_writer = "Muse Wonder 1.0"
     try:
-        song = writer.write(look, name=name, note=note, model="muse-wonder-1.0", effort="high", on_try=on_try)
+        song = producer.write(look, order, name, note, on_try=on_try)
     except Exception:
         traceback.print_exc()
         used_writer = "Muse Spark 1.3"
-        song = writer.write(look, name=name, note=note, model=config.SPARK, effort="high", on_try=on_try)
-    mark("write")
+        song = producer.write(look, order, name, note, on_try=on_try, model=config.SPARK)
+    mark("produce")
+    bpm = max(60, min(170, int(song.get("bpm", 100))))
+    job.emit("genre", genre=song["genre"].lower(), why=song["why"], bpm=bpm, key=song["key"])
+    job.emit("title", title=song["title"].lower())
+    sheet = []  # sung order, choruses repeated as written
+    for s in song["sections"]:
+        for ln in s["lines"]:
+            ph = ln.get("photo")
+            sheet.append({"text": ln["text"].strip().lower(), "section": s["tag"],
+                          "kind": "chorus" if s["tag"] == "Chorus" else "verse" if s["tag"].startswith("Verse") else "other",
+                          "photo": ph if isinstance(ph, int) and 0 <= ph < len(order) else None})
+    for i, ln in enumerate(sheet):
+        job.emit("line", index=i, text=ln["text"], photo=ln["photo"], section=ln["section"])
     for f in cut_futs:
         f.result()
     mark("cut")
-    job.emit("title", title=song["title"].lower())
-    job.emit("progress", value=0.45)
+    for b in song["band"]:
+        if 0 <= b["photo"] < len(order):
+            job.emit("band", photo=b["photo"], role=b["role"].lower())
+    job.emit("progress", value=0.42)
 
-    # 3. compose -------------------------------------------------------------------------------
-    job.stage("composing", "finding the tune", 0.47)
-    song["_moods"] = {orig: look["photos"][orig]["mood"] for orig in range(len(photos))}
-    planned = writer.plan_lines(song)
-    for ln in planned:
-        if ln.photo is not None:
-            ln.photo = pos[ln.photo]
-    moods = [look["photos"][i]["mood"] for i in range(len(photos))]
-    mode = song.get("mode", "major")
-    tonic = 65 if mode == "major" else 62
-    bpm = max(80, min(104, int(song.get("bpm", 90))))
-    meter = 3  # lullabies rock in three; 4/4 lines either crawl or crowd
-    energy = min(1.0, 0.2 + 0.15 * sum(m in ("bright", "playful") for m in moods))
-    brightness = 0.35 + 0.1 * sum(m in ("bright", "playful") for m in moods) - 0.1 * sum(m == "rainy" for m in moods)
-    score = compose.compose(planned, tonic=tonic, mode=mode, bpm=bpm, meter=meter,
-                            palette=song.get("palette", "musicbox"), energy=energy,
-                            brightness=max(0.1, min(0.9, brightness)))
-    (d / "score.json").write_text(json.dumps({"segments": score["segments"], "comp": score["comp"]}, indent=1))
-    for ln in score["lines"]:  # the deck prints lowercase
-        ln["text"] = ln["text"].lower()
-        for w in ln["words"]:
-            w["text"] = w["text"].lower()
-    for i, ln in enumerate(score["lines"]):
-        job.emit("line", index=i, text=ln["text"], photo=ln["photo"])
-    mark("compose")
-
-    # 4. the cover, painted while the singer sings ---------------------------------------------
+    # 3. the sleeve, painted while the band records ---------------------------------------------
     cover_fut = pool.submit(_cover, d, look, order, cuts, photos, song)
 
-    # 5. sing ----------------------------------------------------------------------------------
-    job.stage("singing", "singing it through once", 0.52)
-    n = len(score["segments"])
-    vocal_path = d / "vocal.wav"
-    singer.sing(score["segments"], str(vocal_path),
-                on_line=lambda i: (job.emit("sung", index=i), job.emit("progress", value=round(0.52 + 0.3 * (i + 1) / n, 3))))
-    mark("sing")
+    # 4. record (ACE-Step 1.5) -----------------------------------------------------------------
+    job.stage("recording", "rolling tape", 0.45)
+    lyrics = producer.lyrics_text(song)
+    duration = max(60.0, min(150.0, len(sheet) * 8 * 60 / bpm + 14))
+    taken = band.record(caption=song["caption"], lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
+                        out_dir=str(d / "takes"), takes=2, seed=int(time.time()) % 10000,
+                        on_take=lambda m: job.emit("take", index=m["index"],
+                                                   audio=f"/tapes/{job.id}/takes/take-{m['index']}.mp3"))
+    mark("record")
+    job.emit("progress", value=0.7)
 
-    # 6. arrange + mix -------------------------------------------------------------------------
-    job.stage("mixing", "winding it onto the tape", 0.84)
-    duration = _mix(score, vocal_path, d / "song.mp3")
-    mark("mix")
+    # 5. listen back (Muse Spark 1.2, audio in) and keep the best take ---------------------------
+    job.stage("listening", "the producer is listening back", 0.72)
+    verdicts = list(pool.map(lambda tk: _listen(tk, song, lyrics), taken))
+    best = max(range(len(taken)), key=lambda i: verdicts[i]["score"])
+    for i, v in enumerate(verdicts):
+        job.emit("verdict", index=i, score=v["score"], voice=v["voice"], words=v["words"], genre=v["genre"],
+                 verdict=v["verdict"], kept=i == best)
+    mark("listen")
+    shutil.copy2(taken[best]["path"], d / "song.mp3")
+    length = _duration(d / "song.mp3")
+    timed = _timeline(sheet, taken[best].get("lrc", ""), length)
 
-    # 7. print ---------------------------------------------------------------------------------
-    job.stage("printing", "printing the j-card", 0.92)
+    # 6. press ---------------------------------------------------------------------------------
+    job.stage("pressing", "pressing the cassette", 0.88)
     cover = None
     try:
-        cover = cover_fut.result(timeout=120)
+        cover = cover_fut.result(timeout=150)
     except Exception:
         traceback.print_exc()
     mark("cover")
@@ -261,40 +263,115 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     today = dt.date.today()
     tape = {
         "id": job.id,
+        "catalog": _catalog(),
         "createdAt": dt.datetime.now().isoformat(timespec="seconds"),
         "title": song["title"].lower(),
+        "artist": f"{name.lower()} & the small days" if name else "the small days",
         "name": name.lower() if name else None,
-        "dedication": (f"for {name.lower()}, " if name else "") + _date_words(today),
+        "dedication": (f"{name.lower()}'s " if name else "") + _date_words(today),
+        "genre": song["genre"].lower(), "why": song["why"], "caption": song["caption"],
         "liner": song["liner"],
         "note": note,
-        "bpm": bpm, "meter": meter, "key": score["key"],
-        "duration": duration,
+        "bpm": bpm, "key": taken[best].get("key") or song["key"],
+        "duration": round(length, 2),
         "audio": f"/tapes/{job.id}/song.mp3",
+        "takes": [{"audio": f"/tapes/{job.id}/takes/take-{i}.mp3", "kept": i == best,
+                   **{k: v[k] for k in ("score", "voice", "words", "genre", "verdict")}} for i, v in enumerate(verdicts)],
         "cover": cover,
         "palette": look.get("palette", [])[:4],
         "photos": [{"src": f"/tapes/{job.id}/photo-{k}.jpg", "cutout": cuts.get(k, (None, None))[0],
                     "box": cuts.get(k, (None, None))[1], "hero": look["photos"][orig]["hero"],
                     "motion": motion.get(k, (None,))[0], "motionBox": motion.get(k, (None, None))[1],
-                    "clip": clips.get(k),
-                    "seen": look["photos"][orig]["seen"]} for k, orig in enumerate(order)],
-        "lines": score["lines"],
-        "credits": [
-            {"role": "looked at the pictures", "model": "Muse Spark 1.3"},
-            {"role": "cut out the stickers" + (" and followed the moving ones" if motion else ""), "model": "SAM 3.1"},
-            {"role": "wrote the words", "model": used_writer},
-            {"role": "painted the cover", "model": "Muse Image 1.0"} if cover else None,
-            {"role": "wrote the tune", "model": "songbird composer"},
-            {"role": "sang it", "model": "SoulX-Singer (open source)"},
+                    "clip": clips.get(k), "seen": look["photos"][orig]["seen"]} for k, orig in enumerate(order)],
+        "band": [{"photo": b["photo"], "role": b["role"].lower()} for b in song["band"] if 0 <= b["photo"] < len(order)],
+        "lines": timed,
+        "credits": [c for c in [
+            {"role": "looked at today", "model": "Muse Spark 1.3"},
+            {"role": "cut out the band" + (" and followed the moving ones" if motion else ""), "model": "SAM 3.1"},
+            {"role": "produced and wrote it", "model": used_writer},
+            {"role": "session band", "model": "ACE-Step 1.5 (open source)"},
+            {"role": "listened back, picked the take", "model": "Muse Spark 1.2"},
+            {"role": "painted the sleeve", "model": "Muse Image 1.0"} if cover else None,
             {"role": "heard your note", "model": "Muse Voice Transcribe"} if getattr(job, "spoken", False) else None,
-        ],
+        ] if c],
     }
-    tape["credits"] = [c for c in tape["credits"] if c]
-    log["look"], log["song"] = look, {k: v for k, v in song.items() if not k.startswith("_")}
+    log["look"], log["song"], log["verdicts"] = look, song, verdicts
     (d / "tape.json").write_text(json.dumps(tape, indent=1))
     (d / "log.json").write_text(json.dumps(log, indent=1, default=str))
     job.tape = tape
     job.emit("progress", value=1.0)
     job.emit("done", tape=tape)
+
+
+def _listen(take: dict, song: dict, lyrics: str) -> dict:
+    try:
+        return producer.listen(take["path"], song["genre"], lyrics)
+    except Exception:
+        traceback.print_exc()
+        return {"voice": 5, "words": 5, "genre": 5, "heard": "", "verdict": "the producer had headphone trouble.",
+                "score": 5.0}
+
+
+def _duration(p: Path) -> float:
+    r = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", str(p)],
+                       capture_output=True, text=True)
+    try:
+        return float(r.stdout.strip())
+    except ValueError:
+        return 0.0
+
+
+def _timeline(sheet: list[dict], lrc: str, length: float) -> list[dict]:
+    """Line start times from the band's LRC (matched in order); word times spread across each line by syllables."""
+    stamps = []
+    for m in re.finditer(r"\[(\d+):(\d+(?:\.\d+)?)\]\s*(.*)", lrc or ""):
+        text = m.group(3).strip()
+        if text and not re.fullmatch(r"\[.*\]", text):
+            stamps.append((int(m.group(1)) * 60 + float(m.group(2)), re.sub(r"[^a-z ]", "", text.lower())))
+    starts: list[float | None] = [None] * len(sheet)
+    j = 0
+    for i, ln in enumerate(sheet):  # walk both in order, tolerating a skipped or merged line
+        key = re.sub(r"[^a-z ]", "", ln["text"])
+        for k in range(j, min(j + 3, len(stamps))):
+            if SequenceMatcher(None, key.split(), stamps[k][1].split()).ratio() > 0.5:
+                starts[i], j = stamps[k][0], k + 1
+                break
+    known = [(i, s) for i, s in enumerate(starts) if s is not None]
+    if not known:  # no timestamps: spread the lines over the middle of the song
+        a, b = 0.1 * length, 0.92 * length
+        starts = [a + (b - a) * i / len(sheet) for i in range(len(sheet))]
+    else:
+        for i in range(len(sheet)):  # interpolate the gaps
+            if starts[i] is None:
+                prev = max((k for k in known if k[0] < i), default=None, key=lambda k: k[0])
+                nxt = min((k for k in known if k[0] > i), default=None, key=lambda k: k[0])
+                if prev and nxt:
+                    starts[i] = prev[1] + (nxt[1] - prev[1]) * (i - prev[0]) / (nxt[0] - prev[0])
+                elif prev:
+                    starts[i] = prev[1] + 3.2 * (i - prev[0])
+                else:
+                    starts[i] = max(0.0, nxt[1] - 3.2 * (nxt[0] - i))
+    out = []
+    for i, ln in enumerate(sheet):
+        s = float(starts[i])
+        nxt = float(starts[i + 1]) if i + 1 < len(sheet) else min(length, s + 6)
+        e = s + min(max(1.0, nxt - s - 0.15), 7.0)
+        shown = re.findall(r"[a-z][a-z'\-]*[^\sa-z]*", ln["text"]) or [ln["text"]]
+        weights = [max(1, compose.count_syllables(w)) for w in shown]
+        tot, acc, words = sum(weights), s, []
+        for w, n in zip(shown, weights):
+            dur = (e - s) * n / tot
+            words.append({"text": w, "start": round(acc, 3), "end": round(acc + dur, 3)})
+            acc += dur
+        out.append({**ln, "start": round(s, 3), "end": round(e, 3), "words": words})
+    return out
+
+
+def _catalog() -> str:
+    f = config.DATA / "catalog.txt"
+    n = (int(f.read_text().strip() or 0) if f.exists() else 0) + 1
+    f.write_text(str(n))
+    return f"SB-{n:04d}"
 
 
 def _date_words(d: dt.date) -> str:
@@ -310,28 +387,15 @@ def _cover(d: Path, look: dict, order: list[int], cuts: dict, photos: list[Image
         else:
             refs.append(photos[orig])
     things = ", ".join(f"the {h}" for h in heroes[:-1]) + f" and the {heroes[-1]}" if len(heroes) > 1 else f"the {heroes[0]}"
-    prompt = (f"Cover art for a children's bedtime cassette tape called \"{song['title']}\", in the style of a risograph "
-              f"print. Redraw {things} from the reference images as simple, flat, cut-paper shapes, arranged together "
-              "in one cosy, playful bedtime scene. Exactly three riso inks on warm cream paper: vermilion red #e0472a, "
-              "sunflower yellow #efb02f and deep ocean blue #1d4a68, overprinting where they meet, visible halftone "
-              "grain, slight misregistration, hand-made like a 1970s picture book. Leave the top third calm and mostly "
-              "empty for a title. No text, no letters, no people, no faces of children.")
+    prompt = (f"Record sleeve art for a {song['genre']} single called \"{song['title']}\", printed as a risograph. "
+              f"The band is {things}, redrawn from the reference images as bold, flat, cut-paper shapes, posed together "
+              f"like the cover of a classic record of that genre and era, with its graphic attitude. Exactly three riso "
+              "inks on warm cream paper: vermilion red #e0472a, sunflower yellow #efb02f and deep ocean blue #1d4a68, "
+              "overprinting where they meet, visible halftone grain, slight misregistration, hand-printed. Leave the top "
+              "third calm for a title. No text, no letters, no people, no faces of children.")
     im = meta.paint(prompt, refs, size="1024x1536")
     im.save(d / "cover.png")
     return f"/tapes/{d.name}/cover.png"
-
-
-def _mix(score: dict, vocal_path: Path, out: Path) -> float:
-    import soundfile as sf
-    vocal, sr = sf.read(str(vocal_path), dtype="float32")
-    try:
-        from . import arrange
-        return round(float(arrange.mix(score["comp"], vocal, sr, str(out), str(out.with_suffix(".wav")))), 3)
-    except Exception:
-        traceback.print_exc()
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(vocal_path), "-ar", "44100", "-b:a", "192k", str(out)],
-                       check=True)
-        return round(len(vocal) / sr, 3)
 
 
 def load_tape(tid: str) -> dict | None:

@@ -17,7 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from . import config, meta, pipeline
-from .singer import singer
+from .band import band
 
 app = FastAPI(title="songbird")
 app.add_middleware(CORSMiddleware, allow_origins=["https://zootzootzoot.github.io", "http://localhost:5173",
@@ -30,13 +30,13 @@ WEB = config.ROOT / "web" / "dist"
 
 @app.on_event("startup")
 def _warm():
-    if singer.available:
-        threading.Thread(target=singer.start, daemon=True).start()
+    if band.available:
+        threading.Thread(target=band.start, daemon=True).start()
 
 
 @app.get("/api/health")
 def health():
-    return {"ok": True, "meta": bool(config.META_KEY), "singer": singer.ready.is_set(),
+    return {"ok": True, "meta": bool(config.META_KEY), "band": band.ready.is_set(),
             "busy": pipeline.GPU.locked()}
 
 
@@ -148,6 +148,7 @@ def samples():
         t = pipeline.load_tape(tid)
         if t:
             out.append({"id": t["id"], "title": t["title"], "dedication": t["dedication"], "cover": t["cover"],
+                        "catalog": t.get("catalog"), "artist": t.get("artist"), "genre": t.get("genre"),
                         "duration": t["duration"], "palette": t.get("palette", []), "photos": len(t["photos"])})
     return {"tapes": out}
 

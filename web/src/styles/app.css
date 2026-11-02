@@ -1,0 +1,388 @@
+/* ==================================================================== room
+   The page is the room. Daylight while you load the pictures; it gets later
+   while the machine works; a single lamp when the tape is done.
+   ========================================================================== */
+
+.app {
+  --bg: #efe7d4;
+  --fg: #1e1712;
+  --fg-2: rgba(30, 23, 18, 0.62);
+  --fg-3: rgba(30, 23, 18, 0.36);
+  --hair: rgba(30, 23, 18, 0.12);
+  --glow: 0;
+  --lamp: 0;
+  position: relative;
+  isolation: isolate;
+  min-height: 100dvh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  padding: 22px clamp(18px, 3vw, 52px) 18px;
+  background-color: var(--bg);
+  color: var(--fg);
+  transition:
+    background-color 2600ms var(--ease-io),
+    color 2600ms var(--ease-io);
+  overflow-x: clip;
+}
+/* a permalink opens straight into the night: no fade on first paint */
+.app:not([data-ready="true"]),
+.app:not([data-ready="true"]) * {
+  transition-duration: 0ms !important;
+}
+
+.app[data-light="dusk"] {
+  --bg: #ddd0b6;
+  --glow: 0.35;
+}
+
+.app[data-light="evening"] {
+  --bg: #2b2723;
+  --fg: #f1e9d8;
+  --fg-2: rgba(241, 233, 216, 0.66);
+  --fg-3: rgba(241, 233, 216, 0.36);
+  --hair: rgba(241, 233, 216, 0.14);
+  --glow: 0.6;
+  --lamp: 0.55;
+}
+
+.app[data-light="night"] {
+  --bg: #17130f;
+  --fg: #f1e9d8;
+  --fg-2: rgba(241, 233, 216, 0.66);
+  --fg-3: rgba(241, 233, 216, 0.34);
+  --hair: rgba(241, 233, 216, 0.13);
+  --glow: 1;
+  --lamp: 1;
+}
+
+.app__light {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(60% 55% at 50% 46%, rgba(255, 252, 244, 0.55), rgba(255, 252, 244, 0) 70%),
+    radial-gradient(120% 90% at 50% 120%, rgba(30, 23, 18, 0.1), transparent 60%);
+  opacity: calc(1 - var(--lamp));
+  transition: opacity 2600ms var(--ease-io);
+}
+
+.app__lamp {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42% 46% at 50% 44%, rgba(255, 176, 92, 0.2), rgba(255, 160, 70, 0.07) 55%, transparent 80%),
+    radial-gradient(28% 40% at 80% 52%, rgba(255, 196, 120, 0.12), transparent 70%);
+  opacity: var(--lamp);
+  transition: opacity 3000ms var(--ease-io);
+}
+
+.app[data-phase="playing"] .app__lamp {
+  animation: lamp-breathe 5.2s ease-in-out infinite;
+}
+@keyframes lamp-breathe {
+  50% {
+    opacity: 0.82;
+  }
+}
+
+.app__grain {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  pointer-events: none;
+  background-image: var(--grain);
+  background-size: 180px;
+  opacity: 0.32;
+  mix-blend-mode: multiply;
+}
+.app[data-light="evening"] .app__grain,
+.app[data-light="night"] .app__grain {
+  mix-blend-mode: soft-light;
+  opacity: 0.4;
+}
+
+/* ------------------------------------------------------------------ header */
+
+.top {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 24px;
+  min-height: 64px;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-self: start;
+  text-decoration: none;
+  color: var(--fg);
+}
+
+.brand__word {
+  font-family: var(--serif);
+  font-size: 30px;
+  font-weight: 700;
+  font-variation-settings: "SOFT" 100, "WONK" 1, "opsz" 72;
+  line-height: 0.9;
+  letter-spacing: -0.02em;
+}
+
+.brand__line {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+
+.top__sound {
+  justify-self: end;
+  margin-left: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 2px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.top__sound-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--fg-3);
+  transition: background-color 200ms ease, box-shadow 200ms ease;
+}
+.top__sound-dot[data-on="true"] {
+  background: var(--vermilion);
+  box-shadow: 0 0 0 3px rgba(224, 71, 42, 0.18);
+}
+
+/* ------------------------------------------------------------------- stage */
+
+.stage {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) minmax(0, 880px) minmax(300px, 380px);
+  grid-template-areas: "day center output";
+  align-items: center;
+  justify-content: center;
+  gap: clamp(20px, 2.6vw, 52px);
+  padding: 12px 0 8px;
+}
+
+.day {
+  grid-area: day;
+}
+.stage__center {
+  grid-area: center;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.output {
+  grid-area: output;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.output__silent {
+  margin: 14px 0 0;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+  text-align: center;
+}
+
+/* ------------------------------------------------------------------ footer */
+
+.foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--fg-3);
+}
+
+/* ---------------------------------------------------------------- subtitle */
+
+.subtitle {
+  width: min(100%, 760px);
+  min-height: 132px;
+  margin-top: 4px;
+  text-align: center;
+}
+
+.subtitle__kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 10px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.subtitle[data-tone="work"] .subtitle__kicker::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--vermilion);
+  box-shadow: 0 0 0 3px rgba(224, 71, 42, 0.2);
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+@keyframes pulse-dot {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.subtitle__text {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 340;
+  font-variation-settings: "opsz" 144, "SOFT" 50;
+  font-size: clamp(30px, 2.55vw, 46px);
+  line-height: 1.06;
+  letter-spacing: -0.012em;
+  text-wrap: balance;
+  animation: sub-in 640ms var(--ease-out) both;
+}
+
+.subtitle[data-tone="song"] .subtitle__text {
+  font-weight: 380;
+}
+
+@keyframes sub-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(6px);
+  }
+}
+
+.subtitle__sub {
+  margin: 12px auto 0;
+  max-width: 560px;
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--fg-2);
+  text-wrap: balance;
+  animation: sub-in 640ms var(--ease-out) 90ms both;
+}
+
+.subtitle[data-tone="warn"] .subtitle__text {
+  color: var(--vermilion);
+}
+
+/* karaoke: each word fills with ink as it is sung */
+.sung {
+  color: transparent;
+  background-image: linear-gradient(90deg, var(--fg) 0 calc(var(--p) * 100%), var(--fg-3) calc(var(--p) * 100%) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+/* ------------------------------------------------------------------ mobile */
+
+@media (max-width: 1180px) {
+  .stage {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      "center center"
+      "day output";
+    align-items: start;
+  }
+}
+
+@media (max-width: 760px) {
+  .app .spine {
+    width: 26px;
+    height: 76px;
+  }
+  .app .print__hero {
+    font-size: 7.5px;
+    padding: 3px 5px 2px;
+  }
+  .app .print__role {
+    font-size: 9px;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .app {
+    padding: 14px 16px 18px;
+  }
+  .top {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "brand sound"
+      "shelf shelf";
+    row-gap: 10px;
+  }
+  .brand {
+    grid-area: brand;
+  }
+  .top__sound {
+    grid-area: sound;
+  }
+  .shelf {
+    grid-area: shelf;
+  }
+  .brand__word {
+    font-size: 22px;
+    white-space: nowrap;
+  }
+  .brand__line {
+    display: none;
+  }
+  .top__sound {
+    margin-left: 0;
+    font-size: 9.5px;
+  }
+  .stage {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "center"
+      "day"
+      "output";
+    gap: 28px;
+  }
+  .subtitle {
+    min-height: 0;
+  }
+  .subtitle__text {
+    font-size: 27px;
+  }
+  .subtitle__sub {
+    font-size: 14px;
+  }
+  .foot {
+    flex-direction: column;
+    gap: 6px;
+    padding-top: 28px;
+  }
+}

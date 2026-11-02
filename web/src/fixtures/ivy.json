@@ -1,0 +1,587 @@
+{
+ "id": "t_ivy00006",
+ "catalog": "SB-0006",
+ "createdAt": "2026-11-01T15:10:00",
+ "title": "duck, you're on",
+ "artist": "ivy & the bathwater",
+ "name": "ivy",
+ "dedication": "ivy's sunday 1 november",
+ "genre": "1979 disco, unreasonably sincere",
+ "why": "a rubber duck that bobs on the one is a disco drummer. i have checked.",
+ "caption": "four-on-the-floor kick, octave bass, string swells, rubber-duck squeak on the backbeat, a cowbell with nothing to prove",
+ "liner": "the snail was offered the lead and declined, citing pace. the duck did not decline anything. i would put this record on at a wedding.",
+ "note": null,
+ "bpm": 118,
+ "key": "A minor",
+ "duration": 50.61,
+ "audio": "/tapes/t_ivy00006/song.mp3",
+ "takes": [
+  {
+   "audio": "/tapes/t_ivy00006/take-0.mp3",
+   "score": 8.2,
+   "voice": 8,
+   "words": 8.4,
+   "genre": 8.1,
+   "verdict": "the duck kept time. the duck is the record.",
+   "kept": true
+  },
+  {
+   "audio": "/tapes/t_ivy00006/take-1.mp3",
+   "score": 5.9,
+   "voice": 6.5,
+   "words": 6,
+   "genre": 5.2,
+   "verdict": "too much reverb on the snail. nobody asked for that.",
+   "kept": false
+  }
+ ],
+ "cover": "/tapes/t_1599d844/cover.jpg",
+ "palette": [
+  "#efb02f",
+  "#e0472a",
+  "#1d4a68"
+ ],
+ "photos": [
+  {
+   "src": "/tapes/t_1599d844/photo-0.jpg",
+   "cutout": "/tapes/t_1599d844/cut-0.png",
+   "box": [
+    0.2578,
+    0.6,
+    0.6522,
+    0.8378
+   ],
+   "hero": "dough ball",
+   "motion": null,
+   "motionBox": null,
+   "clip": null,
+   "seen": "Child kneads dough on sunny kitchen counter"
+  },
+  {
+   "src": "/tapes/t_1599d844/photo-1.jpg",
+   "cutout": "/tapes/t_1599d844/cut-1.png",
+   "box": [
+    0.3878,
+    0.3533,
+    0.5856,
+    0.53
+   ],
+   "hero": "snail",
+   "motion": null,
+   "motionBox": null,
+   "clip": null,
+   "seen": "Hands gently hold snail shell over clover"
+  },
+  {
+   "src": "/tapes/t_1599d844/photo-2.jpg",
+   "cutout": "/tapes/t_1599d844/cut-2.png",
+   "box": [
+    0.5478,
+    0.56,
+    1,
+    0.8344
+   ],
+   "hero": "garden sprinkler",
+   "motion": null,
+   "motionBox": null,
+   "clip": null,
+   "seen": "Toddler steps through sparkling garden sprinkler"
+  },
+  {
+   "src": "/tapes/t_1599d844/photo-3.jpg",
+   "cutout": "/tapes/t_1599d844/cut-3.png",
+   "box": [
+    0.0906,
+    0.4297,
+    0.3953,
+    0.6625
+   ],
+   "hero": "rubber duck",
+   "motion": "/tapes/t_1599d844/move-3.webp",
+   "motionBox": [
+    0.0703,
+    0.4281,
+    0.4062,
+    0.6687
+   ],
+   "clip": "/tapes/t_1599d844/clip-3.mp4",
+   "seen": "Child peeks over bubbly bath beside duck"
+  }
+ ],
+ "band": [
+  {
+   "photo": 0,
+   "role": "bass, kneaded"
+  },
+  {
+   "photo": 1,
+   "role": "percussion, eventually"
+  },
+  {
+   "photo": 2,
+   "role": "strings and weather"
+  },
+  {
+   "photo": 3,
+   "role": "lead vocals and choreography"
+  }
+ ],
+ "lines": [
+  {
+   "text": "ivy pressed the dough like it owed her rent",
+   "section": "Verse 1",
+   "kind": "verse",
+   "photo": 0,
+   "start": 8,
+   "end": 11.661,
+   "words": [
+    {
+     "text": "ivy",
+     "start": 8,
+     "end": 8.327
+    },
+    {
+     "text": "pressed",
+     "start": 8.363,
+     "end": 8.867
+    },
+    {
+     "text": "the",
+     "start": 8.923,
+     "end": 9.25
+    },
+    {
+     "text": "dough",
+     "start": 9.286,
+     "end": 9.701
+    },
+    {
+     "text": "like",
+     "start": 9.747,
+     "end": 10.118
+    },
+    {
+     "text": "it",
+     "start": 10.16,
+     "end": 10.442
+    },
+    {
+     "text": "owed",
+     "start": 10.473,
+     "end": 10.845
+    },
+    {
+     "text": "her",
+     "start": 10.886,
+     "end": 11.212
+    },
+    {
+     "text": "rent",
+     "start": 11.249,
+     "end": 11.62
+    }
+   ]
+  },
+  {
+   "text": "the snail moved in slow, a gentleman of the old school",
+   "section": "Verse 1",
+   "kind": "verse",
+   "photo": 1,
+   "start": 12.068,
+   "end": 15.729,
+   "words": [
+    {
+     "text": "the",
+     "start": 12.068,
+     "end": 12.334
+    },
+    {
+     "text": "snail",
+     "start": 12.364,
+     "end": 12.703
+    },
+    {
+     "text": "moved",
+     "start": 12.741,
+     "end": 13.08
+    },
+    {
+     "text": "in",
+     "start": 13.117,
+     "end": 13.348
+    },
+    {
+     "text": "slow,",
+     "start": 13.374,
+     "end": 13.676
+    },
+    {
+     "text": "a",
+     "start": 13.71,
+     "end": 13.904
+    },
+    {
+     "text": "gentleman",
+     "start": 13.926,
+     "end": 14.41
+    },
+    {
+     "text": "of",
+     "start": 14.463,
+     "end": 14.694
+    },
+    {
+     "text": "the",
+     "start": 14.719,
+     "end": 14.986
+    },
+    {
+     "text": "old",
+     "start": 15.016,
+     "end": 15.282
+    },
+    {
+     "text": "school",
+     "start": 15.312,
+     "end": 15.687
+    }
+   ]
+  },
+  {
+   "text": "duck, you're on",
+   "section": "Chorus",
+   "kind": "chorus",
+   "photo": 3,
+   "start": 16.136,
+   "end": 19.797,
+   "words": [
+    {
+     "text": "duck,",
+     "start": 16.136,
+     "end": 17.234
+    },
+    {
+     "text": "you're",
+     "start": 17.356,
+     "end": 18.717
+    },
+    {
+     "text": "on",
+     "start": 18.868,
+     "end": 19.704
+    }
+   ]
+  },
+  {
+   "text": "the spotlight's warm and the bubbles are loud",
+   "section": "Chorus",
+   "kind": "chorus",
+   "photo": null,
+   "start": 20.203,
+   "end": 23.864,
+   "words": [
+    {
+     "text": "the",
+     "start": 20.203,
+     "end": 20.536
+    },
+    {
+     "text": "spotlight's",
+     "start": 20.573,
+     "end": 21.267
+    },
+    {
+     "text": "warm",
+     "start": 21.344,
+     "end": 21.722
+    },
+    {
+     "text": "and",
+     "start": 21.764,
+     "end": 22.097
+    },
+    {
+     "text": "the",
+     "start": 22.134,
+     "end": 22.467
+    },
+    {
+     "text": "bubbles",
+     "start": 22.504,
+     "end": 23.017
+    },
+    {
+     "text": "are",
+     "start": 23.075,
+     "end": 23.407
+    },
+    {
+     "text": "loud",
+     "start": 23.444,
+     "end": 23.822
+    }
+   ]
+  },
+  {
+   "text": "the sprinkler threw a tantrum and we threw one back",
+   "section": "Verse 2",
+   "kind": "verse",
+   "photo": 2,
+   "start": 24.271,
+   "end": 27.932,
+   "words": [
+    {
+     "text": "the",
+     "start": 24.271,
+     "end": 24.555
+    },
+    {
+     "text": "sprinkler",
+     "start": 24.586,
+     "end": 25.1
+    },
+    {
+     "text": "threw",
+     "start": 25.157,
+     "end": 25.517
+    },
+    {
+     "text": "a",
+     "start": 25.557,
+     "end": 25.764
+    },
+    {
+     "text": "tantrum",
+     "start": 25.787,
+     "end": 26.224
+    },
+    {
+     "text": "and",
+     "start": 26.272,
+     "end": 26.556
+    },
+    {
+     "text": "we",
+     "start": 26.587,
+     "end": 26.832
+    },
+    {
+     "text": "threw",
+     "start": 26.86,
+     "end": 27.22
+    },
+    {
+     "text": "one",
+     "start": 27.26,
+     "end": 27.543
+    },
+    {
+     "text": "back",
+     "start": 27.575,
+     "end": 27.896
+    }
+   ]
+  },
+  {
+   "text": "the duck came in on the one, like a professional",
+   "section": "Verse 2",
+   "kind": "verse",
+   "photo": 3,
+   "start": 28.339,
+   "end": 32,
+   "words": [
+    {
+     "text": "the",
+     "start": 28.339,
+     "end": 28.636
+    },
+    {
+     "text": "duck",
+     "start": 28.669,
+     "end": 29.007
+    },
+    {
+     "text": "came",
+     "start": 29.044,
+     "end": 29.382
+    },
+    {
+     "text": "in",
+     "start": 29.419,
+     "end": 29.676
+    },
+    {
+     "text": "on",
+     "start": 29.705,
+     "end": 29.962
+    },
+    {
+     "text": "the",
+     "start": 29.99,
+     "end": 30.288
+    },
+    {
+     "text": "one,",
+     "start": 30.321,
+     "end": 30.618
+    },
+    {
+     "text": "like",
+     "start": 30.651,
+     "end": 30.988
+    },
+    {
+     "text": "a",
+     "start": 31.026,
+     "end": 31.243
+    },
+    {
+     "text": "professional",
+     "start": 31.267,
+     "end": 31.927
+    }
+   ]
+  },
+  {
+   "text": "duck, you're on",
+   "section": "Chorus",
+   "kind": "chorus",
+   "photo": 3,
+   "start": 32.407,
+   "end": 36.068,
+   "words": [
+    {
+     "text": "duck,",
+     "start": 32.407,
+     "end": 33.505
+    },
+    {
+     "text": "you're",
+     "start": 33.627,
+     "end": 34.988
+    },
+    {
+     "text": "on",
+     "start": 35.139,
+     "end": 35.975
+    }
+   ]
+  },
+  {
+   "text": "the spotlight's warm and the bubbles are loud",
+   "section": "Chorus",
+   "kind": "chorus",
+   "photo": null,
+   "start": 36.475,
+   "end": 40.136,
+   "words": [
+    {
+     "text": "the",
+     "start": 36.475,
+     "end": 36.807
+    },
+    {
+     "text": "spotlight's",
+     "start": 36.844,
+     "end": 37.538
+    },
+    {
+     "text": "warm",
+     "start": 37.616,
+     "end": 37.994
+    },
+    {
+     "text": "and",
+     "start": 38.036,
+     "end": 38.368
+    },
+    {
+     "text": "the",
+     "start": 38.405,
+     "end": 38.738
+    },
+    {
+     "text": "bubbles",
+     "start": 38.775,
+     "end": 39.289
+    },
+    {
+     "text": "are",
+     "start": 39.346,
+     "end": 39.679
+    },
+    {
+     "text": "loud",
+     "start": 39.716,
+     "end": 40.094
+    }
+   ]
+  },
+  {
+   "text": "and the bath keeps the beat",
+   "section": "Outro",
+   "kind": "other",
+   "photo": null,
+   "start": 40.542,
+   "end": 44.203,
+   "words": [
+    {
+     "text": "and",
+     "start": 40.542,
+     "end": 41.046
+    },
+    {
+     "text": "the",
+     "start": 41.102,
+     "end": 41.606
+    },
+    {
+     "text": "bath",
+     "start": 41.662,
+     "end": 42.233
+    },
+    {
+     "text": "keeps",
+     "start": 42.297,
+     "end": 42.937
+    },
+    {
+     "text": "the",
+     "start": 43.008,
+     "end": 43.512
+    },
+    {
+     "text": "beat",
+     "start": 43.568,
+     "end": 44.14
+    }
+   ]
+  }
+ ],
+ "credits": [
+  {
+   "role": "looked at the pictures",
+   "model": "Muse Spark 1.3"
+  },
+  {
+   "role": "cut out the band, and followed the one that moved",
+   "model": "SAM 3.1"
+  },
+  {
+   "role": "produced it and wrote the words",
+   "model": "Muse Wonder 1.0"
+  },
+  {
+   "role": "the session band",
+   "model": "ACE-Step 1.5 (open source)"
+  },
+  {
+   "role": "a&r, picked the take",
+   "model": "Muse Spark 1.2"
+  },
+  {
+   "role": "painted the sleeve",
+   "model": "Muse Image 1.0"
+  }
+ ]
+}

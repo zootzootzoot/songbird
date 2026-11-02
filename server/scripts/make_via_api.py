@@ -9,5 +9,5 @@ with httpx.stream("GET", f"http://127.0.0.1:8787/api/tapes/{tid}/events", timeou
     for line in s.iter_lines():
         if line.startswith("data:"):
             ev = json.loads(line[5:])
-            if ev["type"] in ("title", "line", "error"): print(json.dumps(ev)[:150], flush=True)
+            if ev["type"] not in ("progress", "line", "seen", "cut"): print(json.dumps(ev)[:260], flush=True)
             if ev["type"] == "done": print("done", tid); break

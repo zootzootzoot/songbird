@@ -1,0 +1,677 @@
+/* ===================================================================== day
+   A light table. The prints are single-ink riso, ocean on paper; SAM's
+   stickers come off them in full colour. In the evening the table glows.
+   ========================================================================== */
+
+.day {
+  width: 100%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.day__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.table {
+  position: relative;
+  padding: 20px 18px 22px;
+  border-radius: 22px;
+  background: linear-gradient(180deg, #f8f3e8, #f1eadb);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    inset 0 0 0 1px rgba(30, 23, 18, 0.06),
+    0 1px 1px rgba(30, 23, 18, 0.05),
+    0 18px 36px -24px rgba(30, 23, 18, 0.45);
+  transition:
+    box-shadow 2400ms var(--ease-io),
+    background 2400ms var(--ease-io);
+}
+
+.app[data-light="evening"] .table,
+.app[data-light="night"] .table {
+  background: linear-gradient(180deg, #fbf3df, #f3e6c9);
+  box-shadow:
+    inset 0 1px 0 #fff,
+    0 0 0 1px rgba(255, 220, 160, 0.18),
+    0 0 60px -6px rgba(255, 196, 120, 0.32),
+    0 24px 40px -20px rgba(0, 0, 0, 0.7);
+}
+
+.table[data-over="true"] {
+  box-shadow:
+    inset 0 0 0 2px var(--ocean),
+    0 18px 36px -24px rgba(30, 23, 18, 0.45);
+}
+
+.table__grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.table__slot {
+  position: relative;
+  aspect-ratio: 1;
+  min-width: 0;
+}
+
+.table__ghost {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 6px;
+  border: 1px dashed rgba(30, 23, 18, 0.16);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  color: rgba(30, 23, 18, 0.22);
+}
+.table[data-empty="true"] .table__ghost {
+  opacity: 0.55;
+}
+
+.table__invite {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 18px;
+  text-align: center;
+  border-radius: inherit;
+  background: radial-gradient(70% 60% at 50% 50%, rgba(248, 243, 232, 0.96), rgba(248, 243, 232, 0.72) 70%, rgba(248, 243, 232, 0.2));
+}
+
+.table__invite-line {
+  margin: 0;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 380;
+  font-variation-settings: "opsz" 72, "SOFT" 50;
+  font-size: 24px;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.table__invite-sub {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: rgba(30, 23, 18, 0.6);
+}
+
+.table__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.table__drop {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: rgba(29, 74, 104, 0.82);
+  color: var(--paper-hi);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 30px;
+  pointer-events: none;
+  animation: drop-in 180ms var(--ease-out) both;
+}
+@keyframes drop-in {
+  from {
+    opacity: 0;
+  }
+}
+
+.table__remove {
+  position: absolute;
+  z-index: 9;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ink);
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity 150ms ease,
+    transform 150ms var(--ease-out);
+}
+.table__remove svg {
+  width: 10px;
+  height: 10px;
+  stroke: var(--paper-hi);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.table__slot:hover .table__remove,
+.table__remove:focus-visible {
+  opacity: 1;
+  transform: scale(1);
+}
+@media (hover: none) {
+  .table__remove {
+    opacity: 0.85;
+    transform: scale(1);
+  }
+}
+
+.day__more {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 18px;
+}
+.day__need {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+
+.day__notice {
+  margin: 0;
+  font-size: 13px;
+  color: var(--vermilion);
+}
+
+/* ------------------------------------------------------------------- note */
+
+.note {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 6px;
+}
+.note[data-locked="true"] {
+  opacity: 0.6;
+}
+.note__input {
+  width: 100%;
+  padding: 6px 0 8px;
+  border: 0;
+  border-bottom: 1px solid var(--hair);
+  background: transparent;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 19px;
+  font-variation-settings: "opsz" 36;
+  color: var(--fg);
+  caret-color: var(--vermilion);
+  outline: none;
+  transition: border-color 200ms ease;
+}
+.note__input::placeholder {
+  color: var(--fg-3);
+}
+.note__input:focus {
+  border-bottom-color: var(--vermilion);
+}
+
+.mic {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mic__button {
+  position: relative;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ocean);
+  cursor: pointer;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 4px 10px -4px rgba(18, 50, 74, 0.6);
+  transition:
+    transform 140ms var(--ease-out),
+    background-color 200ms ease;
+}
+.mic__button svg {
+  width: 18px;
+  height: 18px;
+  fill: var(--paper-hi);
+  stroke: var(--paper-hi);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+}
+.mic__button svg path {
+  fill: none;
+}
+.mic__button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.mic__ring {
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  border: 2px solid var(--vermilion);
+  opacity: 0;
+  transform: scale(calc(1 + var(--lvl, 0) * 0.4));
+  transition:
+    transform 80ms linear,
+    opacity 200ms ease;
+}
+.mic[data-state="recording"] .mic__button,
+.mic[data-state="asking"] .mic__button {
+  background: var(--vermilion);
+  transform: scale(0.94);
+}
+.mic[data-state="recording"] .mic__ring {
+  opacity: 1;
+}
+.mic[data-state="hearing"] .mic__button {
+  animation: pulse-dot 1s ease-in-out infinite;
+}
+.mic__label {
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--fg-2);
+}
+.mic[data-state="denied"] .mic__label,
+.mic[data-state="error"] .mic__label {
+  color: var(--vermilion);
+}
+
+/* ------------------------------------------------------------------ print */
+
+.print {
+  --pad: 6px;
+  --cw: 2.2px;
+  position: relative;
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  transition:
+    transform 700ms var(--spring-soft),
+    opacity 500ms ease,
+    filter 500ms ease;
+}
+
+.table__slot .print {
+  animation: print-land 700ms var(--spring-bouncy) both;
+  animation-delay: calc(var(--order) * 60ms);
+}
+@keyframes print-land {
+  from {
+    transform: translateY(-22px) rotate(6deg) scale(0.96);
+    opacity: 0;
+  }
+}
+
+.print__paper {
+  position: relative;
+  height: 100%;
+  padding: var(--pad);
+  background: var(--card);
+  border-radius: 2px;
+  transform: rotate(var(--tilt));
+  box-shadow:
+    0 0.5px 0 rgba(255, 255, 255, 0.8) inset,
+    0 1px 2px rgba(30, 23, 18, 0.12),
+    0 8px 14px -8px rgba(30, 23, 18, 0.4);
+  transition:
+    transform 700ms var(--spring-soft),
+    box-shadow 500ms ease;
+}
+
+.print__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #e9e2d2;
+}
+
+.print__plate {
+  position: absolute;
+}
+
+.print__ink {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: url(#riso-ocean);
+}
+
+.print__screen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: var(--halftone), var(--grain-soft);
+  background-size: 3px 3px, 120px;
+  mix-blend-mode: multiply;
+  opacity: 0.32;
+}
+
+.print__no {
+  position: absolute;
+  right: 7px;
+  bottom: -1px;
+  transform: translateY(100%);
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.1em;
+  color: rgba(30, 23, 18, 0.4);
+}
+
+/* a clip: sprocket holes along the edge and a little play mark */
+.print[data-clip="true"] .print__paper {
+  padding-left: 13px;
+  padding-right: 13px;
+  background:
+    radial-gradient(circle at 6.5px 50%, rgba(30, 23, 18, 0.72) 2px, transparent 2.4px) 0 0 / 13px 9px repeat-y,
+    radial-gradient(circle at calc(100% - 6.5px) 50%, rgba(30, 23, 18, 0.72) 2px, transparent 2.4px) 100% 0 / 13px 9px repeat-y,
+    #f3eee2;
+}
+.print__film {
+  position: absolute;
+  left: 18px;
+  top: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px 2px 4px;
+  border-radius: 99px;
+  background: rgba(18, 50, 74, 0.82);
+  color: var(--paper-hi);
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  backdrop-filter: blur(2px);
+}
+.print__film svg {
+  width: 8px;
+  height: 8px;
+  fill: currentColor;
+}
+.print[data-moving="true"] .print__film {
+  background: var(--vermilion);
+}
+
+/* scanning: muse spark reads it; a beam of true colour sweeps across */
+.print[data-scanning="true"] {
+  z-index: 6;
+  transform: translateY(-6px) scale(1.12);
+}
+.print[data-scanning="true"] .print__paper {
+  transform: rotate(0deg);
+  box-shadow:
+    0 0 0 1px rgba(224, 71, 42, 0.5),
+    0 22px 30px -12px rgba(30, 23, 18, 0.55);
+}
+.print__true {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  animation: beam-band 1.6s var(--ease-io) infinite;
+}
+.print__beam {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 2px;
+  background: #fff;
+  box-shadow:
+    0 0 12px 4px rgba(255, 238, 200, 0.85),
+    0 0 40px 10px rgba(239, 176, 47, 0.35);
+  animation: beam-line 1.6s var(--ease-io) infinite;
+  pointer-events: none;
+}
+@keyframes beam-band {
+  from {
+    clip-path: inset(0 100% 0 -30%);
+  }
+  to {
+    clip-path: inset(0 -30% 0 100%);
+  }
+}
+@keyframes beam-line {
+  from {
+    transform: translateX(-4px);
+    left: 0;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+/* the tag spark wrote, stamped on */
+.print__tag {
+  position: absolute;
+  z-index: 7;
+  left: -4px;
+  bottom: -12px;
+  max-width: calc(100% + 8px);
+  transform: rotate(-2.5deg);
+  animation: tag-stamp 620ms var(--spring-bouncy) both;
+  animation-delay: calc(var(--order) * 110ms);
+  pointer-events: none;
+}
+.print__tag .print__hero-legacy {
+  display: block;
+  padding: 4px 7px 3px;
+  border-radius: 2px;
+  background: var(--ink);
+  color: var(--paper-hi);
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 3px 6px -2px rgba(0, 0, 0, 0.4);
+}
+@keyframes tag-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-9deg) scale(1.5);
+  }
+  30% {
+    opacity: 1;
+  }
+}
+
+/* sam is cutting: a dashed line runs round the subject */
+.print__cutline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.print__cutline rect {
+  fill: none;
+  stroke: var(--vermilion);
+  stroke-width: 1.8;
+  stroke-dasharray: 3 2.4;
+  animation: march 1.2s linear infinite;
+}
+@keyframes march {
+  to {
+    stroke-dashoffset: -10.8;
+  }
+}
+
+/* where the sticker came off: paper backing shows through */
+.print__hole {
+  position: absolute;
+  background: #f6f1e5;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.print__hole[data-fresh="true"] {
+  animation: hole-in 1200ms ease both;
+}
+@keyframes hole-in {
+  0%,
+  30% {
+    opacity: 0;
+  }
+}
+
+.print__over {
+  position: absolute;
+  inset: var(--pad);
+  z-index: 5;
+  pointer-events: none;
+  transform: rotate(var(--tilt));
+  transition: transform 700ms var(--spring-soft);
+}
+.print[data-clip="true"] .print__over {
+  left: 13px;
+  right: 13px;
+}
+
+.sticker-anchor {
+  position: absolute;
+  display: block;
+}
+
+.sticker {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
+  transform-origin: 50% 90%;
+  transform: translate(calc(var(--lift) * 8%), -14%) rotate(calc(var(--lift) * -6deg)) scale(calc(var(--cap) * 1.08));
+  filter: drop-shadow(var(--cw) 0 0 #fff) drop-shadow(calc(var(--cw) * -1) 0 0 #fff) drop-shadow(0 var(--cw) 0 #fff)
+    drop-shadow(0 calc(var(--cw) * -1) 0 #fff) drop-shadow(0 8px 7px rgba(20, 14, 8, 0.45));
+}
+
+.sticker[data-fresh="true"] {
+  animation: peel 1500ms var(--ease-out) both;
+  animation-delay: 120ms;
+}
+
+/* lies flat; the die-cut edge appears; it curls up, lifts, and settles */
+@keyframes peel {
+  0% {
+    transform: none;
+    filter: drop-shadow(0 0 0 #fff) drop-shadow(0 0 0 #fff) drop-shadow(0 0 0 #fff) drop-shadow(0 0 0 #fff)
+      drop-shadow(0 0 0 rgba(20, 14, 8, 0));
+  }
+  24% {
+    transform: none;
+    filter: drop-shadow(2.2px 0 0 #fff) drop-shadow(-2.2px 0 0 #fff) drop-shadow(0 2.2px 0 #fff) drop-shadow(0 -2.2px 0 #fff)
+      drop-shadow(0 0 0 rgba(20, 14, 8, 0));
+  }
+  52% {
+    transform: perspective(360px) rotateX(38deg) rotateZ(calc(var(--lift) * -10deg)) translateY(-28%)
+      scale(calc(var(--cap) * 1.2));
+    filter: drop-shadow(2.2px 0 0 #fff) drop-shadow(-2.2px 0 0 #fff) drop-shadow(0 2.2px 0 #fff) drop-shadow(0 -2.2px 0 #fff)
+      drop-shadow(0 22px 14px rgba(20, 14, 8, 0.4));
+  }
+  76% {
+    transform: translate(calc(var(--lift) * 9%), -12%) rotate(calc(var(--lift) * -4deg)) scale(calc(var(--cap) * 1.04));
+  }
+  100% {
+    transform: translate(calc(var(--lift) * 8%), -14%) rotate(calc(var(--lift) * -6deg)) scale(calc(var(--cap) * 1.08));
+    filter: drop-shadow(2.2px 0 0 #fff) drop-shadow(-2.2px 0 0 #fff) drop-shadow(0 2.2px 0 #fff) drop-shadow(0 -2.2px 0 #fff)
+      drop-shadow(0 8px 7px rgba(20, 14, 8, 0.45));
+  }
+}
+
+/* a moving sticker gets a slower, bigger lift: it's alive */
+.print[data-moving="true"] .sticker[data-fresh="true"] {
+  animation-duration: 2200ms;
+}
+.print[data-moving="true"] .sticker-anchor::after {
+  content: "";
+  position: absolute;
+  inset: -18%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(239, 176, 47, 0.55), transparent);
+  opacity: 0;
+  animation: moving-glow 2200ms ease-out 900ms both;
+  z-index: -1;
+}
+@keyframes moving-glow {
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* the song is on this one */
+.print[data-forward="true"] {
+  z-index: 6;
+  transform: translateY(-6px) scale(1.14);
+}
+.print[data-forward="true"] .print__paper,
+.print[data-forward="true"] .print__over {
+  transform: rotate(0deg);
+}
+.print[data-forward="true"] .print__paper {
+  box-shadow:
+    0 0 0 2px var(--vermilion),
+    0 26px 34px -14px rgba(20, 14, 8, 0.6);
+}
+.print[data-forward="true"] .sticker-anchor {
+  animation: bob 1.4s var(--ease-io) infinite alternate;
+}
+@keyframes bob {
+  from {
+    transform: translateY(0) rotate(-2deg);
+  }
+  to {
+    transform: translateY(-7%) rotate(2.5deg);
+  }
+}
+.print[data-dim="true"] {
+  opacity: 0.55;
+  filter: saturate(0.6);
+}
+
+.print__ink--clip {
+  animation: clip-in 500ms ease both;
+}
+@keyframes clip-in {
+  from {
+    opacity: 0;
+  }
+}
+.note[hidden] { display: none; }
