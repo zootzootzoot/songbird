@@ -2,9 +2,14 @@
 
 Runs inside ACE-Step's own venv:  <acestep>/.venv/Scripts/python.exe band_worker.py
 
-  in:  {"id", "caption", "lyrics", "bpm", "key", "duration", "takes": 2, "seed": 7, "out_dir", "language": "en"}
+  in:  {"id", "caption", "lyrics", "bpm", "key", "duration", "takes": 4, "seed": 7, "out_dir", "language": "en"}
   out: {"id": null, "event": "ready"}
-       {"id", "event": "take", "index": 0, "path": ".../take-0.mp3", "lrc": "[00:12.34]line...", "seconds": 9.1}
+       {"id", "event": "take", "index": 0, "path": ".../take-0.mp3", "lrc": "[00:12.34]line...", "seconds": 9.1,
+        "tuning": {"bandKey": "F major", "vocalKey": "F major", "inKey": 0.85}}
+
+The 5Hz LM only plans the metadata here. When it also wrote the melody codes ("thinking"), the vocal came out in a
+different key from the band on every take we measured (F# minor over F major); the DiT alone keeps them together
+and is 6x faster. See tuner.py and docs/META_LOG.md.
        {"id", "event": "done"} | {"id", "event": "error", "message"}
 """
 import json
@@ -14,6 +19,8 @@ import sys
 import time
 import traceback
 from pathlib import Path
+
+import torch
 
 ACE = Path(os.environ.get("ACE_DIR", Path(__file__).resolve().parents[3] / "rea-work/acestep")).resolve()
 _stdout = sys.stdout
@@ -31,9 +38,13 @@ from acestep.handler import AceStepHandler  # noqa: E402
 from acestep.inference import GenerationConfig, GenerationParams, generate_music  # noqa: E402
 from acestep.llm_inference import LLMHandler  # noqa: E402
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import tuner  # noqa: E402
+
 CK = ACE / "checkpoints"
 DIT = os.environ.get("ACE_DIT", "acestep-v15-turbo")
 LM = os.environ.get("ACE_LM", "acestep-5Hz-lm-1.7B")
+THINK = os.environ.get("ACE_THINK", "0") == "1"
 dit, lm = AceStepHandler(), LLMHandler()
 dit.initialize_service(project_root=str(ACE), config_path=DIT, device="cuda")
 lm.initialize(checkpoint_dir=str(CK), lm_model_path=LM, backend="pt", device="cuda")
@@ -43,10 +54,10 @@ send({"id": None, "event": "ready"})
 def record(job):
     out = Path(job["out_dir"])
     out.mkdir(parents=True, exist_ok=True)
-    takes = int(job.get("takes", 2))
+    takes = int(job.get("takes", 4))
     params = GenerationParams(caption=job["caption"], lyrics=job["lyrics"], vocal_language=job.get("language", "en"),
                               bpm=job.get("bpm"), keyscale=job.get("key", ""), timesignature=job.get("time", ""),
-                              duration=float(job.get("duration", -1)), thinking=True,
+                              duration=float(job.get("duration", -1)), thinking=THINK,
                               use_cot_caption=False)  # play the producer's session notes as written
     seeds = [int(job.get("seed", 7)) + 101 * k for k in range(takes)]
     cfg = GenerationConfig(batch_size=takes, audio_format="mp3", use_random_seed=False, seeds=seeds)
@@ -74,8 +85,16 @@ def record(job):
         except Exception:
             traceback.print_exc()
         meta = a.get("params") if isinstance(a.get("params"), dict) else {}
+        tuning = {}
+        for device in ("cuda", "cpu"):
+            try:
+                tuning = tuner.measure(str(dest), device)
+                break
+            except Exception:
+                traceback.print_exc()
+                torch.cuda.empty_cache()
         send({"id": job["id"], "event": "take", "index": k, "path": str(dest), "lrc": lrc, "seconds": took,
-              "seed": seeds[k], "key": a.get("key") or meta.get("keyscale"), "bpm": meta.get("bpm")})
+              "seed": seeds[k], "key": meta.get("keyscale"), "bpm": meta.get("bpm"), "tuning": tuning})  # a["key"] is the file id
     send({"id": job["id"], "event": "done"})
 
 

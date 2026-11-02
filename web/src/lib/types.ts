@@ -41,6 +41,12 @@ export type Take = {
   genre: number;
   verdict: string;
   kept: boolean;
+  /** cut by the tuner before the producer heard it */
+  cut?: boolean;
+  /** share of sung time on the band's scale (Demucs split + pitch track) */
+  inKey?: number | null;
+  vocalKey?: string | null;
+  bandKey?: string;
 };
 
 export type Tape = {
@@ -103,8 +109,8 @@ export type SongEvent =
   | { type: "title"; title: string }
   | { type: "line"; index: number; text: string; photo: number | null; section?: string }
   | { type: "band"; photo: number; role: string }
-  | { type: "take"; index: number; audio: string }
-  | { type: "verdict"; index: number; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean }
+  | { type: "take"; index: number; audio: string; inKey?: number | null; vocalKey?: string | null; bandKey?: string }
+  | { type: "verdict"; index: number; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean; cut?: boolean }
   | { type: "sung"; index: number }
   | { type: "progress"; value: number }
   | { type: "done"; tape: Tape }

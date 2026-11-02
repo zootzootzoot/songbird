@@ -12,7 +12,8 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 | Cast | **SAM 3.1** (video) | For a clip, tracks the hero through every frame → an animated sticker that moves (45 frames in 3.5 s) | Text-prompted video tracking turns a parent's 3-second phone clip into a moving band member |
 | Produce | **Muse Wonder 1.0** (structured output) | Picks the genre with conviction, writes the session notes, the lyrics (every verse line tied to a photo), band credits, liner notes. A mechanical checker (syllables, photo coverage, chorus repeats, banned clichés) sends it back until it passes | Wonder writes better songs than Spark (see build log); the checker loop makes it reliable |
 | Hear your note | **Muse Voice Transcribe** | A parent holds the mic and says one thing the photos can't show ("he named the snail gary"); it ends up in the song ("you named the snail Gary that day") | Turns a 5-second voice note into the most personal line of the song |
-| A&R | **Muse Spark 1.2** (audio in) | Listens to each recorded take and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets the label judge its own output instead of shipping the first take |
+| Tune | **Demucs** (Meta FAIR, open weights; Hybrid Demucs via torchaudio) | Splits every take into singer and band, then our tuner checks how much of the singing sits on the band's scale; takes under 75% are cut before anyone hears them | The off-key problem was invisible until the voice could be heard apart from the band (see build log 10) |
+| A&R | **Muse Spark 1.2** (audio in) | Listens to every take that passed the tuner and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets the label judge its own output instead of shipping the first take |
 | Sleeve | **Muse Image 1.0** (edits, references) | Redraws the day's SAM stickers as a three-ink riso record sleeve in the genre's style (~15 s, $0.01) | Multi-reference edits: the cover is made *from that day's actual objects*, not from a text prompt |
 
 ## In the build
@@ -45,3 +46,14 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
    tied to the chair"). ACE-Step recorded two takes; Muse Spark 1.2 listened and kept take 0 (voice 6, words 8) over
    take 1 (voice 3): *"honey this ain't philly soul it's hold music with a robot doing karaoke night."* Muse Image
    painted the sleeve from SAM's cutouts of the boots, pigeons, ice cream and balloon. Total ≈ 2.5 minutes.
+10. **The singer was in a different key from the band, and Meta's Demucs proved it (Nov 2).** The owner heard SB-0001
+    as "strangely out of key with the beat". Muse Spark 1.2 did not: it gave that exact take its best voice score (7).
+    So we split the takes with Meta's open-weight Hybrid Demucs and pitch-tracked the vocal alone. The band played the
+    F major the producer asked for, but the vocal sat in **F# minor**, with only **64%** of the singing on the band's
+    scale (calibration: our old score-driven vocals measure 0.93-0.96, a reference mix 0.83). Tuning drift was near
+    zero, so this was not a detuned singer but a melody written in the wrong key. A four-way trial found the cause:
+    ACE-Step's 5Hz LM writes the melody as audio codes while the DiT renders the band in the requested key, and the two
+    disagree on every take. With the LM planning only the metadata, all takes measured **0.80-0.90** in key, and
+    recording got **6x faster** (12 s for two takes instead of 80 s). The split-and-measure step now ships as the
+    label's tuner: the band records four takes, Demucs cuts the off-key ones, and Spark 1.2 judges taste among the rest.
+    First release through it (SB-0002): four takes at 85-90% in key; Spark kept take 3 (voice 7, words 8).

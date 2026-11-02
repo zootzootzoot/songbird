@@ -112,8 +112,8 @@ export function JCardInside({ tape, activeLine = -1, onSeek }: { tape: Tape; act
             {tape.takes.map((t, i) => (
               <li key={i} data-kept={t.kept}>
                 <span>take {i + 1}</span>
-                <span>{t.score.toFixed(1)}</span>
-                <span>{t.kept ? "kept" : "rejected"}</span>
+                <span>{t.cut ? (t.inKey != null ? `${Math.round(t.inKey * 100)}% in key` : "—") : t.score.toFixed(1)}</span>
+                <span>{t.kept ? "kept" : t.cut ? "off key" : "rejected"}</span>
               </li>
             ))}
           </ul>

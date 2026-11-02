@@ -62,6 +62,10 @@ def copy_tapes():
         for f in src.iterdir():
             if f.name.startswith(("photo-", "cut-", "move-", "clip-")) or f.name == "song.mp3":
                 shutil.copy2(f, out / f.name)
+        if (src / "takes").is_dir():  # the session sheet plays every take, the cut ones too
+            (out / "takes").mkdir()
+            for f in (src / "takes").glob("take-*.mp3"):
+                shutil.copy2(f, out / "takes" / f.name)
         if tape.get("cover"):  # the png is ~3.5 MB; a high-quality jpeg is a tenth of that
             Image.open(src / "cover.png").convert("RGB").save(out / "cover.jpg", quality=88, optimize=True)
             tape["cover"] = f"/tapes/{tid}/cover.jpg"
@@ -78,7 +82,7 @@ def share_page(tape: dict):
     tid = tape["id"]
     e = lambda s: html.escape(s or "", quote=True)
     title = f"{tape['title']} · songbird"
-    desc = f"a bedtime song {tape['dedication']}. {tape.get('liner', '')}"
+    desc = f"a {tape.get('genre') or 'small'} single by {tape.get('artist') or 'the small days'}. {tape.get('liner', '')}"
     img = SITE.rstrip("/") + tape["cover"] if tape.get("cover") else SITE + f"tapes/{tid}/photo-0.jpg"
     page = f"""<!doctype html><html><head><meta charset="utf-8"><title>{e(title)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">

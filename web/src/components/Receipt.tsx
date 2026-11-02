@@ -188,13 +188,28 @@ export function Receipt({
         const tk = work.takes[e.index] ?? {};
         const judged = tk.verdict !== undefined;
         return (
-          <li key={e.key} className="r-take" data-judged={judged} data-kept={tk.kept} style={style}>
+          <li key={e.key} className="r-take" data-judged={judged} data-kept={tk.kept} data-cut={tk.cut} style={style}>
             <div className="r-take__head">
               <Reels spinning={!judged && working} />
               <span className="r-take__no">take {e.index + 1}</span>
-              <span className="r-take__state">{judged ? `${tk.score?.toFixed(1)} / 10` : "in the can"}</span>
+              <span className="r-take__state">
+                {tk.cut ? "cut" : judged ? `${tk.score?.toFixed(1)} / 10` : "in the can"}
+              </span>
             </div>
-            {judged && (
+            {tk.inKey != null && (
+              <p className="r-take__tuner" data-off={tk.inKey < 0.75}>
+                tuner: {Math.round(tk.inKey * 100)}% in key · sings {tk.vocalKey ?? "?"} over {tk.bandKey ?? "?"}
+              </p>
+            )}
+            {judged && tk.cut && (
+              <>
+                <p className="r-take__verdict">off key. never reached the producer.</p>
+                <span className="r-stamp" data-kept={false}>
+                  cut
+                </span>
+              </>
+            )}
+            {judged && !tk.cut && (
               <>
                 <div className="r-take__bars">
                   <Bar label="voice" value={tk.voice} />
@@ -241,7 +256,10 @@ export function Receipt({
                   <b>muse wonder</b> produces: picks the genre, writes the single, credits the band.
                 </li>
                 <li>
-                  <b>ace-step</b>, the session band, records two takes.
+                  <b>ace-step</b>, the session band, records four takes.
+                </li>
+                <li>
+                  <b>demucs</b> splits the singer from the band; the tuner cuts takes sung off key.
                 </li>
                 <li>
                   <b>muse spark 1.2</b> listens back like a&r. one take is kept.
@@ -265,7 +283,7 @@ export function Receipt({
                 </li>
               )}
               {work.log.map(row)}
-              {recordingNow && nextTake < 2 && (
+              {recordingNow && nextTake < 4 && (
                 <li className="r-take r-take--rolling" key={`rolling-${nextTake}`}>
                   <div className="r-take__head">
                     <Reels spinning />

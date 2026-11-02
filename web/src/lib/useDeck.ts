@@ -39,6 +39,10 @@ export type TakeState = {
   genre?: number;
   verdict?: string;
   kept?: boolean;
+  cut?: boolean;
+  inKey?: number | null;
+  vocalKey?: string | null;
+  bandKey?: string;
 };
 
 export type Work = {
@@ -253,7 +257,10 @@ function reduceEvent(state: DeckState, ev: SongEvent): DeckState {
         ...state,
         work: {
           ...w,
-          takes: { ...w.takes, [ev.index]: { ...w.takes[ev.index], audio: ev.audio } },
+          takes: {
+            ...w.takes,
+            [ev.index]: { ...w.takes[ev.index], audio: ev.audio, inKey: ev.inKey, vocalKey: ev.vocalKey, bandKey: ev.bandKey },
+          },
           log: pushLog(w.log, { key: `take-${ev.index}`, kind: "take", index: ev.index }),
         },
       };
@@ -272,6 +279,7 @@ function reduceEvent(state: DeckState, ev: SongEvent): DeckState {
               genre: ev.genre,
               verdict: ev.verdict,
               kept: ev.kept,
+              cut: ev.cut,
             },
           },
           log: pushLog(w.log, { key: `verdict-${ev.index}`, kind: "verdict", index: ev.index }),

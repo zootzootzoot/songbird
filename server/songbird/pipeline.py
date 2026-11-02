@@ -26,6 +26,8 @@ from .band import band
 
 JOBS: dict[str, "Job"] = {}
 GPU = threading.Lock()  # one release on the machine at a time; later ones wait their turn
+TAKES = 4  # the band records four takes
+IN_KEY = 0.75  # the tuner cuts takes with less of the singing on the band's scale (in-key vocals measure 0.83-0.96)
 
 
 class Job:
@@ -232,19 +234,31 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     lyrics = producer.lyrics_text(song)
     duration = max(60.0, min(150.0, len(sheet) * 8 * 60 / bpm + 14))
     taken = band.record(caption=song["caption"], lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
-                        out_dir=str(d / "takes"), takes=2, seed=int(time.time()) % 10000,
+                        out_dir=str(d / "takes"), takes=TAKES, seed=int(time.time()) % 10000,
                         on_take=lambda m: job.emit("take", index=m["index"],
-                                                   audio=f"/tapes/{job.id}/takes/take-{m['index']}.mp3"))
+                                                   audio=f"/tapes/{job.id}/takes/take-{m['index']}.mp3",
+                                                   **(m.get("tuning") or {})))
     mark("record")
     job.emit("progress", value=0.7)
 
     # 5. listen back (Muse Spark 1.2, audio in) and keep the best take ---------------------------
     job.stage("listening", "the producer is listening back", 0.72)
-    verdicts = list(pool.map(lambda tk: _listen(tk, song, lyrics), taken))
-    best = max(range(len(taken)), key=lambda i: verdicts[i]["score"])
+    # the tuner already heard every take; only the ones whose singer stayed in the band's key reach the producer
+    in_key = lambda i: (taken[i].get("tuning") or {}).get("inKey") or 0.0
+    heard = [i for i in range(len(taken)) if in_key(i) >= IN_KEY] or sorted(range(len(taken)), key=in_key)[-2:]
+    verdicts = [None] * len(taken)
+    for i, v in zip(heard, pool.map(lambda i: _listen(taken[i], song, lyrics), heard)):
+        verdicts[i] = v
+    for i in range(len(taken)):
+        if verdicts[i] is None:
+            t = taken[i].get("tuning") or {}
+            verdicts[i] = {"score": 0.0, "voice": 0.0, "words": 0.0, "genre": 0.0, "cut": True,
+                           "verdict": f"cut by the tuner: only {round(in_key(i) * 100)}% of the singing sat in the "
+                                      f"band's {t.get('bandKey') or 'key'}"}
+    best = max(heard, key=lambda i: verdicts[i]["score"])
     for i, v in enumerate(verdicts):
         job.emit("verdict", index=i, score=v["score"], voice=v["voice"], words=v["words"], genre=v["genre"],
-                 verdict=v["verdict"], kept=i == best)
+                 verdict=v["verdict"], kept=i == best, cut=bool(v.get("cut")), inKey=in_key(i))
     mark("listen")
     shutil.copy2(taken[best]["path"], d / "song.mp3")
     length = _duration(d / "song.mp3")
@@ -272,11 +286,12 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         "genre": song["genre"].lower(), "why": song["why"], "caption": song["caption"],
         "liner": song["liner"],
         "note": note,
-        "bpm": bpm, "key": taken[best].get("key") or song["key"],
+        "bpm": bpm, "key": (taken[best].get("tuning") or {}).get("bandKey") or song["key"],
         "duration": round(length, 2),
         "audio": f"/tapes/{job.id}/song.mp3",
-        "takes": [{"audio": f"/tapes/{job.id}/takes/take-{i}.mp3", "kept": i == best,
-                   **{k: v[k] for k in ("score", "voice", "words", "genre", "verdict")}} for i, v in enumerate(verdicts)],
+        "takes": [{"audio": f"/tapes/{job.id}/takes/take-{i}.mp3", "kept": i == best, "cut": bool(v.get("cut")),
+                   **{k: v[k] for k in ("score", "voice", "words", "genre", "verdict")},
+                   **(taken[i].get("tuning") or {})} for i, v in enumerate(verdicts)],
         "cover": cover,
         "palette": look.get("palette", [])[:4],
         "photos": [{"src": f"/tapes/{job.id}/photo-{k}.jpg", "cutout": cuts.get(k, (None, None))[0],
@@ -290,6 +305,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             {"role": "cut out the band" + (" and followed the moving ones" if motion else ""), "model": "SAM 3.1"},
             {"role": "produced and wrote it", "model": used_writer},
             {"role": "session band", "model": "ACE-Step 1.5 (open source)"},
+            {"role": "tuned the takes (split the singer from the band)", "model": "Demucs (Meta, open source)"},
             {"role": "listened back, picked the take", "model": "Muse Spark 1.2"},
             {"role": "painted the sleeve", "model": "Muse Image 1.0"} if cover else None,
             {"role": "heard your note", "model": "Muse Voice Transcribe"} if getattr(job, "spoken", False) else None,

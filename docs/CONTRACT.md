@@ -11,7 +11,8 @@ photos/clips ──► Muse Spark 1.3   looks: each item's hero (a noun phrase),
              ──► Muse Wonder 1.0  produces: genre + why, session notes, lyrics (every verse line belongs to a photo),
                                   the band credits, liner notes; a checker sends it back until it holds up
              ──► ACE-Step 1.5     the session band (open source, on our GPU): records 2 takes, with lyric timestamps
-             ──► Muse Spark 1.2   A&R: listens to every take (audio in), scores voice / words / genre, keeps the best
+             ──► Demucs (Meta)    tuner: splits singer from band, cuts takes with < 75% of the singing in the band's key
+             ──► Muse Spark 1.2   A&R: listens to every take that passed (audio in), scores voice / words / genre, keeps the best
              ──► Muse Image 1.0   the J-card cover, redrawn from the day's stickers as a riso print
 Muse Voice Transcribe: a spoken note about the day ("she named the snail gary") goes into the song.
 ```
@@ -44,8 +45,10 @@ type Stage = "looking" | "cutting" | "producing" | "recording" | "listening" | "
 { type: "title",    title: string }
 { type: "line",     index: number, text: string, photo: number|null, section: string }  // the lyric sheet
 { type: "band",     photo: number, role: string }                  // a casting credit, e.g. "lead vocals"
-{ type: "take",     index: number, audio: string }                 // a take is recorded (playable preview)
-{ type: "verdict",  index: number, score: number, voice: number, words: number, genre: number, verdict: string, kept: boolean }
+{ type: "take",     index: number, audio: string, inKey?: number | null, vocalKey?: string | null, bandKey?: string }
+                                                                  // a take is recorded and tuned (four per release)
+{ type: "verdict",  index: number, score: number, voice: number, words: number, genre: number, verdict: string, kept: boolean,
+  cut?: boolean, inKey?: number }                                 // cut: the tuner dropped it; the producer never heard it
 { type: "progress", value: number }
 { type: "done",     tape: Tape }
 { type: "error",    message: string, stage?: Stage }
@@ -72,7 +75,8 @@ type Tape = {
   bpm: number; key: string;
   duration: number;
   audio: string;                // the kept take, "/tapes/<id>/song.mp3"
-  takes: { audio: string; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean }[];
+  takes: { audio: string; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean;
+           cut?: boolean; inKey?: number | null; vocalKey?: string | null; bandKey?: string }[];
   cover: string | null;
   palette: string[];
   photos: Photo[];              // song order
