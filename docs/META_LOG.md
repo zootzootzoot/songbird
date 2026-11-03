@@ -14,7 +14,8 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 | Hear your note | **Muse Voice Transcribe** | A parent holds the mic and says one thing the photos can't show ("he named the snail gary"); it ends up in the song ("you named the snail Gary that day") | Turns a 5-second voice note into the most personal line of the song |
 | Tune | **Demucs** (Meta FAIR, open weights; Hybrid Demucs via torchaudio) | Splits every take into singer and band, then our tuner checks how much of the singing sits on the band's scale; takes under 75% are cut before anyone hears them | The off-key problem was invisible until the voice could be heard apart from the band (see build log 10) |
 | A&R | **Muse Spark 1.2** (audio in) | Listens to every take that passed the tuner and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets the label judge its own output instead of shipping the first take |
-| Sleeve | **Muse Image 1.0** (edits, references) | Redraws the day's SAM stickers as a three-ink riso record sleeve in the genre's style (~15 s, $0.01) | Multi-reference edits: the cover is made *from that day's actual objects*, not from a text prompt |
+| Sleeve | **Muse Image 1.0** (edits, references) | Redraws the day's SAM cut-outs as the band on a square record sleeve made the way that genre's sleeves really looked (2 Tone checkerboard for ska, a hand-tinted oval frame for 1950s tango) (~15 s, $0.01) | Multi-reference edits: the cover is made *from that day's actual objects*, not from a text prompt |
+| Lyrics on the record | **Muse Voice Transcribe** (on Demucs's isolated vocal) | Hears the kept take phrase by phrase; a word-level alignment puts every lyric line where it was actually sung, and drops lines the singer skipped | The video's karaoke is timed from what was sung, not from what was written |
 
 ## In the build
 
@@ -89,4 +90,18 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     Spark believed, and each session the producer gets a random ten of them, so the label's catalogue stays varied.
     First releases after: "1979 two-tone ska revival" (kept take voice 7, words 8, genre 7), "1987 arena power ballad",
     "1930s golden-age argentine tango".
+16. **Muse Voice Transcribe found the singer skipping half the song (Nov 3).** ACE-Step's own lyric timestamps were
+    unusable (SB-0012 stamped four lines at 0:00 and the next four at 0:49). So we cut Demucs's isolated vocal into
+    sung phrases, had Voice Transcribe hear each one, and aligned the lyric sheet to what was heard (a monotonic
+    word-level alignment that tolerates mishearings like "bottle down" for "puddle town"). It worked, and it exposed
+    a bigger problem: on SB-0012 only about half of the 21 lines were sung at all; whole verses were skipped. We
+    measured why by recording the same song three times at three lengths: 90 s (our old rule, 8 beats a line) sang
+    12, 18 and 17 of 21 lines; 120 s sang 19, 19 and 20; 150 s no better. The song length rule is now ~11 beats a
+    line, the kept take is the one that sings the most of the sheet (with Spark's taste), and the video only shows
+    lines that were really sung, at the time they were sung. First release after (SB-0014, a 1930s tango): 21 of 21
+    lines on the record, first sung line at 15.2 s.
+17. **Muse Image's filter shaped the sleeve brief (Nov 3).** Sleeves moved from one riso look for everything to the
+    way each genre's records actually looked. The hard-rock brief ("smoke, pyro") was refused by Muse Image's
+    content filter; the brief was rewritten (stage lights, lightning) and the pipeline now retries a refused brief
+    without the genre look rather than shipping a release with no sleeve.
 
