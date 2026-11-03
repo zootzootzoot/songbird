@@ -10,6 +10,8 @@ export type CueWord = { text: string; start: number; end: number };
 
 export type Cue = {
   index: number;
+  /** index into tape.lines (and tape.direction.shots) */
+  line: number;
   text: string;
   section: string;
   kind: Line["kind"];
@@ -50,7 +52,8 @@ function weight(w: string) {
 }
 
 export function buildTimeline(tape: Tape, duration: number): Timeline {
-  const lines = tape.lines.filter((l) => l.text && l.text.trim());
+  const source = tape.lines.map((l, i) => ({ l, i })).filter(({ l }) => l.text && l.text.trim());
+  const lines = source.map(({ l }) => l);
   const n = lines.length;
   const end = Math.max(duration, 1);
   if (!n) return { cues: [], titleEnd: Math.min(8, end * 0.4), creditsStart: Math.max(end * 0.5, end - 14), end };
@@ -134,6 +137,7 @@ export function buildTimeline(tape: Tape, duration: number): Timeline {
     if (photo != null) seen.add(photo);
     cues.push({
       index: i,
+      line: source[i].i,
       text: l.text,
       section: l.section ?? "",
       kind: l.kind,

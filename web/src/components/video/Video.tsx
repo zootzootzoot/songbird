@@ -5,9 +5,10 @@ import type { Tape } from "../../lib/types";
 import { Backdrop, Fx } from "./Backdrop";
 import { Lyrics } from "./Lyrics";
 import { pulse } from "./motion";
+import { freezeHold, plan, SINGLE, takeAt } from "./direct";
 import { Credits, Flash, LowerThird, TitleCard } from "./Overlays";
 import { buildTimeline, cueAt, lastCueAt, members, type Member } from "./schedule";
-import { Stage, type StageState } from "./Stage";
+import { Stage, type CameraLayers, type StageState } from "./Stage";
 import { resolveTheme, useThemeFonts } from "./themes";
 import { Transport } from "./Transport";
 // core first, then the themes, regardless of who else imports video.css
@@ -71,15 +72,55 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   const inTitle = t < titleEnd && !ended;
   const held = cur >= 0 ? cues[cur] : last >= 0 && t - cues[last].until < 2.5 ? cues[last] : null;
   const credits = t >= creditsStart;
-  const verse = !inTitle && !credits && held && held.photo != null && !held.chorus;
-  const mode: StageState["mode"] = inTitle ? "title" : verse ? "verse" : "lineup";
   const n = tape.photos.length;
-  const solo = !inTitle && !held && !credits && n > 1 ? Math.floor(beats / 8) % n : null;
-  const side: 0 | 1 = verse && held ? held.side : 0;
-  const flash = !inTitle && held && held.photo != null ? held.photo : null;
 
+  // the director's shot list, when the tape has one
+  const takes = useMemo(() => plan(tape, tl, bpm), [tape, tl, bpm]);
+  const take = takes ? takes[takeAt(takes, t)] : null;
+  // each member is introduced on the first shot that singles them out
+  const introOf = useMemo(() => {
+    const m = new Map<number, number>();
+    const seen = new Set<number>();
+    takes?.forEach((k) => {
+      if (k.cue < 0 || !SINGLE.includes(k.shot)) return;
+      const s = k.subjects[0];
+      if (!seen.has(s)) {
+        seen.add(s);
+        m.set(k.index, s);
+      }
+    });
+    return m;
+  }, [takes]);
+
+  let mode: StageState["mode"];
+  let side: 0 | 1;
+  let solo: number | null = null;
+  let flashShown = "";
+  let frozen = false;
   let intro: Member | null = null;
-  if (!inTitle && !credits) {
+  if (take) {
+    const single = take.fx !== "split" && SINGLE.includes(take.shot);
+    // under the credits roll the lyrics move to the left column, whatever the shot
+    mode = inTitle ? "title" : credits ? "lineup" : single ? "verse" : "lineup";
+    side = single ? take.side : 0;
+    if (!inTitle && !(credits && take.fx === "split")) {
+      const [a, b] = take.subjects;
+      if (take.fx === "split") flashShown = b != null ? `${a}:left,${b}:right` : `${a}:left`;
+      else if (take.shot === "photo") flashShown = `${a}:full`;
+      else if (take.shot === "close-up" && held && held.photo === a) flashShown = `${a}:full`;
+    }
+    frozen = take.fx === "freeze" && t - take.from < freezeHold(bpm) && !inTitle;
+    const who = introOf.get(take.index);
+    if (who != null && !inTitle && !credits && t < take.from + Math.max(4.2, Math.min(take.to - take.from, 6))) intro = band[who] ?? null;
+  } else {
+    const verse = !inTitle && !credits && held && held.photo != null && !held.chorus;
+    mode = inTitle ? "title" : verse ? "verse" : "lineup";
+    solo = !inTitle && !held && !credits && n > 1 ? Math.floor(beats / 8) % n : null;
+    side = verse && held ? held.side : 0;
+    flashShown = !inTitle && held && held.photo != null ? `${held.photo}:full` : "";
+  }
+
+  if (!take && !inTitle && !credits) {
     for (let j = last; j >= 0 && cues[j].start > t - 5; j -= 1) {
       const c = cues[j];
       if (c.intro && c.photo != null) {
@@ -90,8 +131,13 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
     }
   }
 
-  const live = useRef<StageState>({ mode, front: null, side, solo, credits, t, bpm });
-  live.current = { mode, front: verse && held ? held.photo : null, side, solo, credits, t, bpm };
+  const live = useRef<StageState>({ mode, front: null, side, solo, credits, t, bpm, take });
+  live.current = { mode, front: mode === "verse" && held ? held.photo : null, side, solo, credits, t, bpm, take };
+  const layers = useRef<CameraLayers>({ bd: null, vf: null });
+  const setVf = useCallback((el: HTMLDivElement | null) => {
+    layers.current.vf = el;
+  }, []);
+  const shotFx = take && !inTitle && !reduced && !(credits && take.fx === "split") ? take.fx : "none";
 
   // per-frame beat values for CSS, written straight to the root
   useLayoutEffect(() => {
@@ -219,7 +265,11 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
       data-playing={player.playing ? 1 : 0}
       data-started={started ? 1 : 0}
       data-portrait={portrait ? 1 : 0}
-      data-flash={flash != null ? 1 : 0}
+      data-flash={flashShown ? 1 : 0}
+      data-shot={take && !inTitle ? take.shot : undefined}
+      data-move={take && !inTitle ? take.move : undefined}
+      data-fx={shotFx}
+      data-freeze={frozen ? 1 : 0}
       data-idle={show ? 0 : 1}
       data-reduced={reduced ? 1 : 0}
       onPointerMove={wake}
@@ -229,9 +279,17 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
       }}
     >
       <div className="video-world">
-        <Backdrop theme={theme} tape={tape} />
-        <Flash tape={tape} theme={theme} photo={flash} />
-        <Stage tape={tape} theme={theme} live={live} W={W} H={H} reduced={reduced} />
+        <div className="vcam-bd" ref={(el) => (layers.current.bd = el)}>
+          <Backdrop theme={theme} tape={tape} />
+        </div>
+        <Flash tape={tape} theme={theme} shown={flashShown} camRef={setVf} />
+        <Stage tape={tape} theme={theme} live={live} layers={layers} W={W} H={H} reduced={reduced} />
+        <div className="vsx" aria-hidden="true">
+          <i className="vsx-strobe" />
+          <i className="vsx-split" />
+          <i className="vsx-freeze" />
+          {take && !inTitle && take.fx === "flash" && !reduced && <i key={`cut${take.index}`} className="vsx-cut" />}
+        </div>
         {(started || !inTitle) && (
           <Lyrics cues={cues} cur={cur} out={out} t={t} theme={theme} layout={`${mode}:${side}:${credits ? 1 : 0}:${W}x${H}`} />
         )}

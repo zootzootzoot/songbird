@@ -47,11 +47,30 @@ export const TitleCard = memo(function TitleCard({ tape, theme, on }: { tape: Ta
 });
 
 /** 3. Photo flashes: the line's photo full-bleed behind the band, treated by the theme. */
-export const Flash = memo(function Flash({ tape, theme, photo }: { tape: Tape; theme: Theme; photo: number | null }) {
+export const Flash = memo(function Flash({
+  tape,
+  theme,
+  shown,
+  camRef,
+}: {
+  tape: Tape;
+  theme: Theme;
+  /** "2:full" or "0:left,1:right" (split screen); "" for none */
+  shown: string;
+  camRef?: (el: HTMLDivElement | null) => void;
+}) {
+  const on = new Map(
+    shown
+      .split(",")
+      .filter(Boolean)
+      .map((s) => s.split(":"))
+      .map(([i, half]) => [Number(i), half] as const),
+  );
+  const first = shown.split(",")[0] || "";
   return (
-    <div className="vf" data-on={photo != null ? 1 : 0} aria-hidden="true">
+    <div className="vf" data-on={on.size ? 1 : 0} data-split={on.size > 1 || [...on.values()].some((h) => h !== "full") ? 1 : 0} ref={camRef} aria-hidden="true">
       {tape.photos.map((p, i) => (
-        <div key={i} className="vf-ph" data-on={photo === i ? 1 : 0}>
+        <div key={i} className="vf-ph" data-on={on.has(i) ? 1 : 0} data-half={on.get(i) ?? "full"}>
           {theme.pixel ? (
             <Pixel src={p.src} rows={96} levels={6} className="vf-img vf-px" />
           ) : p.clip ? (
@@ -62,7 +81,7 @@ export const Flash = memo(function Flash({ tape, theme, photo }: { tape: Tape; t
           <div className="vf-tint" />
         </div>
       ))}
-      {photo != null && <div key={`hit${photo}`} className="vf-hit" />}
+      {first && <div key={`hit${first}`} className="vf-hit" />}
     </div>
   );
 });

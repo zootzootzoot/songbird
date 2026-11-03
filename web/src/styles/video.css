@@ -1031,3 +1031,123 @@
     bottom: 12%;
   }
 }
+
+/* ---------- the director: camera layers, shot fx ---------- */
+
+/* the backdrop is overscanned so the camera can pan and orbit without showing an edge */
+.vcam-bd {
+  position: absolute;
+  inset: -5%;
+  z-index: 0;
+  will-change: transform;
+}
+
+.vf {
+  will-change: transform;
+}
+
+.vf-ph[data-half="left"] {
+  clip-path: inset(0 50% 0 0);
+}
+
+.vf-ph[data-half="right"] {
+  clip-path: inset(0 0 0 50%);
+}
+
+.vf[data-split="1"] .vf-ph[data-on="1"] .vf-img {
+  animation: none;
+  opacity: max(var(--flash-o, 0.7), 0.8);
+}
+
+/* the solo and the spotlight: the stage goes dark around one member */
+.vs-dim {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 0.35s var(--ease);
+  background: radial-gradient(ellipse 20% 70% at var(--sx, 50%) 72%, transparent 30%, var(--dim-c, rgba(0, 0, 0, 0.78)) 100%);
+}
+
+.vm-ghost {
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.vm-ghost .vm-body {
+  filter: var(--echo-filter, saturate(0.5) brightness(1.3));
+  mix-blend-mode: var(--echo-blend, screen);
+}
+
+.vm-ghost[data-g="2"] .vm-body {
+  filter: var(--echo-filter-2, var(--echo-filter, saturate(0.3) brightness(1.5)));
+}
+
+.vsx {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+}
+
+.vsx > i {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+}
+
+/* strobe: a hard hit on every beat */
+.video[data-fx="strobe"] .vsx-strobe {
+  background: var(--strobe, #fff);
+  mix-blend-mode: var(--strobe-blend, screen);
+  opacity: calc(var(--pulse, 0) * var(--pulse, 0) * var(--pulse, 0) * var(--strobe-o, 0.6));
+}
+
+/* split screen: a hard rule down the middle */
+.video[data-fx="split"][data-portrait="0"] .vsx-split {
+  opacity: 1;
+  left: calc(50% - 0.5vh);
+  right: auto;
+  width: 1vh;
+  background: var(--split, var(--ink));
+  box-shadow: 0 0 0 0.4vh var(--bg);
+}
+
+.video[data-fx="split"][data-portrait="0"][data-credits="1"] .vsx-split {
+  left: calc(30% - 0.5vh);
+}
+
+/* freeze-frame: the world stops, goes to a still, then lets go */
+.video[data-freeze="1"] .vs,
+.video[data-freeze="1"] .vf {
+  filter: var(--freeze-filter, grayscale(1) contrast(1.25) brightness(1.05));
+}
+
+.video[data-freeze="1"] .bd,
+.video[data-freeze="1"] .bd * {
+  animation-play-state: paused !important;
+}
+
+.video[data-freeze="1"] .vsx-freeze {
+  opacity: 1;
+  box-shadow:
+    inset 0 0 0 1.4vh var(--freeze-frame, #fff),
+    inset 0 0 0 1.6vh rgba(0, 0, 0, 0.6);
+  background-image: var(--noise);
+  background-size: 220px 220px;
+  mix-blend-mode: normal;
+  animation: vsx-freeze 0.35s var(--ease) both;
+}
+
+@keyframes vsx-freeze {
+  0% {
+    background-color: rgba(255, 255, 255, 0.85);
+  }
+  100% {
+    background-color: rgba(255, 255, 255, 0);
+  }
+}
+
+/* white flash cut */
+.vsx > .vsx-cut {
+  background: var(--cut, #fff);
+  animation: vf-hit 0.5s var(--ease) both;
+}

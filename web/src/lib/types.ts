@@ -80,6 +80,21 @@ export type Tape = {
   band?: { photo: number; role: string }[];
   lines: Line[];
   credits: Credit[];
+  /** the video's shot list, written by Muse Spark 1.3; older tapes lack it */
+  direction?: Direction;
+};
+
+export type ShotKind = "close-up" | "two-shot" | "wide" | "solo" | "lineup" | "photo" | "low-angle";
+export type CameraMove = "static" | "push-in" | "pull-out" | "pan-left" | "pan-right" | "orbit" | "handheld" | "snap-zoom" | "crane-up";
+export type ShotFx = "none" | "strobe" | "freeze" | "echo" | "split" | "spotlight" | "flash";
+export type Shot = { shot: ShotKind; subjects: number[]; move: CameraMove; fx: ShotFx };
+export type Direction = {
+  concept: string;
+  intro: Shot;
+  outro: Shot;
+  /** one per tape.lines[i], same index */
+  shots: Shot[];
+  members: number;
 };
 
 /** The shelf (back catalogue). Only `id` is guaranteed. */

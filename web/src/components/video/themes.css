@@ -3557,3 +3557,167 @@
 .video.vt-twotone[data-reduced="1"] .vl-words {
   transform: none;
 }
+
+/* ---------- the director's shot fx, flavoured per family ---------- */
+
+.vt-neon {
+  --strobe: #ff2fb4;
+  --strobe-o: 0.55;
+  --echo-filter: hue-rotate(160deg) saturate(2.4) drop-shadow(0 0 1vh #22e4ff);
+  --echo-filter-2: hue-rotate(260deg) saturate(3) drop-shadow(0 0 1vh #ff2fb4);
+  --dim-c: rgba(7, 1, 26, 0.85);
+  --freeze-filter: grayscale(1) contrast(1.4) sepia(1) hue-rotate(250deg) saturate(2.4);
+  --freeze-frame: #22e4ff;
+  --split: #22e4ff;
+}
+
+.vt-strut {
+  --strobe: #f2b230;
+  --strobe-o: 0.42;
+  --echo-filter: sepia(1) saturate(3.5) hue-rotate(-18deg) brightness(1.1);
+  --echo-blend: normal;
+  --dim-c: rgba(30, 10, 0, 0.78);
+  --freeze-filter: sepia(0.85) contrast(1.25) saturate(1.3);
+  --freeze-frame: #f2b230;
+  --split: #f2b230;
+  --tc-bg: rgba(42, 20, 7, 0.5);
+}
+
+.vt-deco {
+  --strobe: #f7d67a;
+  --strobe-o: 0.4;
+  --echo-filter: grayscale(1) sepia(1) brightness(1.25) saturate(1.6);
+  --dim-c: rgba(0, 0, 0, 0.85);
+  --freeze-filter: grayscale(1) sepia(0.6) contrast(1.3);
+  --freeze-frame: #d4a94a;
+  --split: #d4a94a;
+}
+
+.vt-deco .vtc {
+  --tc-bg: radial-gradient(ellipse at 50% 100%, rgba(42, 31, 12, 0.35), rgba(10, 8, 5, 0.72) 70%);
+}
+
+.vt-twotone {
+  --strobe: #fff;
+  --strobe-blend: difference;
+  --strobe-o: 0.95;
+  --echo-filter: grayscale(1) contrast(2.2);
+  --echo-blend: normal;
+  --dim-c: rgba(12, 12, 12, 0.82);
+  --freeze-filter: grayscale(1) contrast(2.6) brightness(1.1);
+  --freeze-frame: #e21b23;
+  --split: #e21b23;
+  --cut: #e21b23;
+}
+
+.vt-twotone .vtc {
+  --tc-bg: rgba(12, 12, 12, 0.45);
+}
+
+.vt-arena {
+  --strobe: #fff;
+  --strobe-o: 0.7;
+  --echo-filter: brightness(1.5) saturate(0.4) drop-shadow(0 0 1.2vh var(--a1));
+  --dim-c: rgba(0, 0, 0, 0.86);
+  --freeze-filter: grayscale(0.8) contrast(1.5);
+  --freeze-frame: var(--a1);
+  --split: var(--a1);
+}
+
+.vv-ballad {
+  --strobe: #ffd7ef;
+  --strobe-o: 0.35;
+}
+
+.vt-zine {
+  --strobe: #fff;
+  --strobe-blend: difference;
+  --strobe-o: 0.85;
+  --echo-filter: grayscale(1) contrast(3) brightness(1.15);
+  --echo-blend: multiply;
+  --dim-c: rgba(17, 17, 17, 0.62);
+  --freeze-filter: grayscale(1) contrast(3) brightness(1.15);
+  --freeze-frame: #111;
+  --split: #111;
+  --cut: #111;
+}
+
+.vt-zine .vtc {
+  --tc-bg: rgba(236, 235, 228, 0.6);
+}
+
+.vt-atomic {
+  --strobe: #1fa5a0;
+  --strobe-blend: multiply;
+  --strobe-o: 0.4;
+  --echo-filter: saturate(1.6) opacity(0.9);
+  --echo-blend: multiply;
+  --dim-c: rgba(29, 26, 23, 0.62);
+  --freeze-filter: sepia(0.7) contrast(1.15);
+  --freeze-frame: #d7263d;
+  --split: #d7263d;
+  --cut: #fff8e6;
+}
+
+.vt-atomic .vtc {
+  --tc-bg: rgba(243, 230, 200, 0.6);
+}
+
+.vt-bluenote {
+  --strobe: #1f56d6;
+  --strobe-o: 0.55;
+  --echo-filter: grayscale(1) brightness(1.6);
+  --dim-c: rgba(14, 15, 18, 0.88);
+  --freeze-filter: grayscale(1) contrast(1.45);
+  --freeze-frame: #f5b700;
+  --split: #f5b700;
+}
+
+.vt-bluenote .vtc {
+  --tc-bg: rgba(14, 15, 18, 0.8);
+}
+
+.vt-milonga {
+  --strobe: #d3203a;
+  --strobe-o: 0.5;
+  --echo-filter: grayscale(1) sepia(1) hue-rotate(-40deg) saturate(5) brightness(0.9);
+  --dim-c: rgba(10, 4, 5, 0.9);
+  --freeze-filter: grayscale(1) contrast(1.7);
+  --freeze-frame: #d3203a;
+  --split: #d3203a;
+}
+
+.vt-milonga .vtc {
+  --tc-bg: radial-gradient(ellipse at 50% 30%, rgba(42, 6, 11, 0.55), rgba(10, 4, 5, 0.82) 70%);
+}
+
+.vv-salsa {
+  --strobe: #fff;
+  --strobe-blend: difference;
+  --strobe-o: 0.75;
+  --echo-filter: saturate(2.2);
+  --echo-blend: multiply;
+  --dim-c: rgba(0, 0, 0, 0.6);
+  --freeze-filter: saturate(0) contrast(1.6);
+  --freeze-frame: #111;
+  --split: #111;
+}
+
+.vv-salsa .vtc {
+  --tc-bg: rgba(255, 207, 31, 0.45);
+}
+
+.vt-bit {
+  --strobe: #fff;
+  --strobe-blend: difference;
+  --strobe-o: 0.85;
+  --echo-filter: brightness(1.7) saturate(0.6);
+  --dim-c: rgba(11, 11, 42, 0.86);
+  --freeze-filter: grayscale(1) contrast(1.5);
+  --freeze-frame: #fff;
+  --split: #fff;
+}
+
+.vt-strut .vtc {
+  --tc-bg: rgba(42, 20, 7, 0.5);
+}
