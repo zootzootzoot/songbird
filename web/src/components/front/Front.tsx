@@ -1,17 +1,17 @@
-import { useCallback, useRef, useState, type DragEvent } from "react";
-import type { Health } from "../../lib/api";
+import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { getTape, type Health } from "../../lib/api";
 import type { Deck } from "../../lib/useDeck";
 import { useRecorder } from "../../lib/useRecorder";
-import type { TapeSummary } from "../../lib/types";
+import type { Tape, TapeSummary } from "../../lib/types";
 
 /** the signal chain, in the order a release goes through it */
 const CHAIN: { model: string; job: string; open?: boolean }[] = [
-  { model: "Muse Spark 1.3", job: "looks at the day" },
-  { model: "SAM 3.1", job: "cuts out the band" },
-  { model: "Muse Wonder 1.0", job: "produces, writes" },
-  { model: "ACE-Step 1.5 XL", job: "records 4 takes", open: true },
-  { model: "Demucs", job: "tunes, cuts off-key takes", open: true },
-  { model: "Muse Spark 1.2", job: "listens back, keeps one" },
+  { model: "Muse Spark 1.3", job: "looks" },
+  { model: "SAM 3.1", job: "casts the band" },
+  { model: "Muse Wonder 1.0", job: "produces" },
+  { model: "ACE-Step 1.5 XL", job: "records four takes", open: true },
+  { model: "Demucs", job: "tunes", open: true },
+  { model: "Muse Spark 1.2", job: "keeps one" },
   { model: "Muse Image 1.0", job: "paints the sleeve" },
 ];
 
@@ -26,6 +26,13 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
   const [over, setOver] = useState(false);
   const rec = useRecorder((text) => deck.setNote(text, true));
 
+  // one real release, shown whole: what went in, what the producer decided, what came out
+  const [specimen, setSpecimen] = useState<Tape | null>(null);
+  const firstId = shelf[0]?.id;
+  useEffect(() => {
+    if (firstId) void getTape(firstId).then(setSpecimen);
+  }, [firstId]);
+
   const onDrop = useCallback(
     (e: DragEvent) => {
       e.preventDefault();
@@ -39,57 +46,71 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
   const bandAway = health?.ok && health.band === false;
   const status = !online ? "closed" : bandAway ? "warming" : "open";
   const micLabel =
-    rec.state === "recording" ? "listening" : rec.state === "hearing" ? "voice transcribe" : rec.state === "denied" ? "mic blocked" : "hold to talk";
+    rec.state === "recording" ? "listening" : rec.state === "hearing" ? "writing it down" : rec.state === "denied" ? "mic blocked" : "hold to say it";
+  const cast = specimen ? specimen.photos.map((p, i) => ({ p, i })).filter(({ p }) => p.cutout).slice(0, 4) : [];
 
   return (
     <main className="front">
       <header className="front__strip">
-        <span className="wordmark front__mark">
-          Songbird<i aria-hidden="true" />
-        </span>
+        <span className="wordmark front__mark">Songbird</span>
         <span className="front__status label" data-status={status}>
           <b aria-hidden="true" />
-          {status === "open" ? "studio open" : status === "warming" ? "band warming up" : "studio closed, the catalogue still plays"}
+          {status === "open" ? "studio open" : status === "warming" ? "the band is warming up" : "studio closed · the catalogue still plays"}
         </span>
       </header>
 
       <section className="front__pitch">
         <h1 className="front__headline">
-          Your day,
-          <br />
-          produced.
+          Every day has a genre.
+          <span>Songbird finds yours.</span>
         </h1>
         <p className="front__lede">
-          Give Songbird three to six photos from one day. Its producer has enormous opinions: it calls the genre, casts
-          the things in your photos as the band, writes the single, records four takes, bins the off-key ones and cuts
-          the music video.
+          Give it a few photos from one day. A producer with very strong opinions calls the genre, casts what's in them
+          as the band, records the single and cuts the video.
         </p>
-        {shelf.some((t) => t.genre) && (
-          <div className="front__ticker" aria-label="the producer's recent calls">
-            <span className="label">lately the producer called</span>
-            <div className="front__ticker-track">
-              {[0, 1].map((copy) => (
-                <p key={copy} aria-hidden={copy === 1}>
-                  {shelf
-                    .filter((t) => t.genre)
-                    .map((t) => (
-                      <span key={t.id}>
-                        {t.genre}
-                        <i aria-hidden="true">/</i>
-                      </span>
-                    ))}
-                </p>
-              ))}
+
+        {specimen && (
+          <figure className="front__specimen">
+            <figcaption className="label">
+              how <span className="num">{specimen.catalog}</span> was made
+            </figcaption>
+            <div className="front__flow">
+              <span className="front__step label">the photos, cast as the band · SAM 3.1</span>
+              <span className="front__step label">the call · Muse Wonder 1.0</span>
+              <span className="front__step label">the single · ACE-Step XL, Muse Image</span>
+              <ol className="front__cast" aria-label="the band, cut out of the photos">
+                {cast.map(({ p, i }) => (
+                  <li key={i}>
+                    <img className="front__cast-photo" src={p.src} alt="" />
+                    <img className="front__cast-cut" src={p.cutout ?? ""} alt={p.hero} />
+                    <span>{p.hero}</span>
+                  </li>
+                ))}
+              </ol>
+              <blockquote className="front__call">
+                <p className="front__genre-call">{specimen.genre}</p>
+                <p className="front__why">“{specimen.why}”</p>
+              </blockquote>
+              <button className="front__sleeve-big" onClick={() => onOpen(specimen.id)} aria-label={`play ${specimen.title}`}>
+                {specimen.cover && <img src={specimen.cover} alt="" />}
+                <span className="front__play">
+                  <i aria-hidden="true" />
+                  {specimen.title}
+                </span>
+              </button>
             </div>
-          </div>
+          </figure>
         )}
+
         <ol className="front__chain" aria-label="signal chain">
           {CHAIN.map((c, i) => (
             <li key={c.model}>
               <span className="num">{pad(i + 1)}</span>
               <b>{c.model}</b>
-              <span>{c.job}</span>
-              {c.open && <em className="label">open weights</em>}
+              <span>
+                {c.job}
+                {c.open && <em> · open weights</em>}
+              </span>
             </li>
           ))}
         </ol>
@@ -98,7 +119,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
       <section
         className="front__input"
         data-over={over}
-        aria-label="inputs"
+        aria-label="your day"
         onDragOver={(e) => {
           e.preventDefault();
           setOver(true);
@@ -107,9 +128,9 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
         onDrop={onDrop}
       >
         <div className="front__input-head">
-          <span className="label">inputs</span>
+          <h2>Your day</h2>
           <span className="num front__count">
-            {photos.length}/{MAX}
+            {photos.length} of {MAX}
           </span>
         </div>
 
@@ -118,7 +139,6 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
             const p = photos[i];
             return (
               <li key={p?.key ?? `empty-${i}`} className="front__ch" data-empty={!p}>
-                <span className="front__ch-no num">CH {pad(i + 1)}</span>
                 {p ? (
                   <>
                     {p.video ? (
@@ -133,7 +153,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
                   </>
                 ) : (
                   <button className="front__add" onClick={() => input.current?.click()} aria-label="add photos">
-                    +
+                    <span className="num">{pad(i + 1)}</span>
                   </button>
                 )}
               </li>
@@ -151,22 +171,20 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
             e.target.value = "";
           }}
         />
-        <div className="front__sources">
-          <button className="front__link" onClick={() => input.current?.click()}>
-            add photos or a 3-second clip
-          </button>
-          <span aria-hidden="true">/</span>
+        <p className="front__sources">
+          Drop in photos or a three-second clip, or{" "}
           <button className="front__link" onClick={deck.addSample}>
-            use the sample day
+            borrow a sample day
           </button>
-        </div>
+          .
+        </p>
         {state.notice && <p className="front__notice">{state.notice}</p>}
 
         <label className="front__field">
-          <span className="label">the star</span>
+          <span className="label">who's the star</span>
           <input value={name} maxLength={24} placeholder="ada" onChange={(e) => deck.setName(e.target.value)} />
         </label>
-        <div className="front__field front__field--note">
+        <div className="front__field">
           <label htmlFor="front-note" className="label">
             one thing the photos can't show
           </label>
@@ -191,7 +209,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
                 onPointerLeave={() => rec.state === "recording" && rec.stop()}
                 aria-label="hold to say it; Muse Voice Transcribe writes it down"
               >
-                <span className="label">{micLabel}</span>
+                {micLabel}
               </button>
             )}
           </div>
@@ -199,24 +217,24 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
 
         <button className="front__rec" disabled={!ready} onClick={() => void deck.pull()}>
           <i aria-hidden="true" />
-          <span>{ready ? "record the single" : online ? `add ${MIN - photos.length} more` : "studio closed"}</span>
-          <em className="num">{ready ? "~2:00" : `${photos.length}/${MIN}`}</em>
+          <span>{ready ? "Produce my day" : online ? `Add ${MIN - photos.length} more photo${MIN - photos.length === 1 ? "" : "s"}` : "The studio is closed"}</span>
+          {ready && <em className="num">about 2 min</em>}
         </button>
       </section>
 
       <section className="front__catalogue" aria-label="catalogue">
         <div className="front__cat-head">
-          <span className="label">the catalogue</span>
-          <span className="label">{shelf.length} releases</span>
+          <span className="label">recently released</span>
         </div>
         <ul>
           {shelf.map((t) => (
             <li key={t.id}>
-              <button className="front__release" onClick={() => onOpen(t.id)}>
+              <button className="front__release" onClick={() => onOpen(t.id)} title={`${t.title} · ${t.genre}`}>
                 <span className="front__sleeve">{t.cover ? <img src={t.cover} alt="" loading="lazy" /> : <i />}</span>
-                <span className="num front__cat-no">{t.catalog ?? t.id}</span>
-                <b>{t.title}</b>
-                <span className="front__genre">{t.genre}</span>
+                <span className="front__rel-text">
+                  <b>{t.title}</b>
+                  <span>{t.genre}</span>
+                </span>
               </button>
             </li>
           ))}
