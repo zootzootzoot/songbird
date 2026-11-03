@@ -42,7 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tuner  # noqa: E402
 
 CK = ACE / "checkpoints"
-DIT = os.environ.get("ACE_DIT", "acestep-v15-turbo")
+DIT = os.environ.get("ACE_DIT", "acestep-v15-xl-turbo")  # the owner preferred XL over the 2B by ear
 LM = os.environ.get("ACE_LM", "none")
 THINK = os.environ.get("ACE_THINK", "0") == "1"
 dit, lm = AceStepHandler(), LLMHandler()
@@ -61,26 +61,25 @@ def record(job):
                               duration=float(job.get("duration", -1)), thinking=THINK,
                               use_cot_caption=False)  # play the producer's session notes as written
     seeds = [int(job.get("seed", 7)) + 101 * k for k in range(takes)]
-    cfg = GenerationConfig(batch_size=takes, audio_format="mp3", use_random_seed=False, seeds=seeds)
-    t = time.time()
-    res = generate_music(dit, lm, params, cfg, save_dir=str(out / "raw"))
-    if not res.success:
-        raise RuntimeError(res.error or "generation failed")
-    eo = res.extra_outputs
-    took = round(time.time() - t, 1)
-    for k, a in enumerate(res.audios):
+    for k, seed in enumerate(seeds):  # one take at a time: the XL band leaves no room on 16 GB for a batch
+        t = time.time()
+        res = generate_music(dit, lm, params, GenerationConfig(batch_size=1, audio_format="mp3", use_random_seed=False,
+                                                               seeds=[seed]), save_dir=str(out / "raw"))
+        if not res.success:
+            raise RuntimeError(res.error or "generation failed")
+        eo, a = res.extra_outputs, res.audios[0]
+        took = round(time.time() - t, 1)
         dest = out / f"take-{k}.mp3"
         shutil.copy2(a["path"], dest)
         lrc = ""
         try:
-            dur = float(eo["pred_latents"].shape[1] / 25.0)
-            r = dit.get_lyric_timestamp(pred_latent=eo["pred_latents"][k:k + 1],
-                                        encoder_hidden_states=eo["encoder_hidden_states"][k:k + 1],
-                                        encoder_attention_mask=eo["encoder_attention_mask"][k:k + 1],
-                                        context_latents=eo["context_latents"][k:k + 1],
-                                        lyric_token_ids=eo["lyric_token_idss"][k:k + 1],
-                                        total_duration_seconds=dur, vocal_language=job.get("language", "en"),
-                                        inference_steps=8, seed=42)
+            r = dit.get_lyric_timestamp(pred_latent=eo["pred_latents"][:1],
+                                        encoder_hidden_states=eo["encoder_hidden_states"][:1],
+                                        encoder_attention_mask=eo["encoder_attention_mask"][:1],
+                                        context_latents=eo["context_latents"][:1],
+                                        lyric_token_ids=eo["lyric_token_idss"][:1],
+                                        total_duration_seconds=float(eo["pred_latents"].shape[1] / 25.0),
+                                        vocal_language=job.get("language", "en"), inference_steps=8, seed=42)
             if r.get("success"):
                 lrc = r.get("lrc_text", "")
         except Exception:
@@ -95,7 +94,7 @@ def record(job):
                 traceback.print_exc()
                 torch.cuda.empty_cache()
         send({"id": job["id"], "event": "take", "index": k, "path": str(dest), "lrc": lrc, "seconds": took,
-              "seed": seeds[k], "key": meta.get("keyscale"), "bpm": meta.get("bpm"), "tuning": tuning})  # a["key"] is the file id
+              "seed": seed, "key": meta.get("keyscale"), "bpm": meta.get("bpm"), "tuning": tuning})  # a["key"] is the file id
     send({"id": job["id"], "event": "done"})
 
 

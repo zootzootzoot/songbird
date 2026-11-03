@@ -1,6 +1,6 @@
 """One release, start to finish. Runs in a thread; every step is published as an event for the deck to show.
 
-look (Muse Spark 1.3) → cut (SAM 3.1) ∥ produce (Muse Wonder) → record 2 takes (ACE-Step 1.5) ∥ sleeve (Muse Image)
+look (Muse Spark 1.3) → cut (SAM 3.1) ∥ produce (Muse Wonder) → record 4 takes (ACE-Step 1.5 XL) → tune (Demucs) → listen (Muse Spark 1.2) ∥ sleeve (Muse Image)
 → listen back (Muse Spark 1.2, audio in) → keep the best take → press.
 """
 from __future__ import annotations
@@ -309,7 +309,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             {"role": "looked at today", "model": "Muse Spark 1.3"},
             {"role": "cut out the band" + (" and followed the moving ones" if motion else ""), "model": "SAM 3.1"},
             {"role": "produced and wrote it", "model": used_writer},
-            {"role": "session band", "model": "ACE-Step 1.5 (open source)"},
+            {"role": "session band", "model": "ACE-Step 1.5 XL (open source)"},
             {"role": "tuned the takes (split the singer from the band)", "model": "Demucs (Meta, open source)"},
             {"role": "listened back, picked the take", "model": "Muse Spark 1.2"},
             {"role": "painted the sleeve", "model": "Muse Image 1.0"} if cover else None,
