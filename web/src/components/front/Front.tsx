@@ -3,6 +3,7 @@ import { getTape, type Health } from "../../lib/api";
 import type { Deck } from "../../lib/useDeck";
 import { useRecorder } from "../../lib/useRecorder";
 import type { Tape, TapeSummary } from "../../lib/types";
+import { Record } from "./Record";
 
 /** the signal chain, in the order a release goes through it */
 const CHAIN: { model: string; job: string; open?: boolean }[] = [
@@ -15,7 +16,16 @@ const CHAIN: { model: string; job: string; open?: boolean }[] = [
   { model: "Muse Image 1.0", job: "paints the sleeve" },
 ];
 
+const ROTATE_MS = 7000;
 const pad = (n: number) => String(n).padStart(2, "0");
+
+/** "ada's tuesday 3 november" -> "Ada's Tuesday" */
+function whose(t: Tape): string {
+  const m = t.dedication.match(/^(.*?'s )?(monday|tuesday|wednesday|thursday|friday|saturday|sunday)/i);
+  if (!m) return "This day";
+  const cap = (w: string) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase();
+  return `${m[1] ? cap(m[1]) : "This "}${cap(m[2])}`;
+}
 
 type Props = { deck: Deck; shelf: TapeSummary[]; health: Health | null; online: boolean; onOpen: (id: string) => void };
 
@@ -26,12 +36,23 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
   const [over, setOver] = useState(false);
   const rec = useRecorder((text) => deck.setNote(text, true));
 
-  // one real release, shown whole: what went in, what the producer decided, what came out
-  const [specimen, setSpecimen] = useState<Tape | null>(null);
-  const firstId = shelf[0]?.id;
+  // the hero cycles through real releases, whole
+  const [releases, setReleases] = useState<Tape[]>([]);
+  const [at, setAt] = useState(0);
+  const [held, setHeld] = useState(false);
+  const ids = shelf.slice(0, 5).map((t) => t.id).join(",");
   useEffect(() => {
-    if (firstId) void getTape(firstId).then(setSpecimen);
-  }, [firstId]);
+    if (!ids) return;
+    void Promise.all(ids.split(",").map((id) => getTape(id))).then((ts) =>
+      setReleases(ts.filter((t): t is Tape => Boolean(t?.cover))),
+    );
+  }, [ids]);
+  useEffect(() => {
+    if (releases.length < 2 || held) return;
+    const id = window.setInterval(() => setAt((a) => (a + 1) % releases.length), ROTATE_MS);
+    return () => window.clearInterval(id);
+  }, [releases.length, held]);
+  const hero = releases[at % Math.max(1, releases.length)] ?? null;
 
   const onDrop = useCallback(
     (e: DragEvent) => {
@@ -47,10 +68,20 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
   const status = !online ? "closed" : bandAway ? "warming" : "open";
   const micLabel =
     rec.state === "recording" ? "listening" : rec.state === "hearing" ? "writing it down" : rec.state === "denied" ? "mic blocked" : "hold to say it";
-  const cast = specimen ? specimen.photos.map((p, i) => ({ p, i })).filter(({ p }) => p.cutout).slice(0, 4) : [];
 
   return (
-    <main className="front">
+    <main
+      className="front"
+      data-over={over}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setOver(true);
+      }}
+      onDragLeave={(e) => {
+        if (e.currentTarget === e.target) setOver(false);
+      }}
+      onDrop={onDrop}
+    >
       <header className="front__strip">
         <span className="wordmark front__mark">Songbird</span>
         <span className="front__status label" data-status={status}>
@@ -60,48 +91,25 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
       </header>
 
       <section className="front__pitch">
-        <h1 className="front__headline">
-          Every day has a genre.
-          <span>Songbird finds yours.</span>
-        </h1>
+        <h1 className="front__headline">Every day has a genre.</h1>
+        <p className="front__verdict" aria-live="polite">
+          {hero ? (
+            <span key={hero.id} className="front__verdict-line">
+              {whose(hero)} was <b>{hero.genre}</b>.
+            </span>
+          ) : (
+            <span className="front__verdict-line">Songbird finds yours.</span>
+          )}
+        </p>
+        {hero?.why && (
+          <p key={`why-${hero.id}`} className="front__why">
+            <span className="label">the producer</span> “{hero.why}”
+          </p>
+        )}
         <p className="front__lede">
           Give it a few photos from one day. A producer with very strong opinions calls the genre, casts what's in them
           as the band, records the single and cuts the video.
         </p>
-
-        {specimen && (
-          <figure className="front__specimen">
-            <figcaption className="label">
-              how <span className="num">{specimen.catalog}</span> was made
-            </figcaption>
-            <div className="front__flow">
-              <span className="front__step label">the photos, cast as the band · SAM 3.1</span>
-              <span className="front__step label">the call · Muse Wonder 1.0</span>
-              <span className="front__step label">the single · ACE-Step XL, Muse Image</span>
-              <ol className="front__cast" aria-label="the band, cut out of the photos">
-                {cast.map(({ p, i }) => (
-                  <li key={i}>
-                    <img className="front__cast-photo" src={p.src} alt="" />
-                    <img className="front__cast-cut" src={p.cutout ?? ""} alt={p.hero} />
-                    <span>{p.hero}</span>
-                  </li>
-                ))}
-              </ol>
-              <blockquote className="front__call">
-                <p className="front__genre-call">{specimen.genre}</p>
-                <p className="front__why">“{specimen.why}”</p>
-              </blockquote>
-              <button className="front__sleeve-big" onClick={() => onOpen(specimen.id)} aria-label={`play ${specimen.title}`}>
-                {specimen.cover && <img src={specimen.cover} alt="" />}
-                <span className="front__play">
-                  <i aria-hidden="true" />
-                  {specimen.title}
-                </span>
-              </button>
-            </div>
-          </figure>
-        )}
-
         <ol className="front__chain" aria-label="signal chain">
           {CHAIN.map((c, i) => (
             <li key={c.model}>
@@ -116,22 +124,42 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
         </ol>
       </section>
 
-      <section
-        className="front__input"
-        data-over={over}
-        aria-label="your day"
-        onDragOver={(e) => {
-          e.preventDefault();
-          setOver(true);
-        }}
-        onDragLeave={() => setOver(false)}
-        onDrop={onDrop}
-      >
-        <div className="front__input-head">
+      <section className="front__stage" onPointerEnter={() => setHeld(true)} onPointerLeave={() => setHeld(false)}>
+        {hero && <Record key={hero.id} tape={hero} onOpen={() => onOpen(hero.id)} />}
+        {releases.length > 1 && (
+          <div className="front__dots" role="tablist" aria-label="releases">
+            {releases.map((r, i) => (
+              <button
+                key={r.id}
+                role="tab"
+                aria-selected={i === at % releases.length}
+                aria-label={`${r.catalog} ${r.title}`}
+                onClick={() => setAt(i)}
+              >
+                <span className="num">{r.catalog?.replace("SB-", "")}</span>
+              </button>
+            ))}
+          </div>
+        )}
+        {hero && (
+          <p className="front__caption">
+            <span className="num">{hero.catalog}</span> {hero.title}
+            {hero.artist && !hero.artist.includes("small days") && <span> · {hero.artist}</span>}
+          </p>
+        )}
+      </section>
+
+      <section className="front__dock" aria-label="your day">
+        <div className="front__dock-head">
           <h2>Your day</h2>
-          <span className="num front__count">
-            {photos.length} of {MAX}
-          </span>
+          <p>
+            Drop in 3 to {MAX} photos or a three-second clip, or{" "}
+            <button className="front__link" onClick={deck.addSample}>
+              borrow a sample day
+            </button>
+            .
+          </p>
+          {state.notice && <p className="front__notice">{state.notice}</p>}
         </div>
 
         <ul className="front__channels">
@@ -153,7 +181,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
                   </>
                 ) : (
                   <button className="front__add" onClick={() => input.current?.click()} aria-label="add photos">
-                    <span className="num">{pad(i + 1)}</span>
+                    {i === photos.length ? "+" : <span className="num">{pad(i + 1)}</span>}
                   </button>
                 )}
               </li>
@@ -171,61 +199,59 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
             e.target.value = "";
           }}
         />
-        <p className="front__sources">
-          Drop in photos or a three-second clip, or{" "}
-          <button className="front__link" onClick={deck.addSample}>
-            borrow a sample day
-          </button>
-          .
-        </p>
-        {state.notice && <p className="front__notice">{state.notice}</p>}
 
-        <label className="front__field">
-          <span className="label">who's the star</span>
-          <input value={name} maxLength={24} placeholder="ada" onChange={(e) => deck.setName(e.target.value)} />
-        </label>
-        <div className="front__field">
-          <label htmlFor="front-note" className="label">
-            one thing the photos can't show
+        <div className="front__fields">
+          <label className="front__field">
+            <span className="label">who's the star</span>
+            <input value={name} maxLength={24} placeholder="ada" onChange={(e) => deck.setName(e.target.value)} />
           </label>
-          <div className="front__note">
-            <input
-              id="front-note"
-              value={note}
-              maxLength={160}
-              placeholder="she named the pigeon gerald"
-              onChange={(e) => deck.setNote(e.target.value)}
-            />
-            {rec.supported && (
-              <button
-                className="front__mic"
-                data-state={rec.state}
-                style={{ ["--level" as string]: rec.level }}
-                onPointerDown={(e) => {
-                  e.preventDefault();
-                  void rec.start();
-                }}
-                onPointerUp={rec.stop}
-                onPointerLeave={() => rec.state === "recording" && rec.stop()}
-                aria-label="hold to say it; Muse Voice Transcribe writes it down"
-              >
-                {micLabel}
-              </button>
-            )}
+          <div className="front__field">
+            <label htmlFor="front-note" className="label">
+              one thing the photos can't show
+            </label>
+            <div className="front__note">
+              <input
+                id="front-note"
+                value={note}
+                maxLength={160}
+                placeholder="she named the pigeon gerald"
+                onChange={(e) => deck.setNote(e.target.value)}
+              />
+              {rec.supported && (
+                <button
+                  className="front__mic"
+                  data-state={rec.state}
+                  style={{ ["--level" as string]: rec.level }}
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    void rec.start();
+                  }}
+                  onPointerUp={rec.stop}
+                  onPointerLeave={() => rec.state === "recording" && rec.stop()}
+                  aria-label="hold to say it; Muse Voice Transcribe writes it down"
+                >
+                  {micLabel}
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         <button className="front__rec" disabled={!ready} onClick={() => void deck.pull()}>
           <i aria-hidden="true" />
-          <span>{ready ? "Produce my day" : online ? `Add ${MIN - photos.length} more photo${MIN - photos.length === 1 ? "" : "s"}` : "The studio is closed"}</span>
+          <span>
+            {ready
+              ? "Produce my day"
+              : online
+                ? `Add ${MIN - photos.length} more photo${MIN - photos.length === 1 ? "" : "s"}`
+                : "The studio is closed"}
+          </span>
           {ready && <em className="num">about 2 min</em>}
         </button>
       </section>
 
       <section className="front__catalogue" aria-label="catalogue">
-        <div className="front__cat-head">
-          <span className="label">recently released</span>
-        </div>
+        <span className="label">recently released</span>
         <ul>
           {shelf.map((t) => (
             <li key={t.id}>
