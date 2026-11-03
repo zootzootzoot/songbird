@@ -15,6 +15,8 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 | Tune | **Demucs** (Meta FAIR, open weights; Hybrid Demucs via torchaudio) | Splits every take into singer and band, then our tuner checks how much of the singing sits on the band's scale; takes under 75% are cut before anyone hears them | The off-key problem was invisible until the voice could be heard apart from the band (see build log 10) |
 | A&R | **Muse Spark 1.2** (audio in) | Listens to every take that passed the tuner and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets the label judge its own output instead of shipping the first take |
 | Sleeve | **Muse Image 1.0** (edits, references) | Redraws the day's SAM cut-outs as the band on a square record sleeve made the way that genre's sleeves really looked (2 Tone checkerboard for ska, a hand-tinted oval frame for 1950s tango) (~15 s, $0.01) | Multi-reference edits: the cover is made *from that day's actual objects*, not from a text prompt |
+| Cast | **Muse Image 1.0 + SAM 3.1** | Redraws each SAM cut-out as its band role in the genre's wardrobe (the rubber duck on contrabass in a 1930s pinstripe suit), on a colour screen chosen to contrast with the object; keyed out, with SAM's mask of the object keeping its body solid | A photo cut-out can only be as good as a casual snapshot; a cast performer is whole, in costume, holding its instrument |
+| Direct | **Muse Spark 1.3** | Reads the finished single (lyrics, band, roles, genre) and writes the video's shot list: per line a shot (close-up, duet, wide, solo, lineup, photo, low-angle), who is in frame, a camera move and an effect | The staging follows the song and changes every release, instead of a template |
 | Lyrics on the record | **Muse Voice Transcribe** (on Demucs's isolated vocal) | Hears the kept take phrase by phrase; a word-level alignment puts every lyric line where it was actually sung, and drops lines the singer skipped | The video's karaoke is timed from what was sung, not from what was written |
 
 ## In the build
@@ -104,4 +106,20 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     way each genre's records actually looked. The hard-rock brief ("smoke, pyro") was refused by Muse Image's
     content filter; the brief was rewritten (stage lights, lightning) and the pipeline now retries a refused brief
     without the genre look rather than shipping a release with no sleeve.
+18. **Muse Image + SAM cast the band; the owner called the old cut-outs "wonky" (Nov 3).** SAM cutting a hero out of
+    a casual phone photo gives whatever the photo gives: waffle fragments for an ice cream cone, a bus window with a
+    stranger's hand in it, a pipe for a sprinkler. So each cut-out now goes back to Muse Image with the photo, to be
+    redrawn as its band role in the genre's wardrobe, whole, on a flat colour screen. Asking SAM for "the musician"
+    in the painting was unreliable (it cut the dough but not its hat or accordion), so the screen is keyed out instead;
+    the screen colour is picked per performer to be as far as possible from the object's own colours, and SAM's mask
+    of the object is kept so pale dough on a grey screen never goes transparent. Muse Image's filter refused two
+    rock wardrobes ("spandex", "open shirt"); the brief falls back to a plain stage outfit. All 35 members of the
+    catalogue were cast in under three minutes; casting runs while the band records, so it adds no time.
+19. **Muse Spark 1.3 directs the video (Nov 3).** The owner's other note was that the band "dances in the same spots
+    every time". Spark now reads each single and writes a shot list from a fixed vocabulary of shots, moves and
+    effects: on the tango single it gave the dough's line the dough's close-up, then its real photo, then a solo
+    spotlight; choruses went wide with strobe on the hook; the duck got a low-angle hero shot. Its first lists leaned
+    on one move ("orbit" on 17 of 21 lines, echoing an example in our prompt), so the brief asks for range and the
+    pipeline breaks up any run of four identical moves. It writes the list from the lyric sheet while the band
+    records, and the shots are mapped onto the lines that were actually sung.
 
