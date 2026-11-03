@@ -34,7 +34,7 @@ Single: "{title}", {genre}, {bpm} bpm.
 The band (index: who, role):
 {band}
 
-The lyrics, in order, with when each line is sung:
+The lyrics, in order, with their section:
 {lines}
 
 Write the shot list: one shot per line, plus an intro (before the first line) and an outro.
@@ -63,7 +63,7 @@ def direct(title: str, genre: str, bpm: int, band: list[dict], lines: list[dict]
     prompt = PROMPT.format(
         title=title, genre=genre, bpm=bpm,
         band="\n".join(f"{b['photo']}: the {b['hero']}, {b['role']}" for b in band),
-        lines="\n".join(f"{i}. [{ln.get('section') or ''} {ln['start']:.0f}s] {ln['text']}"
+        lines="\n".join(f"{i}. [{ln.get('section') or ''}] {ln['text']}"
                         + (f"  (about {ln['photo']})" if ln.get("photo") is not None else "") for i, ln in enumerate(lines)))
     try:
         plan = meta.spark_json([{"role": "user", "content": prompt}], SCHEMA, "shot_list", effort="low", model=config.SPARK)

@@ -230,6 +230,11 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     cover_fut = pool.submit(_cover, d, look, order, cuts, photos, song)
     casting = ThreadPoolExecutor(max_workers=6)
     roles = {b["photo"]: b["role"] for b in song["band"] if 0 <= b["photo"] < len(order)}
+    cast_list = [{"photo": k, "hero": look["photos"][orig]["hero"], "role": roles.get(k, "band member")}
+                 for k, orig in enumerate(order) if k in roles]
+    # the director writes the video's shot list from the sheet while the band records
+    direction_fut = casting.submit(director.direct, song["title"].lower(), song["genre"].lower(), bpm, cast_list,
+                                   [{**ln, "start": 0.0} for ln in sheet])
     performer_futs = {k: casting.submit(_cast, job, d, k, photos[orig], look["photos"][orig]["hero"],
                                         roles.get(k, "band member"), song)
                       for k, orig in enumerate(order)}
@@ -243,7 +248,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     if not caption.lower().endswith(style.lower()):
         caption = f"{caption}, {style}"
     # ~11 beats a line: at 8 the singer dropped lines to fit (SB-0012: 12-18 of 21 sung at 90 s, 19-20 at 120 s)
-    duration = max(75.0, min(160.0, len(sheet) * 11 * 60 / bpm + 14))
+    duration = max(75.0, min(195.0, len(sheet) * 11 * 60 / bpm + 14))
     taken = band.record(caption=caption, lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
                         out_dir=str(d / "takes"), takes=TAKES, seed=int(time.time()) % 10000,
                         on_take=lambda m: job.emit("take", index=m["index"],
@@ -279,13 +284,11 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     shutil.copy2(taken[best]["path"], d / "song.mp3")
     length = _duration(d / "song.mp3")
     if aligned.get(best):  # what was heard; lines the singer skipped are left off the record
-        timed = [{k: v for k, v in ln.items() if k != "sung"} for ln in aligned[best] if ln["sung"]]
+        kept_lines = [i for i, ln in enumerate(aligned[best]) if ln["sung"]]
+        timed = [{k: v for k, v in aligned[best][i].items() if k != "sung"} for i in kept_lines]
     else:
+        kept_lines = list(range(len(sheet)))
         timed = _timeline(sheet, taken[best].get("lrc", ""), length)
-    # the director writes the video's shot list while the sleeve and the cast finish
-    cast_list = [{"photo": k, "hero": look["photos"][orig]["hero"], "role": roles.get(k, "band member")}
-                 for k, orig in enumerate(order) if k in roles]
-    direction_fut = pool.submit(director.direct, song["title"].lower(), song["genre"].lower(), bpm, cast_list, timed)
 
     # 6. press ---------------------------------------------------------------------------------
     job.stage("pressing", "pressing the cassette", 0.88)
@@ -305,6 +308,8 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     mark("cast")
     try:
         direction = direction_fut.result(timeout=90)
+        if direction:  # one shot per line that made the record
+            direction["shots"] = [direction["shots"][i] for i in kept_lines if i < len(direction["shots"])]
     except Exception:
         traceback.print_exc()
         direction = None
