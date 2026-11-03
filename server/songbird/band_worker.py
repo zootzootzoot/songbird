@@ -88,13 +88,14 @@ def record(job):
         tuning = {}
         for device in ("cuda", "cpu"):
             try:
-                tuning = tuner.measure(str(dest), device)
+                tuning = tuner.measure(str(dest), device, vocal_out=str(out / f"vocal-{k}.wav"))
                 break
             except Exception:
                 traceback.print_exc()
                 torch.cuda.empty_cache()
         send({"id": job["id"], "event": "take", "index": k, "path": str(dest), "lrc": lrc, "seconds": took,
-              "seed": seed, "key": meta.get("keyscale"), "bpm": meta.get("bpm"), "tuning": tuning})  # a["key"] is the file id
+              "seed": seed, "key": meta.get("keyscale"), "bpm": meta.get("bpm"), "tuning": tuning,
+              "vocal": str(out / f"vocal-{k}.wav") if (out / f"vocal-{k}.wav").exists() else None})  # a["key"] is the file id
     send({"id": job["id"], "event": "done"})
 
 

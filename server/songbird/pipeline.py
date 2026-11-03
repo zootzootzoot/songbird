@@ -21,7 +21,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
-from . import compose, config, meta, producer, writer
+from . import align, compose, config, meta, producer, writer
 from .band import band
 
 JOBS: dict[str, "Job"] = {}
@@ -237,7 +237,8 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         caption = f"{style}, {caption}"
     if not caption.lower().endswith(style.lower()):
         caption = f"{caption}, {style}"
-    duration = max(60.0, min(150.0, len(sheet) * 8 * 60 / bpm + 14))
+    # ~11 beats a line: at 8 the singer dropped lines to fit (SB-0012: 12-18 of 21 sung at 90 s, 19-20 at 120 s)
+    duration = max(75.0, min(160.0, len(sheet) * 11 * 60 / bpm + 14))
     taken = band.record(caption=caption, lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
                         out_dir=str(d / "takes"), takes=TAKES, seed=int(time.time()) % 10000,
                         on_take=lambda m: job.emit("take", index=m["index"],
@@ -252,22 +253,30 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     in_key = lambda i: (taken[i].get("tuning") or {}).get("inKey") or 0.0
     heard = [i for i in range(len(taken)) if in_key(i) >= IN_KEY] or sorted(range(len(taken)), key=in_key)[-2:]
     verdicts = [None] * len(taken)
+    # while Spark listens, Voice Transcribe hears each take's isolated vocal so we know which lines were really sung
+    aligned = dict(zip(heard, pool.map(lambda i: _align(taken[i], sheet), heard)))
     for i, v in zip(heard, pool.map(lambda i: _listen(taken[i], song, lyrics), heard)):
         verdicts[i] = v
+    sung = {i: (sum(ln["sung"] for ln in a) / len(a) if a else None) for i, a in aligned.items()}
     for i in range(len(taken)):
         if verdicts[i] is None:
             t = taken[i].get("tuning") or {}
             verdicts[i] = {"score": 0.0, "voice": 0.0, "words": 0.0, "genre": 0.0, "cut": True,
                            "verdict": f"cut by the tuner: only {round(in_key(i) * 100)}% of the singing sat in the "
                                       f"band's {t.get('bandKey') or 'key'}"}
-    best = max(heard, key=lambda i: verdicts[i]["score"])
+    # Spark's taste, plus a take that actually sings the whole sheet beats one that drops verses
+    best = max(heard, key=lambda i: verdicts[i]["score"] + 4 * (sung.get(i) if sung.get(i) is not None else 0.5))
     for i, v in enumerate(verdicts):
+        v["sung"] = sung.get(i)
         job.emit("verdict", index=i, score=v["score"], voice=v["voice"], words=v["words"], genre=v["genre"],
-                 verdict=v["verdict"], kept=i == best, cut=bool(v.get("cut")), inKey=in_key(i))
+                 verdict=v["verdict"], kept=i == best, cut=bool(v.get("cut")), inKey=in_key(i), sung=sung.get(i))
     mark("listen")
     shutil.copy2(taken[best]["path"], d / "song.mp3")
     length = _duration(d / "song.mp3")
-    timed = _timeline(sheet, taken[best].get("lrc", ""), length)
+    if aligned.get(best):  # what was heard; lines the singer skipped are left off the record
+        timed = [{k: v for k, v in ln.items() if k != "sung"} for ln in aligned[best] if ln["sung"]]
+    else:
+        timed = _timeline(sheet, taken[best].get("lrc", ""), length)
 
     # 6. press ---------------------------------------------------------------------------------
     job.stage("pressing", "pressing the cassette", 0.88)
@@ -295,7 +304,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         "duration": round(length, 2),
         "audio": f"/tapes/{job.id}/song.mp3",
         "takes": [{"audio": f"/tapes/{job.id}/takes/take-{i}.mp3", "kept": i == best, "cut": bool(v.get("cut")),
-                   **{k: v[k] for k in ("score", "voice", "words", "genre", "verdict")},
+                   **{k: v.get(k) for k in ("score", "voice", "words", "genre", "verdict", "sung")},
                    **(taken[i].get("tuning") or {})} for i, v in enumerate(verdicts)],
         "cover": cover,
         "palette": look.get("palette", [])[:4],
@@ -322,6 +331,17 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     job.tape = tape
     job.emit("progress", value=1.0)
     job.emit("done", tape=tape)
+
+
+def _align(take: dict, sheet: list[dict]) -> list[dict] | None:
+    if not take.get("vocal"):
+        return None
+    try:
+        import soundfile as sf
+        return align.align(take["vocal"], sheet, sf.info(take["vocal"]).duration)
+    except Exception:
+        traceback.print_exc()
+        return None
 
 
 def _listen(take: dict, song: dict, lyrics: str) -> dict:

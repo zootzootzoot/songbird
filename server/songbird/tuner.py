@@ -83,8 +83,12 @@ def _scale(r, mode):
     return [(r + s) % 12 for s in steps]
 
 
-def measure(path: str, device: str = "cpu") -> dict:
+def measure(path: str, device: str = "cpu", vocal_out: str | None = None) -> dict:
     d, sr = stems(path, device)
+    if vocal_out:  # the isolated vocal at 16 kHz, for lyric alignment (align.py)
+        import soundfile as sf
+        v = torchaudio.functional.resample(torch.tensor(d["vocals"])[None], sr, 16000)[0].numpy()
+        sf.write(vocal_out, (v / max(1e-6, float(np.abs(v).max())) * 0.9).astype(np.float32), 16000, subtype="PCM_16")
     r, mode = _key(_pitch_classes(d["bass"] + d["other"], sr))
     midi = _vocal_midi(d["vocals"], sr)
     if len(midi) < 200:  # barely any singing found

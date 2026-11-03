@@ -91,6 +91,7 @@ const Lane = memo(function Lane({ l }: { l: LaneView }) {
             <span>VOICE {fmt(l.voice)}</span>
             <span>WORDS {fmt(l.words)}</span>
             <span>GENRE {fmt(l.genre)}</span>
+            {typeof l.sung === "number" && <span>SUNG {Math.round(l.sung * 100)}%</span>}
           </div>
         )}
       </div>

@@ -21,13 +21,13 @@ VARIANTS = {  # name: (thinking, pass the key, extra params)
     "dit_nokey": (False, False, {}),
     "dit_more": (False, True, {}),
 }
-SEEDS = {"dit_more": [3, 204, 305, 406]}
+SEEDS = {"dit_more": [3, 204, 305, 406], "dit_key": [11, 112, 213]}
 tid = sys.argv[1]
 names = sys.argv[2:] or list(VARIANTS)
 song = json.loads((SERVER / "data/tapes" / tid / "log.json").read_text())["song"]
 lyrics = "\n".join(f"[{s['tag']}]\n" + "\n".join(l["text"] for l in s["lines"]) + "\n" for s in song["sections"]).strip()
 n_lines = sum(len(s["lines"]) for s in song["sections"])
-duration = max(60.0, min(150.0, n_lines * 8 * 60 / song["bpm"] + 14))
+duration = float(os.environ["DUR"]) if os.environ.get("DUR") else max(60.0, min(150.0, n_lines * 8 * 60 / song["bpm"] + 14))
 dit, lm = AceStepHandler(), LLMHandler()
 dit.initialize_service(project_root=str(ACE), config_path=os.environ.get("ACE_DIT", "acestep-v15-turbo"), device="cuda")
 if os.environ.get("NO_LM") != "1":  # without it the DiT plays from our bpm/key/duration alone

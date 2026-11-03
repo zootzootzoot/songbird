@@ -40,6 +40,7 @@ export type TakeState = {
   verdict?: string;
   kept?: boolean;
   cut?: boolean;
+  sung?: number | null;
   inKey?: number | null;
   vocalKey?: string | null;
   bandKey?: string;
@@ -280,6 +281,7 @@ function reduceEvent(state: DeckState, ev: SongEvent): DeckState {
               verdict: ev.verdict,
               kept: ev.kept,
               cut: ev.cut,
+              sung: ev.sung,
             },
           },
           log: pushLog(w.log, { key: `verdict-${ev.index}`, kind: "verdict", index: ev.index }),

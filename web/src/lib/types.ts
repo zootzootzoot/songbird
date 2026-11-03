@@ -43,6 +43,8 @@ export type Take = {
   kept: boolean;
   /** cut by the tuner before the producer heard it */
   cut?: boolean;
+  /** share of the sheet's lines actually sung (Demucs vocal + Voice Transcribe), when measured */
+  sung?: number | null;
   /** share of sung time on the band's scale (Demucs split + pitch track) */
   inKey?: number | null;
   vocalKey?: string | null;
@@ -113,7 +115,7 @@ export type SongEvent =
   | { type: "line"; index: number; text: string; photo: number | null; section?: string }
   | { type: "band"; photo: number; role: string }
   | { type: "take"; index: number; audio: string; inKey?: number | null; vocalKey?: string | null; bandKey?: string }
-  | { type: "verdict"; index: number; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean; cut?: boolean }
+  | { type: "verdict"; index: number; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean; cut?: boolean; sung?: number | null }
   | { type: "sung"; index: number }
   | { type: "progress"; value: number }
   | { type: "done"; tape: Tape }
