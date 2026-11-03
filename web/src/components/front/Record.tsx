@@ -43,7 +43,7 @@ export function Record({ tape, onOpen }: { tape: Tape; onOpen: () => void }) {
     };
   }, []);
 
-  const band = tape.photos.map((p, i) => ({ p, i })).filter(({ p }) => p.cutout || p.motion).slice(0, SPOTS.length);
+  const band = tape.photos.map((p, i) => ({ p, i })).filter(({ p }) => p.performer || p.cutout || p.motion).slice(0, SPOTS.length);
   return (
     <button ref={stage} className="rec" onClick={onOpen} aria-label={`play ${tape.title}`}>
       <span className="rec__world">
@@ -73,7 +73,7 @@ export function Record({ tape, onOpen }: { tape: Tape; onOpen: () => void }) {
                 } as CSSProperties
               }
             >
-              <img src={p.motion ?? p.cutout ?? ""} alt={p.hero} />
+              <img src={p.performer ?? p.motion ?? p.cutout ?? ""} alt={p.hero} />
             </span>
           );
         })}

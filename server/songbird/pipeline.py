@@ -21,7 +21,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
-from . import align, compose, config, meta, producer, writer
+from . import align, cast, compose, config, meta, producer, writer
 from .band import band
 
 JOBS: dict[str, "Job"] = {}
@@ -226,8 +226,13 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             job.emit("band", photo=b["photo"], role=b["role"].lower())
     job.emit("progress", value=0.42)
 
-    # 3. the sleeve, painted while the band records ---------------------------------------------
+    # 3. the sleeve and the cast, painted while the band records --------------------------------
     cover_fut = pool.submit(_cover, d, look, order, cuts, photos, song)
+    casting = ThreadPoolExecutor(max_workers=6)
+    roles = {b["photo"]: b["role"] for b in song["band"] if 0 <= b["photo"] < len(order)}
+    performer_futs = {k: casting.submit(_cast, job, d, k, photos[orig], look["photos"][orig]["hero"],
+                                        roles.get(k, "band member"), song)
+                      for k, orig in enumerate(order)}
 
     # 4. record (ACE-Step 1.5) -----------------------------------------------------------------
     job.stage("recording", "rolling tape", 0.45)
@@ -286,6 +291,14 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     except Exception:
         traceback.print_exc()
     mark("cover")
+    performers = {}
+    for k, f in performer_futs.items():
+        try:
+            performers[k] = f.result(timeout=120)
+        except Exception:
+            traceback.print_exc()
+    casting.shutdown(wait=False)
+    mark("cast")
     pool.shutdown(wait=False)
 
     today = dt.date.today()
@@ -311,7 +324,8 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         "photos": [{"src": f"/tapes/{job.id}/photo-{k}.jpg", "cutout": cuts.get(k, (None, None))[0],
                     "box": cuts.get(k, (None, None))[1], "hero": look["photos"][orig]["hero"],
                     "motion": motion.get(k, (None,))[0], "motionBox": motion.get(k, (None, None))[1],
-                    "clip": clips.get(k), "seen": look["photos"][orig]["seen"]} for k, orig in enumerate(order)],
+                    "clip": clips.get(k), "seen": look["photos"][orig]["seen"], "performer": performers.get(k)}
+                   for k, orig in enumerate(order)],
         "band": [{"photo": b["photo"], "role": b["role"].lower()} for b in song["band"] if 0 <= b["photo"] < len(order)],
         "lines": timed,
         "credits": [c for c in [
@@ -322,6 +336,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             {"role": "tuned the takes (split the singer from the band)", "model": "Demucs (Meta, open source)"},
             {"role": "listened back, picked the take", "model": "Muse Spark 1.2"},
             {"role": "painted the sleeve", "model": "Muse Image 1.0"} if cover else None,
+            {"role": "dressed the band for the genre", "model": "Muse Image 1.0 + SAM 3.1"} if any(performers.values()) else None,
             {"role": "heard your note", "model": "Muse Voice Transcribe"} if getattr(job, "spoken", False) else None,
         ] if c],
     }
@@ -342,6 +357,23 @@ def _align(take: dict, sheet: list[dict]) -> list[dict] | None:
     except Exception:
         traceback.print_exc()
         return None
+
+
+def _cast(job, d: Path, k: int, photo: Image.Image, hero: str, role: str, song: dict) -> str | None:
+    """Muse Image redraws photo k's hero as its band role in the genre's wardrobe; keyed out -> cast-k.png."""
+    try:
+        cut = Image.open(d / f"cut-{k}.png") if (d / f"cut-{k}.png").exists() else None
+        r = cast.performer(photo, cut, hero, role, song["genre"], song.get("style"))
+    except Exception:
+        traceback.print_exc()
+        return None
+    if not r:
+        return None
+    r[0].save(d / f"cast-{k}.png")
+    r[1].save(d / f"cast-{k}-art.png")  # the painting, so the key can be redone without repainting
+    url = f"/tapes/{job.id}/cast-{k}.png"
+    job.emit("performer", photo=k, src=url)
+    return url
 
 
 def _listen(take: dict, song: dict, lyrics: str) -> dict:

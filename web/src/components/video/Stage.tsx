@@ -235,7 +235,7 @@ export const Stage = memo(function Stage({
       ))}
       {tape.photos.map((p, i) => {
         const d = dims[i];
-        const art = p.motion || p.cutout;
+        const art = p.performer || p.motion || p.cutout;
         return (
           <div
             key={i}

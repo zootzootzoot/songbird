@@ -11,6 +11,8 @@ export type ChannelView = {
   seen: string | null;
   cut: { cutout: string | null; box: Box | null; motion?: string | null; motionBox?: Box | null } | null;
   role: string | null;
+  /** Muse Image's costumed performer, once dressed */
+  performer: string | null;
   lines: number;
   /** 0..1: how hard the producer is addressing this channel right now */
   level: number;
@@ -72,7 +74,7 @@ const Strip = memo(function Strip({ c, looking }: { c: ChannelView; looking: boo
   const state = !c.hero ? (looking ? "looking" : "idle") : c.cut ? (sticker ? "cast" : "nocut") : "seen";
 
   return (
-    <li className="rm-strip" data-state={state} data-focus={c.focus || undefined}>
+    <li className="rm-strip" data-state={state} data-focus={c.focus || undefined} data-dressed={Boolean(c.performer) || undefined}>
       <span className="rm-strip__no num">{pad2(c.k + 1)}</span>
 
       <div className="rm-photo">
@@ -121,6 +123,7 @@ const Strip = memo(function Strip({ c, looking }: { c: ChannelView; looking: boo
               />
             </>
           )}
+          {c.performer && <img className="rm-performer" src={media(c.performer) ?? c.performer} alt={`${c.hero ?? "the band member"}, dressed for the band`} />}
         </div>
         {looking && !c.hero && <span className="rm-scan" />}
       </div>

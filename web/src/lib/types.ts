@@ -17,6 +17,8 @@ export type Photo = {
   motionBox?: Box | null;
   /** videos only: the 3 s muted clip */
   clip?: string | null;
+  /** the hero redrawn by Muse Image as its band role in the genre's wardrobe, keyed out (RGBA) */
+  performer?: string | null;
 };
 
 export type Word = { text: string; start: number; end: number };
@@ -114,6 +116,7 @@ export type SongEvent =
   | { type: "title"; title: string }
   | { type: "line"; index: number; text: string; photo: number | null; section?: string }
   | { type: "band"; photo: number; role: string }
+  | { type: "performer"; photo: number; src: string }
   | { type: "take"; index: number; audio: string; inKey?: number | null; vocalKey?: string | null; bandKey?: string }
   | { type: "verdict"; index: number; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean; cut?: boolean; sung?: number | null }
   | { type: "sung"; index: number }
@@ -130,6 +133,7 @@ export const EVENT_TYPES: SongEvent["type"][] = [
   "title",
   "line",
   "band",
+  "performer",
   "take",
   "verdict",
   "sung",

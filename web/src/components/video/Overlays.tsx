@@ -121,7 +121,7 @@ export function Credits({
         <div className="vc-h">the band</div>
         {band.map((m) => {
           const ph = tape.photos[m.photo];
-          const art = ph?.motion || ph?.cutout;
+          const art = ph?.performer || ph?.motion || ph?.cutout;
           return (
             <div className="vc-row" key={m.photo}>
               <div className="vc-thumb">

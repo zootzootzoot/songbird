@@ -16,6 +16,7 @@ export function rebase(tape: Tape, map: (u: string | null) => string | null): Ta
       cutout: map(p.cutout),
       motion: map(p.motion ?? null),
       clip: map(p.clip ?? null),
+      performer: map(p.performer ?? null),
     })),
   };
 }
@@ -120,7 +121,8 @@ export async function transcribe(audio: Blob): Promise<string> {
 
 async function staticTape(id: string): Promise<Tape | null> {
   try {
-    const res = await fetch(asset(`tapes/${encodeURIComponent(id)}/tape.json`));
+    // revalidate: a release can be updated after pressing (re-cast band, re-painted sleeve)
+    const res = await fetch(asset(`tapes/${encodeURIComponent(id)}/tape.json`), { cache: "no-cache" });
     if (!res.ok || !isJson(res)) return null;
     return rebase((await res.json()) as Tape, staticMedia);
   } catch {
@@ -196,6 +198,7 @@ export function openEvents(id: string, onEvent: (event: SongEvent) => void, onLo
   let failures = 0;
 
   const fix = (ev: SongEvent): SongEvent => {
+    if (ev.type === "performer") return { ...ev, src: media(ev.src) ?? ev.src };
     if (ev.type === "cut") return { ...ev, cutout: media(ev.cutout), motion: media(ev.motion ?? null), clip: media(ev.clip ?? null) };
     if (ev.type === "take") return { ...ev, audio: media(ev.audio) ?? ev.audio };
     if (ev.type === "done") return { ...ev, tape: rebase(ev.tape, media) };

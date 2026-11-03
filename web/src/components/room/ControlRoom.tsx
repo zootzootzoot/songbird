@@ -160,6 +160,7 @@ function Room({ deck }: { deck: Deck }) {
       hero: w.seen[k]?.hero ?? null,
       seen: w.seen[k]?.seen ?? null,
       cut: w.cuts[k] ?? null,
+      performer: w.performers[k] ?? null,
       role: w.band[k] ?? null,
       lines: linesPer[k] ?? 0,
       level,

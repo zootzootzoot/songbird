@@ -56,6 +56,8 @@ export type Work = {
   title: string | null;
   genre: { genre: string; why: string; bpm: number; key: string } | null;
   band: Record<number, string>;
+  /** Muse Image's costumed performer per photo */
+  performers: Record<number, string>;
   takes: Record<number, TakeState>;
   lines: Record<number, { text: string; photo: number | null; section: string }>;
   sung: Record<number, true>;
@@ -109,6 +111,7 @@ const emptyWork = (): Work => ({
   title: null,
   genre: null,
   band: {},
+  performers: {},
   takes: {},
   lines: {},
   sung: {},
@@ -253,6 +256,8 @@ function reduceEvent(state: DeckState, ev: SongEvent): DeckState {
           }),
         },
       };
+    case "performer":
+      return { ...state, work: { ...w, performers: { ...w.performers, [ev.photo]: ev.src } } };
     case "take":
       return {
         ...state,

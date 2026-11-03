@@ -60,7 +60,7 @@ def copy_tapes():
         out = dest / tid
         out.mkdir()
         for f in src.iterdir():
-            if f.name.startswith(("photo-", "cut-", "move-", "clip-")) or f.name == "song.mp3":
+            if (f.name.startswith(("photo-", "cut-", "move-", "clip-", "cast-")) and "-art" not in f.name) or f.name == "song.mp3":
                 shutil.copy2(f, out / f.name)
         if (src / "takes").is_dir():  # the session sheet plays every take, the cut ones too
             (out / "takes").mkdir()
