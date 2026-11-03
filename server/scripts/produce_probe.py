@@ -7,5 +7,5 @@ look = json.load(open(f"data/tapes/{tid}/log.json"))["look"]
 order = look.get("order") or list(range(len(look["photos"])))
 t = time.time()
 song = producer.write(look, order, "ada", None, on_try=lambda r, s, i: print(f"  round {r} at {time.time() - t:.0f}s: {s.get('style')} | {len(i)} issues"))
-print(f"{time.time() - t:.0f} s | {song['genre']} | {song.get('style')} | {song['title']}")
+print(f"{time.time() - t:.0f} s | {song['genre']} | {song.get('style')} | {song['title']} | {song.get('artist')}")
 print("why:", song["why"]); print("caption:", song["caption"]); print(producer.lyrics_text(song)); print("liner:", song["liner"]); print("band:", song["band"])

@@ -166,7 +166,7 @@ def _page(request: Request, tid: str | None):
             base = base.replace("http://", proto + "://", 1)
         esc = lambda s: (s or "").replace("&", "&amp;").replace('"', "&quot;").replace("<", "&lt;")
         title = f"{tape['title']} · songbird"
-        desc = f"a bedtime song {tape['dedication']}. {tape.get('liner', '')}"
+        desc = f"a {tape.get('genre') or ''} single by {tape.get('artist') or 'songbird'}. {tape.get('liner', '')}"
         img = base + (tape.get("cover") or tape["photos"][0]["src"])
         tags = (f'<meta property="og:title" content="{esc(title)}">'
                 f'<meta property="og:description" content="{esc(desc)}">'

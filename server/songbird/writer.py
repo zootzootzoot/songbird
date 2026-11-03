@@ -62,12 +62,13 @@ WRITE_SCHEMA = {
         "liner": {"type": "string"},
     }}
 
-LOOK_PROMPT = """You are the eyes of Songbird, a toy cassette deck that turns photos of a child's day into a bedtime song.
+LOOK_PROMPT = """You are the eyes of Songbird, a record producer that turns photos of one ordinary day into a produced
+single and its music video. The things in the photos become the band.
 Here are {n} photos from one day, numbered 0 to {last} in the order given.
-For each photo pick its hero: the one concrete thing a small child would point at (an animal, a toy, food, an object),
+For each photo pick its hero: the one concrete thing that would front the band (an animal, an object, food, a vehicle),
 named as a short noun phrase a segmentation model can find. Never a face or a whole person; if people are the subject,
 pick the thing they hold or touch. Note what is happening and three small, specific, sensory details.
-Then order the photos the way the day most likely happened (light, clothes, wet hair, lamps, pyjamas are clues)."""
+Then order the photos the way the day most likely happened (light, clothes, weather, lamps are clues)."""
 
 WRITE_PROMPT = """You are the songwriter inside Songbird, a toy cassette deck. Write a short, true bedtime song about this day,
 for {who}. The parent loaded these photos; here is what you saw in them, in the order of the day:

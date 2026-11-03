@@ -285,7 +285,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         "catalog": _catalog(),
         "createdAt": dt.datetime.now().isoformat(timespec="seconds"),
         "title": song["title"].lower(),
-        "artist": f"{name.lower()} & the small days" if name else "the small days",
+        "artist": (song.get("artist") or (f"{name} and the band" if name else "the band")).lower(),
         "name": name.lower() if name else None,
         "dedication": (f"{name.lower()}'s " if name else "") + _date_words(today),
         "genre": song["genre"].lower(), "why": song["why"], "caption": caption, "style": song.get("style"),

@@ -29,9 +29,10 @@ REPERTOIRE = [
 
 PRODUCE_SCHEMA = {
     "type": "object", "additionalProperties": False,
-    "required": ["title", "genre", "style", "why", "caption", "bpm", "key", "vocal", "sections", "band", "liner"],
+    "required": ["title", "artist", "genre", "style", "why", "caption", "bpm", "key", "vocal", "sections", "band", "liner"],
     "properties": {
         "title": {"type": "string"},
+        "artist": {"type": "string", "description": "an invented act name as it would be printed on the sleeve, in the genre's naming idiom, built around the star's name and the band you cast (e.g. 'ada & the sprinkler sound system', 'lady ada and the puddle department', 'ada vortex'); never just the bare name"},
         "genre": {"type": "string", "description": "the genre in a few words, with an era, e.g. '1974 philly soul ballad'"},
         "style": {"type": "string", "enum": REPERTOIRE, "description": "the style the session band plays it in"},
         "why": {"type": "string", "description": "one sentence, under 25 words, in your voice: the detail that made this day this genre"},
@@ -54,9 +55,9 @@ PRODUCE_SCHEMA = {
         "liner": {"type": "string"},
     }}
 
-PRODUCE_PROMPT = """You are the producer inside Songbird: a small wooden bird who runs a record label for one family, and takes
-small days extremely seriously. Every day gets released as a single. Today's photos came in{who}; this is what the
-deck saw, in the order of the day:
+PRODUCE_PROMPT = """You are the producer inside Songbird: a record producer with enormous opinions and total conviction, who
+treats one ordinary day like a major-label single. Today's photos came in{who}; this is what was seen, in the order of
+the day:
 
 {photos}
 
@@ -88,10 +89,13 @@ Make the single. Rules, every one matters:
 - Lines 5 to 10 syllables, natural stress, real rhymes (verse lines 2 and 4 rhyme at least). Lowercase except names.
   Say it in the genre's own idiom (soul: "baby", "oh"; punk: shouted, short; hip-hop: internal rhymes, swagger;
   metal: mythic and huge).
-- The chorus is the hook: short, singable, a little absurd, sincere. If the child has a name, the chorus uses it.
+- The chorus is the hook: short, singable, a little absurd, sincere. If the star has a name, the chorus uses it.
 - band: cast every photo's hero as a band member with a credit ("the goose: lead antagonist", "the band-aid:
   tambourine"). Funny and affectionate.
 - why: one sentence, under 25 words, naming the one detail that decided the genre.
+- artist: the act's name on the sleeve. Invent it in the genre's own naming idiom, around the star and the band you
+  cast: "ada & the sprinkler sound system" (ska), "lady ada and the puddle department" (soul), "ada vortex"
+  (synthwave). Never just the bare name.
 - title: the single's title, 1 to 5 words, lowercase, like a real song title.
 - liner: 2 or 3 sentences of liner notes in your voice: lowercase, dry, opinionated, warm, a bit unhinged about
   how much this day mattered. No emoji. No "AI".
