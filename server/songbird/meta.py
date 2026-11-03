@@ -218,6 +218,16 @@ def paint(prompt: str, refs: list[Image.Image], size: str = "1024x1024") -> Imag
 
 # ---------------------------------------------------------------- Muse Voice Transcribe
 
+def transcribe_wav(wav: bytes) -> str:
+    """16 kHz mono 16-bit WAV -> Muse Voice Transcribe -> text."""
+    req = {"model": "muse-voice-transcribe-1.0", "audioEncoding": "WAV", "sampleRate": 16000}
+    r = _client.post("/asr/transcribe", files={"request": (None, json.dumps(req), "application/json"),
+                                               "audio": ("clip.wav", wav, "audio/wav")})
+    if r.status_code >= 400:
+        raise RuntimeError(f"transcribe {r.status_code}: {r.text[:300]}")
+    return (r.json().get("transcript") or "").strip()
+
+
 def transcribe(audio: bytes) -> str:
     """Any browser recording (webm/ogg/mp4/wav) → 16 kHz mono WAV → Muse Voice Transcribe → text."""
     import subprocess
