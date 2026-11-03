@@ -58,6 +58,8 @@ export type Tape = {
   name: string | null;
   dedication: string;
   genre?: string;
+  /** the repertoire style the band played it in (picks the video theme); older tapes lack it */
+  style?: string;
   why?: string;
   caption?: string;
   liner: string;
