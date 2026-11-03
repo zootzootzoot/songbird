@@ -78,7 +78,8 @@ def _key(pc):
 
 
 def _scale(r, mode):
-    steps = [0, 2, 4, 5, 7, 9, 11] if mode == "major" else [0, 2, 3, 5, 7, 8, 10]
+    # minor keeps both 7ths: harmonic minor's raised leading tone is in key for tango, soul, rock and most of pop
+    steps = [0, 2, 4, 5, 7, 9, 11] if mode == "major" else [0, 2, 3, 5, 7, 8, 10, 11]
     return [(r + s) % 12 for s in steps]
 
 
