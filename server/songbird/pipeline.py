@@ -21,7 +21,7 @@ from pathlib import Path
 
 from PIL import Image, ImageOps
 
-from . import align, cast, compose, config, meta, producer, writer
+from . import align, cast, compose, config, director, meta, producer, writer
 from .band import band
 
 JOBS: dict[str, "Job"] = {}
@@ -282,6 +282,10 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         timed = [{k: v for k, v in ln.items() if k != "sung"} for ln in aligned[best] if ln["sung"]]
     else:
         timed = _timeline(sheet, taken[best].get("lrc", ""), length)
+    # the director writes the video's shot list while the sleeve and the cast finish
+    cast_list = [{"photo": k, "hero": look["photos"][orig]["hero"], "role": roles.get(k, "band member")}
+                 for k, orig in enumerate(order) if k in roles]
+    direction_fut = pool.submit(director.direct, song["title"].lower(), song["genre"].lower(), bpm, cast_list, timed)
 
     # 6. press ---------------------------------------------------------------------------------
     job.stage("pressing", "pressing the cassette", 0.88)
@@ -299,6 +303,12 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             traceback.print_exc()
     casting.shutdown(wait=False)
     mark("cast")
+    try:
+        direction = direction_fut.result(timeout=90)
+    except Exception:
+        traceback.print_exc()
+        direction = None
+    mark("direct")
     pool.shutdown(wait=False)
 
     today = dt.date.today()
@@ -328,6 +338,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
                    for k, orig in enumerate(order)],
         "band": [{"photo": b["photo"], "role": b["role"].lower()} for b in song["band"] if 0 <= b["photo"] < len(order)],
         "lines": timed,
+        "direction": direction,
         "credits": [c for c in [
             {"role": "looked at today", "model": "Muse Spark 1.3"},
             {"role": "cut out the band" + (" and followed the moving ones" if motion else ""), "model": "SAM 3.1"},
@@ -337,6 +348,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             {"role": "listened back, picked the take", "model": "Muse Spark 1.2"},
             {"role": "painted the sleeve", "model": "Muse Image 1.0"} if cover else None,
             {"role": "dressed the band for the genre", "model": "Muse Image 1.0 + SAM 3.1"} if any(performers.values()) else None,
+            {"role": "directed the video", "model": "Muse Spark 1.3"} if direction else None,
             {"role": "heard your note", "model": "Muse Voice Transcribe"} if getattr(job, "spoken", False) else None,
         ] if c],
     }
