@@ -7,11 +7,19 @@
  * moving SAM sticker. Your own photos replay SB-0007's words over your
  * pictures with fake oval stickers.
  *
- * Shape: ~8 s looking (every `seen` at once), ~4 s of cuts, ~55 s producing
- * (genre, title, lines, band arrive at the end), ~30 s recording (two takes),
- * ~15 s listening (two verdicts), ~15 s pressing, done.
+ * Shape (matches a real run on the GPU server, ~100 s at speed 1): ~8 s looking
+ * (every `seen` at once), cutting then straight into producing, SAM's cuts landing
+ * during the first seconds of producing, ~40 s producing (a checker note midway;
+ * genre, title, lines, band arrive in one burst at the end), ~65 s recording four
+ * takes one at a time (each `take` carries the Demucs tuner reading), ~10 s
+ * listening (every verdict at once: the takes the tuner cut under 75% in key come
+ * back `cut: true`, the rest scored, one kept), a few seconds pressing, done.
  *
- * URL options: `speed=3` (faster), `fail=<stage>`.
+ * The fixtures only hold two scored takes; the replay plays them as takes 1 and 3
+ * and fills takes 2 and 4 with tuner rejects, so the room always sees four.
+ *
+ * URL options: `speed=3` (faster), `fail=<stage>`, `takes=<tape id>` (play a real
+ * release's four take files from the server as the takes, so the room can draw real waveforms).
  */
 import { FIXTURE, MOTION_FIXTURE } from "./api";
 import { fakeCutout } from "./image";
@@ -36,6 +44,50 @@ const LABELS: Record<Stage, string> = {
   pressing: "pressing the release",
 };
 
+const NOTES = "C C# D D# E F F# G G# A A# B".split(" ");
+const FLATS: Record<string, string> = { Db: "C#", Eb: "D#", Gb: "F#", Ab: "G#", Bb: "A#" };
+
+/** the tuner names keys with sharps ("D# major"); shift a fixture key by some semitones */
+function tunerKey(key: string, shift = 0): string {
+  const [rawNote, mode = "major"] = key.trim().split(/\s+/);
+  const note = FLATS[rawNote] ?? rawNote;
+  const r = NOTES.indexOf(note);
+  if (r < 0) return key;
+  return `${NOTES[(r + shift + 12) % 12]} ${mode.toLowerCase()}`;
+}
+
+/** four takes: the fixture's two scored takes at 1 and 3, tuner rejects at 2 and 4 */
+function fourTakes(base: Tape) {
+  const scored = base.takes ?? [];
+  const band = tunerKey(base.key);
+  const plan: { from: number | null; inKey: number; shift: number }[] = [
+    { from: 0, inKey: 0.88, shift: 0 },
+    { from: null, inKey: 0.66, shift: 2 },
+    { from: 1, inKey: 0.92, shift: 0 },
+    { from: null, inKey: 0.71, shift: 7 },
+  ];
+  const audioFor = (i: number) => (scored[0]?.audio ?? `/tapes/${base.id}/take-0.mp3`).replace(/take-\d+/, `take-${i}`);
+  return plan.map((p, i) => {
+    const t = p.from === null ? null : scored[p.from] ?? null;
+    const cut = !t || p.inKey < 0.75;
+    return {
+      audio: t?.audio ?? audioFor(i),
+      tuning: { inKey: p.inKey, vocalKey: tunerKey(base.key, p.shift), bandKey: band },
+      verdict: cut
+        ? {
+            score: 0,
+            voice: 0,
+            words: 0,
+            genre: 0,
+            verdict: `cut by the tuner: only ${Math.round(p.inKey * 100)}% of the singing sat in the band's ${band}`,
+            kept: false,
+            cut: true,
+          }
+        : { score: t!.score, voice: t!.voice, words: t!.words, genre: t!.genre, verdict: t!.verdict, kept: t!.kept, cut: false },
+    };
+  });
+}
+
 export function runMock(
   photoSrcs: string[],
   name: string,
@@ -55,7 +107,9 @@ export function runMock(
   const photos = base.photos.slice(0, n).map((p, i) => ({ ...p, src: real ? p.src : photoSrcs[i] }));
   const lines = base.lines.filter((l) => l.photo === null || l.photo < n);
   const band = (base.band ?? []).filter((b) => b.photo < n);
-  const takes = base.takes ?? [];
+  const takes = fourTakes(base);
+  const realTakes = new URLSearchParams(location.search).get("takes");
+  if (realTakes && /^t_[a-z0-9]+$/i.test(realTakes)) takes.forEach((t, i) => (t.audio = `/tapes/${realTakes}/takes/take-${i}.mp3`));
   const who = name.trim().toLowerCase() || null;
   const baseName = base.name ?? "ada";
   const swap = (t: string) => (who ? t.replace(new RegExp(`\\b${baseName}\\b`, "gi"), who) : t);
@@ -85,8 +139,13 @@ export function runMock(
     at(30, () => ({ type: "order", order: photos.map((_, i) => i) }));
     prog(0.12);
     if (stage("cutting", 300, 0.14)) return;
-    photos.forEach((p, i) =>
-      at(i === 0 ? 700 : 650, async () => {
+    // SAM works in parallel with the producer: the cuts land early in producing
+    if (stage("producing", 300, 0.2)) return;
+    let producing = 0;
+    photos.forEach((p, i) => {
+      const d = i === 0 ? 1600 : 1100;
+      producing += d;
+      at(d, async () => {
         if (!real) cutouts[i] = p.box ? await fakeCutout(p.src, p.box) : null;
         return {
           type: "cut",
@@ -97,39 +156,26 @@ export function runMock(
           motionBox: real ? p.motionBox ?? null : null,
           clip: real ? p.clip ?? null : null,
         };
-      }),
-    );
-    prog(0.2);
-    if (stage("producing", 400, 0.22)) return;
-    prog(0.3);
-    at(44000, () => ({ type: "genre", genre: base.genre ?? "", why: base.why ?? "", bpm: base.bpm, key: base.key }));
-    prog(0.4);
-    at(3600, () => ({ type: "title", title: swap(base.title) }));
-    lines.forEach((l, i) =>
-      at(i === 0 ? 1400 : 25, () => ({ type: "line", index: i, text: swap(l.text), photo: l.photo, section: l.section ?? "" })),
-    );
-    band.forEach((b, i) => at(i === 0 ? 4200 : 500, () => ({ type: "band", photo: b.photo, role: b.role })));
-    prog(0.48);
-    if (stage("recording", 900, 0.5)) return;
-    takes.forEach((t, i) => {
-      at(i === 0 ? 15000 : 14000, () => ({ type: "take", index: i, audio: t.audio }));
-      prog(0.5 + 0.15 * (i + 1));
+      });
     });
-    if (stage("listening", 600, 0.82)) return;
-    takes.forEach((t, i) =>
-      at(i === 0 ? 6500 : 5500, () => ({
-        type: "verdict",
-        index: i,
-        score: t.score,
-        voice: t.voice,
-        words: t.words,
-        genre: t.genre,
-        verdict: t.verdict,
-        kept: t.kept,
-      })),
+    at(22000 - producing, () => ({ type: "stage", stage: "producing", label: "the checker binned a demo. 2 notes" }));
+    at(18000, () => ({ type: "genre", genre: base.genre ?? "", why: base.why ?? "", bpm: base.bpm, key: base.key }));
+    at(20, () => ({ type: "title", title: swap(base.title) }));
+    lines.forEach((l, i) =>
+      at(10, () => ({ type: "line", index: i, text: swap(l.text), photo: l.photo, section: l.section ?? "" })),
     );
-    if (stage("pressing", 1800, 0.9)) return;
-    at(9000, () => ({ type: "progress", value: 1 }));
+    band.forEach((b) => at(10, () => ({ type: "band", photo: b.photo, role: b.role })));
+    prog(0.42);
+    if (stage("recording", 300, 0.45)) return;
+    takes.forEach((t, i) => {
+      at(i === 0 ? 19000 : 15500, () => ({ type: "take", index: i, audio: t.audio, ...t.tuning }));
+    });
+    prog(0.7);
+    if (stage("listening", 300, 0.72)) return;
+    // every verdict lands at once, as the server sends them
+    takes.forEach((t, i) => at(i === 0 ? 9500 : 0, () => ({ type: "verdict", index: i, ...t.verdict })));
+    if (stage("pressing", 100, 0.88)) return;
+    at(4500, () => ({ type: "progress", value: 1 }));
     at(400, () => {
       const tape: Tape = {
         ...base,
@@ -142,6 +188,7 @@ export function runMock(
         dedication: swap(base.dedication),
         liner: swap(base.liner),
         photos: photos.map((p, i) => ({ ...p, cutout: cutouts[i] })),
+        takes: takes.map((t) => ({ audio: t.audio, ...t.verdict, ...t.tuning })),
         lines: lines.map((l) => ({ ...l, text: swap(l.text), words: l.words.map((w) => ({ ...w, text: swap(w.text) })) })),
         credits:
           note.trim() && !base.credits.some((c) => c.role === "heard your note")
