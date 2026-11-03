@@ -563,3 +563,94 @@
     transform: translateX(-100%);
   }
 }
+
+/* short desktop screens (1280x720): everything still on one screen */
+@media (max-height: 820px) and (min-width: 901px) {
+  .front {
+    padding-top: 14px;
+    padding-bottom: 14px;
+    row-gap: 14px;
+    height: 100vh;
+  }
+  .front__strip {
+    padding-bottom: 10px;
+  }
+  .front__headline {
+    font-size: clamp(48px, 6.4vw, 120px);
+  }
+  .front__lede {
+    margin-top: 14px;
+    font-size: 15px;
+  }
+  .front__ticker {
+    margin-top: 16px;
+  }
+  .front__ticker-track p {
+    font-size: 22px;
+  }
+  .front__chain {
+    margin-top: 16px;
+  }
+  .front__chain li {
+    padding: 9px 10px 10px;
+  }
+  .front__input {
+    gap: 9px;
+    padding: 14px;
+  }
+  .front__ch {
+    max-height: 12.5vh;
+  }
+  .front__field input,
+  .front__mic {
+    height: 34px;
+  }
+  .front__rec {
+    height: 50px;
+  }
+  .front__catalogue {
+    padding-top: 8px;
+  }
+  .front__catalogue ul {
+    margin-top: 6px;
+  }
+  .front__release {
+    grid-template-columns: 56px 196px;
+  }
+  .front__sleeve {
+    width: 56px;
+    height: 56px;
+  }
+  .front__genre {
+    display: none;
+  }
+}
+
+/* phones: the inputs come right after the pitch, the explainer after them */
+@media (max-width: 900px) {
+  .front {
+    display: flex;
+    flex-direction: column;
+  }
+  .front__pitch {
+    display: contents;
+  }
+  .front__strip { order: 0; }
+  .front__headline { order: 1; font-size: clamp(44px, 14vw, 72px); }
+  .front__lede { order: 2; margin-top: 0; }
+  .front__input { order: 3; }
+  .front__ticker { order: 4; margin-top: 0; }
+  .front__chain { order: 5; margin-top: 0; }
+  .front__catalogue { order: 6; }
+}
+@media (max-width: 480px) {
+  .front__rec span {
+    font-size: 16px;
+  }
+  .front__rec em {
+    display: none;
+  }
+  .front__sources {
+    flex-wrap: wrap;
+  }
+}
