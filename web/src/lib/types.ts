@@ -85,6 +85,7 @@ export type TapeSummary = {
   title?: string;
   artist?: string;
   genre?: string;
+  style?: string;
   name?: string | null;
   dedication?: string;
   createdAt?: string;

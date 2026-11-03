@@ -154,7 +154,10 @@ function summaryFix(t: TapeSummary, map: (u: string | null) => string | null): T
   return {
     ...t,
     cover: map(t.cover ?? null),
-    photos: t.photos?.map((p) => ({ ...p, src: map(p.src) ?? p.src, cutout: map(p.cutout ?? null) })),
+    // the studio sends a count, the static shelf a list
+    photos: Array.isArray(t.photos)
+      ? t.photos.map((p) => ({ ...p, src: map(p.src) ?? p.src, cutout: map(p.cutout ?? null) }))
+      : undefined,
   };
 }
 

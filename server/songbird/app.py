@@ -148,7 +148,7 @@ def samples():
         t = pipeline.load_tape(tid)
         if t:
             out.append({"id": t["id"], "title": t["title"], "dedication": t["dedication"], "cover": t["cover"],
-                        "catalog": t.get("catalog"), "artist": t.get("artist"), "genre": t.get("genre"),
+                        "catalog": t.get("catalog"), "artist": t.get("artist"), "genre": t.get("genre"), "style": t.get("style"),
                         "duration": t["duration"], "palette": t.get("palette", []), "photos": len(t["photos"])})
     return {"tapes": out}
 

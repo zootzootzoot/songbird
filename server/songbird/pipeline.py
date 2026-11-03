@@ -399,6 +399,30 @@ def _date_words(d: dt.date) -> str:
     return f"{d.strftime('%A').lower()} {d.day} {d.strftime('%B').lower()}"
 
 
+# How real sleeves in each repertoire style looked, so Muse Image dates the cover at a glance.
+COVER_LOOK = {
+    "synthwave": "1984 synth LP: airbrushed chrome and neon, magenta-to-violet sky, laser grid horizon, glossy",
+    "italo disco": "1983 Italian disco 12-inch: airbrushed neon on black, chrome, geometric shapes, glossy and cheap",
+    "synth-pop": "1982 synth-pop single: cool minimal studio photo, flat pastel blocks, Saville-style restraint",
+    "eurodance": "1994 eurodance CD single: saturated rave colours, lens flares, 3D chrome, laser lights",
+    "funk": "1975 funk LP: wild psychedelic illustration, platform boots, cosmic, saturated oranges and purples",
+    "soul": "1970 soul LP: warm studio portrait photography, rich brown and gold, soft vignette",
+    "big band": "1940s big band 78 album: art deco frame, black and gold, spotlight, engraved feel",
+    "bossa nova": "1963 Blue Note / Verve LP: duotone photo in one colour plus black, huge negative space, Reid Miles",
+    "rock and roll": "1957 rock and roll LP: hand-tinted photo, bold primary colours, starburst, jukebox gloss",
+    "rockabilly": "1956 Sun Records sleeve: black and white photo with one saturated colour, flames and dice motifs",
+    "surf rock": "1963 surf LP: sun-bleached Kodachrome beach photo, turquoise and sunset orange, waves",
+    "power ballad": "1987 power ballad single: soft-focus glamour photo, haze, backlight, lens flare, purple dusk",
+    "hard rock": "1986 glam metal LP: airbrushed chrome lettering-free logo shapes, electric blue lightning, neon pink and black stage lights",
+    "indie rock": "1994 indie 7-inch: grainy snapshot, washed colour, lo-fi, off-centre crop",
+    "punk": "1977 punk single: photocopied black and white, ransom-note collage, fluorescent pink and yellow",
+    "chiptune": "1989 game cartridge box art: bold pixel art, CRT glow, saturated primaries",
+    "ska": "1979 2 Tone Records single: black and white checkerboard, stark high-contrast photo, one red accent",
+    "tango": "1950s Argentine tango LP: hand-tinted photo, ornate frame, oxblood, black and cream",
+    "salsa": "1974 Fania Records LP: bold colour photo, hot saturated blocks, tropical, brassy and loud",
+}
+
+
 def _cover(d: Path, look: dict, order: list[int], cuts: dict, photos: list[Image.Image], song: dict) -> str | None:
     heroes = [look["photos"][orig]["hero"] for orig in order]
     refs = []
@@ -408,15 +432,22 @@ def _cover(d: Path, look: dict, order: list[int], cuts: dict, photos: list[Image
         else:
             refs.append(photos[orig])
     things = ", ".join(f"the {h}" for h in heroes[:-1]) + f" and the {heroes[-1]}" if len(heroes) > 1 else f"the {heroes[0]}"
-    prompt = (f"Record sleeve art for a {song['genre']} single called \"{song['title']}\", printed as a risograph. "
-              f"The band is {things}, redrawn from the reference images as bold, flat, cut-paper shapes, posed together "
-              f"like the cover of a classic record of that genre and era, with its graphic attitude. Exactly three riso "
-              "inks on warm cream paper: vermilion red #e0472a, sunflower yellow #efb02f and deep ocean blue #1d4a68, "
-              "overprinting where they meet, visible halftone grain, slight misregistration, hand-printed. Leave the top "
-              "third calm for a title. No text, no letters, no people, no faces of children.")
-    im = meta.paint(prompt, refs, size="1024x1536")
+    prompt = (f"The front cover of a {song['genre']} single called \"{song['title']}\", made exactly the way real "
+              f"{song.get('style') or song['genre']} record sleeves of that era were made: their photography or "
+              f"illustration style, colour, printing, typography-free layout and graphic attitude, so a record collector "
+              f"would date it at a glance. The band is {things}: redraw them from the reference images as the stars of "
+              "the cover, posed like the band on a classic sleeve of that genre. "
+              + (f"The look: {COVER_LOOK[song.get('style')]}. " if song.get("style") in COVER_LOOK else "")
+              + "Square. No text, no letters, no logos, no people, no faces of children.")
+    try:
+        im = meta.paint(prompt, refs, size="1024x1024")
+    except RuntimeError as e:  # Muse Image's filter refused a look once ("pyro"); the plain brief still makes a sleeve
+        if "content" not in str(e) or song.get("style") not in COVER_LOOK:
+            raise
+        im = meta.paint(prompt.replace(f"The look: {COVER_LOOK[song['style']]}. ", ""), refs, size="1024x1024")
     im.save(d / "cover.png")
-    return f"/tapes/{d.name}/cover.png"
+    im.convert("RGB").save(d / "cover.jpg", quality=88, optimize=True)  # the web only needs the jpeg
+    return f"/tapes/{d.name}/cover.jpg"
 
 
 def load_tape(tid: str) -> dict | None:

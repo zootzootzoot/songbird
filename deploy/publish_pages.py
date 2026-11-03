@@ -70,7 +70,7 @@ def copy_tapes():
             Image.open(src / "cover.png").convert("RGB").save(out / "cover.jpg", quality=88, optimize=True)
             tape["cover"] = f"/tapes/{tid}/cover.jpg"
         (out / "tape.json").write_text(json.dumps(tape))
-        summaries.append({k: tape.get(k) for k in ("id", "catalog", "artist", "genre", "title", "dedication", "cover", "duration", "palette")}
+        summaries.append({k: tape.get(k) for k in ("id", "catalog", "artist", "genre", "style", "title", "dedication", "cover", "duration", "palette")}
                          | {"photos": len(tape["photos"]), "name": tape.get("name")})
         share_page(tape)
     (dest / "shelf.json").write_text(json.dumps({"tapes": summaries}))
