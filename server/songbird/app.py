@@ -99,6 +99,12 @@ async def transcribe(audio: UploadFile = File(...)):
     return {"text": text[:200]}
 
 
+# the bare type, no "; charset=utf-8": cloudflared only streams a response whose content type is exactly
+# text/event-stream, and Cloudflare holds back a stream it compresses (browsers ask for gzip/br) unless told
+# no-transform. Either one left the room sitting on "sending" behind the tunnel.
+SSE = {"Content-Type": "text/event-stream", "Cache-Control": "no-cache, no-transform", "X-Accel-Buffering": "no"}
+
+
 @app.get("/api/tapes/{tid}/events")
 async def events(tid: str, request: Request):
     job = pipeline.JOBS.get(tid)
@@ -109,7 +115,7 @@ async def events(tid: str, request: Request):
 
         async def once():
             yield f"event: done\ndata: {json.dumps({'type': 'done', 'tape': tape})}\n\n"
-        return StreamingResponse(once(), media_type="text/event-stream")
+        return StreamingResponse(once(), headers=SSE)
 
     async def stream():
         sent = 0
@@ -128,8 +134,25 @@ async def events(tid: str, request: Request):
                 yield ": tick\n\n"
                 await asyncio.sleep(0.25)
 
-    return StreamingResponse(stream(), media_type="text/event-stream",
-                             headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
+    return StreamingResponse(stream(), headers=SSE)
+
+
+@app.get("/api/tapes/{tid}/log")
+async def event_log(tid: str, since: int = 0):
+    """The same events as /events, as plain JSON from `since` on. The page polls this behind the Cloudflare tunnel,
+    which delivers an open event stream's headers but holds back its body."""
+    job = pipeline.JOBS.get(tid)
+    if job is None:
+        tape = pipeline.load_tape(tid)
+        if not tape:
+            raise HTTPException(404, "no such tape")
+        return JSONResponse({"events": [{"type": "done", "tape": tape}], "next": 1, "finished": True},
+                            headers={"Cache-Control": "no-store"})
+    with job.cond:
+        batch = job.events[max(0, since):]
+        finished = job.finished
+    return JSONResponse({"events": batch, "next": max(0, since) + len(batch), "finished": finished},
+                        headers={"Cache-Control": "no-store"})
 
 
 @app.get("/api/tapes/{tid}")

@@ -51,6 +51,14 @@ cd web && npm install && npm run dev          # http://localhost:5173
 
 The band (ACE-Step 1.5 XL + Demucs) runs as a worker process on a local CUDA GPU and warms up on server start.
 
+Live at <https://zootzootzoot.github.io/songbird/>. The site and the shelf (songs, videos, MP4s) are static on GitHub
+Pages and play on their own; making a new single goes through a Cloudflare tunnel to the GPU studio on our PC:
+
+```
+server\.venv\Scripts\python.exe deploy\publish_pages.py     # build and publish the site and the shelf
+server\.venv\Scripts\python.exe deploy\serve.py             # keep the studio, the tunnel and live.json up
+```
+
 ## Sample days
 
 The nine days on the shelf were photographed by Muse Image ([server/scripts/gen_days.py](server/scripts/gen_days.py)),

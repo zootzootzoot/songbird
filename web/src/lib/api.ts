@@ -1,6 +1,6 @@
 import ada from "../fixtures/ada.json";
 import ivy from "../fixtures/ivy.json";
-import { apiUrl, asset, loadLiveConfig, media, staticMedia, studioClosedByConfig } from "./env";
+import { apiBase, apiUrl, asset, loadLiveConfig, media, staticMedia, studioClosedByConfig } from "./env";
 import { EVENT_TYPES, type SongEvent, type Tape, type TapeSummary } from "./types";
 
 /** apply a URL mapper to every media URL in a tape */
@@ -193,17 +193,14 @@ export async function getShelf(): Promise<TapeSummary[]> {
  * Media URLs in events are made absolute against the studio. Returns close().
  */
 export function openEvents(id: string, onEvent: (event: SongEvent) => void, onLost: () => void): () => void {
+  // behind the Cloudflare tunnel an open event stream never arrives (headers yes, body no), so a studio on another
+  // origin is polled for the same events as JSON; the local studio keeps the stream
+  if (apiBase()) return pollEvents(id, onEvent, onLost);
   const es = new EventSource(apiUrl(`/api/tapes/${encodeURIComponent(id)}/events`));
   let finished = false;
   let failures = 0;
 
-  const fix = (ev: SongEvent): SongEvent => {
-    if (ev.type === "performer") return { ...ev, src: media(ev.src) ?? ev.src };
-    if (ev.type === "cut") return { ...ev, cutout: media(ev.cutout), motion: media(ev.motion ?? null), clip: media(ev.clip ?? null) };
-    if (ev.type === "take") return { ...ev, audio: media(ev.audio) ?? ev.audio };
-    if (ev.type === "done") return { ...ev, tape: rebase(ev.tape, media) };
-    return ev;
-  };
+  const fix = fixEvent;
 
   const deliver = (ev: SongEvent) => {
     if (ev.type === "done" || ev.type === "error") {
@@ -246,5 +243,53 @@ export function openEvents(id: string, onEvent: (event: SongEvent) => void, onLo
   return () => {
     finished = true;
     es.close();
+  };
+}
+
+/** media URLs in an event, made absolute against the studio */
+function fixEvent(ev: SongEvent): SongEvent {
+  if (ev.type === "performer") return { ...ev, src: media(ev.src) ?? ev.src };
+  if (ev.type === "cover") return { ...ev, src: media(ev.src) ?? ev.src };
+  if (ev.type === "cut") return { ...ev, cutout: media(ev.cutout), motion: media(ev.motion ?? null), clip: media(ev.clip ?? null) };
+  if (ev.type === "take") return { ...ev, audio: media(ev.audio) ?? ev.audio };
+  if (ev.type === "done") return { ...ev, tape: rebase(ev.tape, media) };
+  return ev;
+}
+
+const POLL_MS = 600;
+
+function pollEvents(id: string, onEvent: (event: SongEvent) => void, onLost: () => void): () => void {
+  let next = 0;
+  let stopped = false;
+  let failures = 0;
+  let timer = 0;
+  const tick = async () => {
+    if (stopped) return;
+    try {
+      const res = await fetch(apiUrl(`/api/tapes/${encodeURIComponent(id)}/log?since=${next}`), { cache: "no-store" });
+      if (!res.ok) throw new Error(String(res.status));
+      const body = (await res.json()) as { events: SongEvent[]; next: number; finished: boolean };
+      failures = 0;
+      next = body.next;
+      for (const ev of body.events) {
+        if (stopped) return;
+        onEvent(fixEvent(ev));
+        if (ev.type === "done" || ev.type === "error") stopped = true;
+      }
+      if (body.finished && !body.events.length) stopped = true;
+    } catch {
+      failures += 1;
+      if (failures > 10) {
+        stopped = true;
+        onLost();
+        return;
+      }
+    }
+    if (!stopped) timer = window.setTimeout(() => void tick(), POLL_MS);
+  };
+  void tick();
+  return () => {
+    stopped = true;
+    window.clearTimeout(timer);
   };
 }
