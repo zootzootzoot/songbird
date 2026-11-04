@@ -1,7 +1,7 @@
 """Film the real product for the demo video: a headless Edge at 1920x1080 driven over DevTools.
 
 Each shot is a small script of real interactions (a visible cursor glides to an element, then real mouse events
-hover or click it), filmed with the DevTools screencast and encoded at 30 fps. Named marks (wall-clock moments,
+hover or click it), filmed with the DevTools screencast and encoded at 60 fps. Named marks (wall-clock moments,
 relative to the first frame) go next to the clip so the edit can cut on them.
 
   server\\.venv\\Scripts\\python.exe server\\scripts\\demo_film.py <shot> [...]      (shots: see SHOTS)
@@ -205,7 +205,7 @@ async def run(shot_name: str, url: str, script, limit: float = 420):
         (frames_dir / "list.txt").write_text("\n".join(lines))
         out = OUT / f"{shot_name}.mp4"
         subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(frames_dir / "list.txt"),
-                        "-vf", f"scale={W}:{H}:flags=lanczos,fps=30,format=yuv420p", "-c:v", "libx264", "-preset", "medium",
+                        "-vf", f"scale={W}:{H}:flags=lanczos,fps=60,format=yuv420p", "-c:v", "libx264", "-preset", "medium",
                         "-crf", "16", "-t", f"{end - t0:.2f}", str(out)], check=True)
         meta = {"marks": {k: round(v - t0, 3) for k, v in s.marks.items()}, "length": round(end - t0, 3),
                 "sb": json.loads(sb or "{}"), "t0": t0, "url": url}

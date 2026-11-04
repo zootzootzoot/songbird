@@ -32,7 +32,7 @@ TAPES = ROOT / "server" / "data" / "tapes"
 CARDS = Path(__file__).with_name("demo_cards.html")
 WORK = FILM / "cut"
 OUT = FILM / "songbird-demo.mp4"
-FPS = 30
+FPS = 60
 
 # the rack in the control room at 1920x1080: eleven lamps, left to right, and the words that name each one
 LAMPS = [("Muse Spark",), ("SAM",), ("Muse Wonder",), ("dresses",), ("Muse Image",), ("shot list",), ("band records",),
