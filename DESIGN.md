@@ -77,14 +77,21 @@ Respect `prefers-reduced-motion`.
 
 ## The control room (making view)
 
-Driven entirely by real pipeline events (see docs/CONTRACT.md). Every model is a lamp on the top strip and lights
-when it is actually working. Regions:
+Driven entirely by real pipeline events (see docs/CONTRACT.md). Every model is a lamp and lights only while it is
+actually working. Regions:
 
-- **Top strip**: wordmark, session/release number, REC tally + running timecode, the model lamps.
+- **Dusk** (the way in): pressing produce on the front door, the painted sky goes down over the day (about 1.7 s,
+  "lena's day goes into the studio.") and the room comes up underneath. Reduced motion skips it.
+- **Top strip**: wordmark, whose day it is, session number, REC tally + running timecode.
+- **The rack**: one lamp per job, eleven, in the order the day meets them: LOOK (Spark 1.3), CUT (SAM 3.1), PRODUCE
+  (Wonder 1.0), DRESS (Image 1.0 + SAM), SLEEVE (Image 1.0), DIRECT (Spark 1.3), RECORD (ACE-Step), TUNE (Demucs),
+  A&R (Spark 1.2), CHECK (Voice Transcribe), TIME (MMS aligner). The painters start the moment the song is written,
+  so while the band records four lamps are lit at once; that is the real concurrency, not decoration.
 - **Channels** (left): one channel strip per photo. The photo, then SAM's cutout lifting off it when `cut` arrives,
   the hero noun phrase as the channel name, and later the band role as a scribbled credit.
-- **Talkback** (centre, the star): the producer's head. The genre call lands in huge expanded type ("1964 KINGSTON
-  FIRST-WAVE SKA"), the why underneath, then the lyric sheet types out line by line, each line lighting its
+- **Talkback** (centre, the star): the producer's head. While it looks, whose day it is and their note, quoted. The
+  genre call lands in huge expanded type ("1964 KINGSTON FIRST-WAVE SKA"); the sleeve lands beside it the moment
+  Muse Image finishes it (mid-recording); the why underneath, then the lyric sheet types out line by line, each line lighting its
   channel. Stage labels stream like a console log.
 - **Takes** (right): four take lanes. Each shows a waveform/reel when the take arrives, the tuner reading (Demucs
   split: vocal and band as two lanes pulling apart, `in key 81%`, `cut` in tally red if under 75%), then Spark's

@@ -137,6 +137,12 @@ export type SongEvent =
   | { type: "take"; index: number; audio: string; inKey?: number | null; vocalKey?: string | null; bandKey?: string }
   | { type: "verdict"; index: number; score: number; voice: number; words: number; genre: number; verdict: string; kept: boolean; cut?: boolean; sung?: number | null }
   | { type: "sung"; index: number }
+  /** Muse Image finished the sleeve (it paints while the band records) */
+  | { type: "cover"; src: string }
+  /** Muse Spark 1.3 finished the video's shot list */
+  | { type: "directed"; shots: number }
+  /** the MMS aligner placed the kept take's words: `lines` of `of` aligned */
+  | { type: "timed"; lines: number; of: number; words: number }
   | { type: "progress"; value: number }
   | { type: "done"; tape: Tape }
   | { type: "error"; message: string; stage?: Stage };
@@ -154,6 +160,9 @@ export const EVENT_TYPES: SongEvent["type"][] = [
   "take",
   "verdict",
   "sung",
+  "cover",
+  "directed",
+  "timed",
   "progress",
   "done",
   "error",

@@ -58,6 +58,9 @@ type Stage = "looking" | "cutting" | "producing" | "recording" | "listening" | "
 { type: "verdict",  index: number, score: number, voice: number, words: number, genre: number, verdict: string, kept: boolean,
   cut?: boolean, inKey?: number, sung?: number | null }           // cut: the tuner dropped it; the producer never heard it
                                                                   // sung: share of the sheet's lines actually sung
+{ type: "cover",    src: string }                                 // Muse Image finished the sleeve (it paints while the band records)
+{ type: "directed", shots: number }                               // Muse Spark 1.3 finished the video's shot list
+{ type: "timed",    lines: number, of: number, words: number }    // the MMS aligner placed the kept take's words
 { type: "progress", value: number }
 { type: "done",     tape: Tape }
 { type: "error",    message: string, stage?: Stage }

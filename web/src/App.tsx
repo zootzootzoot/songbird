@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { connect, getShelf, getTape, type Health } from "./lib/api";
 import { sound } from "./lib/audio";
 import { BASE, RENDER } from "./lib/env";
@@ -8,6 +8,7 @@ import { usePlayer } from "./lib/usePlayer";
 import type { TapeSummary } from "./lib/types";
 import { Front } from "./components/front/Front";
 import { ControlRoom } from "./components/room/ControlRoom";
+import { Dusk } from "./components/room/Dusk";
 import { Video } from "./components/video/Video";
 
 // the old deck's foley (paper, tape motor, bell) belongs to the retired cassette world
@@ -66,12 +67,22 @@ export default function App() {
 
   const surface = tape ? "video" : state.phase === "sending" || state.phase === "working" || state.phase === "error" ? "room" : "front";
 
+  // pressing produce on the front door: dusk falls over the day while the room comes up
+  const was = useRef(surface);
+  const [dusk, setDusk] = useState(0);
+  useEffect(() => {
+    if (was.current === "front" && surface === "room" && !matchMedia("(prefers-reduced-motion: reduce)").matches) setDusk(Date.now());
+    if (surface !== "room") setDusk(0);
+    was.current = surface;
+  }, [surface]);
+
   return (
     <div className="app" data-surface={surface}>
       {surface === "front" && (
         <Front deck={deck} shelf={shelf} health={health} online={isMock || online !== false} onOpen={openRelease} />
       )}
       {surface === "room" && <ControlRoom deck={deck} />}
+      {surface === "room" && dusk > 0 && <Dusk key={dusk} name={state.name} onDone={() => setDusk(0)} />}
       {surface === "video" && tape && (
         <Video
           tape={tape}

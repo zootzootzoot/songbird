@@ -4,6 +4,8 @@ type Props = {
   live: boolean;
   halted: boolean;
   session: string;
+  /** whose day is in the room */
+  day: string;
   started: string;
   timecode: string;
   progress: number;
@@ -11,7 +13,7 @@ type Props = {
   onStop: () => void;
 };
 
-export function TopStrip({ live, halted, session, started, timecode, progress, lamps, onStop }: Props) {
+export function TopStrip({ live, halted, session, day, started, timecode, progress, lamps, onStop }: Props) {
   return (
     <header className="rm-top">
       <div className="rm-brand">
@@ -20,6 +22,10 @@ export function TopStrip({ live, halted, session, started, timecode, progress, l
       </div>
 
       <dl className="rm-meta">
+        <div className="rm-meta__day">
+          <dt className="label">Day</dt>
+          <dd>{day}</dd>
+        </div>
         <div>
           <dt className="label">Session</dt>
           <dd className="num">{session}</dd>
@@ -42,9 +48,9 @@ export function TopStrip({ live, halted, session, started, timecode, progress, l
         <span className="rm-rec__tc num">{timecode}</span>
       </div>
 
-      <ul className="rm-lamps" aria-label="models">
+      <ul className="rm-lamps" aria-label="models" style={{ ["--n" as string]: lamps.length }}>
         {lamps.map((l) => (
-          <li key={l.name} className="rm-lamp" data-on={l.on || undefined}>
+          <li key={l.role} className="rm-lamp" title={`${l.name}: ${l.role.toLowerCase()}`} data-on={l.on || undefined}>
             <i className="rm-lamp__bulb" />
             <span className="rm-lamp__name">{l.name}</span>
             <span className="rm-lamp__meta">

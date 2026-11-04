@@ -1,4 +1,5 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { media } from "../../lib/env";
 import { pad2 } from "./model";
 
 export type SheetLine = {
@@ -16,8 +17,8 @@ export type SheetLine = {
 export type LogLine = { key: string; t: string; src: string; text: string; tone?: "vu" | "cue" | "tally" | "dim" };
 
 export type Call =
-  | { mode: "sending"; files: number }
-  | { mode: "looking"; files: number }
+  | { mode: "sending"; files: number; name: string; note: string }
+  | { mode: "looking"; files: number; name: string; note: string }
   | {
       mode: "audition";
       k: number;
@@ -36,6 +37,8 @@ export type Call =
       bpm: number;
       musicKey: string;
       title: string | null;
+      /** the sleeve, once Muse Image has painted it */
+      cover: string | null;
     };
 
 type Props = {
@@ -97,6 +100,12 @@ function CallBlock({ call, reduced }: { call: Call; reduced: boolean }) {
             ? "the day goes up to the gpu. nothing has been decided yet."
             : "one look at the whole day: what each picture is about, and the order it happened in."}
         </div>
+        {(call.name || call.note) && (
+          <p className="rm-call__day">
+            <span className="label">{call.name ? `${call.name.toLowerCase()}'s day` : "the day"}</span>
+            {call.note && <q>{call.note}</q>}
+          </p>
+        )}
       </div>
     );
   }
@@ -142,9 +151,17 @@ function CallBlock({ call, reduced }: { call: Call; reduced: boolean }) {
       <div className="rm-call__kick label">
         The call <span className="rm-call__sep">/</span> Muse Wonder 1.0
       </div>
-      <Fit className="rm-call__big rm-call__big--genre" max={150} min={26} watch={call.genre} land={!reduced}>
-        {call.genre}
-      </Fit>
+      <div className="rm-call__row rm-call__row--genre">
+        <Fit className="rm-call__big rm-call__big--genre" max={150} min={26} watch={`${call.genre}-${Boolean(call.cover)}`} land={!reduced && !call.cover}>
+          {call.genre}
+        </Fit>
+        {call.cover && (
+          <figure className="rm-sleeve" data-land={!reduced || undefined}>
+            <img src={media(call.cover) ?? call.cover} alt="the sleeve" />
+            <figcaption className="label">Sleeve / Muse Image 1.0</figcaption>
+          </figure>
+        )}
+      </div>
       <div className="rm-call__meta">
         <div className="rm-readout">
           <span className="label">BPM</span>
@@ -252,19 +269,24 @@ function Fit({
     const t = text.current;
     if (!b || !t) return;
     const fit = () => {
-      // measure at the final width axis, never mid-landing (the entrance animates wdth 62 -> 125)
-      const anim = t.style.animation;
-      t.style.animation = "none";
+      // measure a hidden copy at the final width axis: the entrance animates wdth 62 -> 125, and touching the live
+      // text's animation here would restart the landing every time the panel resizes (it used to blank the call)
+      const c = t.cloneNode(true) as HTMLSpanElement;
+      c.removeAttribute("data-land");
+      c.setAttribute("aria-hidden", "true");
+      c.style.cssText = "position:absolute;left:0;top:0;visibility:hidden;animation:none;pointer-events:none";
+      c.style.width = `${b.clientWidth}px`;
+      b.appendChild(c);
       let lo = min;
       let hi = max;
       for (let i = 0; i < 9; i += 1) {
         const mid = (lo + hi) / 2;
-        t.style.fontSize = `${mid}px`;
-        if (t.scrollWidth <= b.clientWidth + 1 && t.offsetHeight <= b.clientHeight + 1) lo = mid;
+        c.style.fontSize = `${mid}px`;
+        if (c.scrollWidth <= b.clientWidth + 1 && c.offsetHeight <= b.clientHeight + 1) lo = mid;
         else hi = mid;
       }
+      c.remove();
       t.style.fontSize = `${Math.floor(lo)}px`;
-      t.style.animation = anim;
     };
     fit();
     setArmed(watch);

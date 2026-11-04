@@ -239,6 +239,18 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
                                         roles.get(k, "band member"), song)
                       for k, orig in enumerate(order)}
 
+    def _when(fut, then):  # tell the room the moment a painter finishes, not when we get round to collecting it
+        def cb(f):
+            try:
+                if f.exception() is None and f.result():
+                    then(f.result())
+            except Exception:
+                traceback.print_exc()
+        fut.add_done_callback(cb)
+
+    _when(cover_fut, lambda src: job.emit("cover", src=src))
+    _when(direction_fut, lambda dr: job.emit("directed", shots=len(dr.get("shots") or [])))
+
     # 4. record (ACE-Step 1.5) -----------------------------------------------------------------
     job.stage("recording", "rolling tape", 0.45)
     lyrics = producer.lyrics_text(song)
@@ -291,10 +303,13 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
         timed = _timeline(sheet, taken[best].get("lrc", ""), length)
     if aligned.get(best) and taken[best].get("vocal"):
         # Voice Transcribe said which lines were sung; Meta's MMS aligner says exactly when, word by word
+        job.emit("stage", stage="listening", label="timing every word to the singing")
         try:
             timed = band.retime(lines=timed, vocal=taken[best]["vocal"])
         except Exception:
             traceback.print_exc()
+        on = [ln for ln in timed if ln.get("timing") == "aligned"]
+        job.emit("timed", lines=len(on), of=len(timed), words=sum(len(ln.get("words") or []) for ln in on))
     mark("retime")
 
     # 6. press ---------------------------------------------------------------------------------

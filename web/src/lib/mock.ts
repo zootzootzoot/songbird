@@ -168,12 +168,19 @@ export function runMock(
     prog(0.42);
     if (stage("recording", 300, 0.45)) return;
     takes.forEach((t, i) => {
-      at(i === 0 ? 19000 : 15500, () => ({ type: "take", index: i, audio: t.audio, ...t.tuning }));
+      at(i === 0 ? 19000 : i === 1 ? 8500 : 15500, () => ({ type: "take", index: i, audio: t.audio, ...t.tuning }));
+      // the painters finish while the band records, as on the server
+      if (i === 0) {
+        if (base.cover) at(4000, () => ({ type: "cover", src: base.cover as string }));
+        at(3000, () => ({ type: "directed", shots: lines.length }));
+      }
     });
     prog(0.7);
     if (stage("listening", 300, 0.72)) return;
     // every verdict lands at once, as the server sends them
     takes.forEach((t, i) => at(i === 0 ? 9500 : 0, () => ({ type: "verdict", index: i, ...t.verdict })));
+    at(300, () => ({ type: "stage", stage: "listening", label: "timing every word to the singing" }));
+    at(4200, () => ({ type: "timed", lines: lines.length, of: lines.length, words: lines.reduce((n, l) => n + l.words.length, 0) }));
     if (stage("pressing", 100, 0.88)) return;
     at(4500, () => ({ type: "progress", value: 1 }));
     at(400, () => {

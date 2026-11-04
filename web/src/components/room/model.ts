@@ -25,7 +25,7 @@ export type StepState = "idle" | "active" | "done" | "fault";
 
 export const STEPS: { id: StepId; label: string; model: string }[] = [
   { id: "look", label: "LOOK", model: "Muse Spark 1.3" },
-  { id: "cast", label: "CAST", model: "SAM 3.1" },
+  { id: "cast", label: "CUT", model: "SAM 3.1" },
   { id: "produce", label: "PRODUCE", model: "Muse Wonder 1.0" },
   { id: "record", label: "RECORD", model: "ACE-Step 1.5 XL" },
   { id: "tune", label: "TUNE", model: "Demucs" },

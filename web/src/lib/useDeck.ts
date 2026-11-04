@@ -30,7 +30,10 @@ export type LogEntry =
   | { key: string; kind: "line"; index: number; text: string; photo: number | null; section: string }
   | { key: string; kind: "band"; photo: number; role: string; hero: string }
   | { key: string; kind: "take"; index: number }
-  | { key: string; kind: "verdict"; index: number };
+  | { key: string; kind: "verdict"; index: number }
+  | { key: string; kind: "cover" }
+  | { key: string; kind: "directed"; shots: number }
+  | { key: string; kind: "timed"; lines: number; of: number; words: number };
 
 export type TakeState = {
   audio?: string;
@@ -62,6 +65,12 @@ export type Work = {
   takes: Record<number, TakeState>;
   lines: Record<number, { text: string; photo: number | null; section: string }>;
   sung: Record<number, true>;
+  /** the sleeve, as soon as Muse Image has painted it */
+  cover: string | null;
+  /** shots in the director's list, once written */
+  shots: number | null;
+  /** what the MMS aligner placed on the kept take */
+  timed: { lines: number; of: number; words: number } | null;
   progress: number;
   log: LogEntry[];
 };
@@ -116,6 +125,9 @@ const emptyWork = (): Work => ({
   takes: {},
   lines: {},
   sung: {},
+  cover: null,
+  shots: null,
+  timed: null,
   progress: 0,
   log: [],
 });
@@ -295,6 +307,15 @@ function reduceEvent(state: DeckState, ev: SongEvent): DeckState {
       };
     case "sung":
       return { ...state, work: { ...w, sung: { ...w.sung, [ev.index]: true } } };
+    case "cover":
+      return { ...state, work: { ...w, cover: ev.src, log: pushLog(w.log, { key: "cover", kind: "cover" }) } };
+    case "directed":
+      return { ...state, work: { ...w, shots: ev.shots, log: pushLog(w.log, { key: "directed", kind: "directed", shots: ev.shots }) } };
+    case "timed":
+      return {
+        ...state,
+        work: { ...w, timed: { lines: ev.lines, of: ev.of, words: ev.words }, log: pushLog(w.log, { key: "timed", kind: "timed", lines: ev.lines, of: ev.of, words: ev.words }) },
+      };
     case "progress":
       return { ...state, work: { ...w, progress: Math.max(w.progress, Math.min(1, ev.value)) } };
     case "done":

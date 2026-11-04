@@ -152,3 +152,12 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     before the next one, a failed take is retried once and then skipped (the release goes on with the takes it has),
     and songs are capped at 180 s. The shelf showed tango at 64 bpm scoring 4.3 and 5.45 against 6-7.5 at 122-128
     bpm, so the producer's checker now sends back a tango under 100 bpm.
+
+23. **The room shows every Meta model at the moment it works (Nov 4).** The control room had seven lamps, and the
+    sleeve lamp only lit after recording, although Muse Image actually paints the sleeve (and dresses the band, and
+    Spark writes the shot list) while ACE-Step records. Three Meta jobs (Voice Transcribe's check, the MMS timing,
+    the director) had no lamp at all. The pipeline now sends `cover`, `directed` and `timed` the instant each finishes,
+    and the room has eleven lamps, one per job. On a live release (SB-0034, 2:48) the sleeve, all five costumes and a
+    21-shot list were done while the band was still on take one, and MMS timed 18 of 20 lines in 5 s after the A&R
+    verdict.
+

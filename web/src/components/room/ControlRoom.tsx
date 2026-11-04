@@ -106,9 +106,9 @@ function Room({ deck }: { deck: Deck }) {
   let call: Call;
   let auditionK: number | null = null;
   if (state.phase === "sending" || (!w.stage && !seenIdx.length)) {
-    call = { mode: "sending", files: state.photos.length };
+    call = { mode: "sending", files: state.photos.length, name: state.name.trim(), note: state.note.trim() };
   } else if (w.genre) {
-    call = { mode: "call", genre: w.genre.genre, why, whyTyped, bpm: w.genre.bpm, musicKey: w.genre.key, title: w.title };
+    call = { mode: "call", genre: w.genre.genre, why, whyTyped, bpm: w.genre.bpm, musicKey: w.genre.key, title: w.title, cover: w.cover };
   } else if (seenIdx.length && produceAt !== null && f.stageIdx >= 1) {
     const elapsed = Math.max(0, now - produceAt);
     const slot = Math.floor(elapsed / AUDITION_SLOT);
@@ -130,7 +130,7 @@ function Room({ deck }: { deck: Deck }) {
         .slice(-3),
     };
   } else {
-    call = { mode: "looking", files: f.photoN };
+    call = { mode: "looking", files: f.photoN, name: state.name.trim(), note: state.note.trim() };
   }
 
   // ---- channels
@@ -193,24 +193,49 @@ function Room({ deck }: { deck: Deck }) {
   // ---- lamps: lit only while that model is working
   const lastTakeAt = Math.max(...Array.from({ length: TAKE_COUNT }, (_, i) => st.get(`take-${i}`) ?? -Infinity));
   const tunedN = f.takes.filter((t) => t.arrived && t.inKey !== undefined).length;
+  // the painters (sleeve, costumes, shot list) start the moment the song is written and work while the band records
+  const painting = working && w.genre !== null && state.phase !== "error";
+  const perfN = Object.keys(w.performers).length;
+  const castN = Math.max(f.photoN, 1); // every picture gets dressed, not only the ones with a band role
+  const kept = f.takes.find((t) => t.kept);
+  const listening = w.stage === "listening";
   const lamps: Lamp[] = [
     { name: "Muse Spark 1.3", role: "LOOK", on: working && f.steps.look.state === "active", read: `${f.seenN}/${f.photoN || "-"}` },
-    { name: "SAM 3.1", role: "CAST", on: working && f.steps.cast.state === "active", read: `${f.cutN}/${f.seenN || "-"}` },
+    { name: "SAM 3.1", role: "CUT", on: working && f.steps.cast.state === "active", read: `${f.cutN}/${f.seenN || "-"}` },
     {
       name: "Muse Wonder 1.0",
       role: "PRODUCE",
       on: working && w.stage === "producing" && !w.genre,
       read: w.genre ? `${f.lineN} LN` : w.stage === "producing" ? "WRITING" : "--",
     },
+    {
+      name: "Muse Image 1.0 + SAM",
+      role: "DRESS",
+      on: painting && perfN < castN && w.stage !== "pressing",
+      read: w.genre ? `${perfN}/${castN}` : "--",
+    },
+    { name: "Muse Image 1.0", role: "SLEEVE", on: painting && !w.cover && w.stage !== "pressing", read: w.cover ? "PAINTED" : w.genre ? "PAINTING" : "--" },
+    { name: "Muse Spark 1.3", role: "DIRECT", on: painting && w.shots === null && w.stage !== "pressing", read: w.shots !== null ? `${w.shots} SHOTS` : "--" },
     { name: "ACE-Step 1.5 XL", role: "RECORD", on: working && f.steps.record.state === "active", read: `${f.takesIn}/${TAKE_COUNT}` },
     { name: "Demucs", role: "TUNE", on: working && now - lastTakeAt < DEMUCS_LAMP, read: `${tunedN}/${TAKE_COUNT}` },
     {
       name: "Muse Spark 1.2",
       role: "A&R",
-      on: working && w.stage === "listening" && f.verdictN === 0,
+      on: working && listening && f.verdictN === 0,
       read: `${f.takes.filter((t) => t.scored).length}/${f.takes.filter((t) => t.arrived && !t.cut).length || "-"}`,
     },
-    { name: "Muse Image 1.0", role: "PRESS", on: working && w.stage === "pressing", read: w.stage === "pressing" ? "SLEEVE" : "--" },
+    {
+      name: "Muse Voice Transcribe",
+      role: "CHECK",
+      on: working && listening && f.verdictN === 0,
+      read: typeof kept?.sung === "number" ? `${Math.round(kept.sung * 100)}% SUNG` : "--",
+    },
+    {
+      name: "MMS aligner",
+      role: "TIME",
+      on: working && listening && f.verdictN > 0 && !w.timed,
+      read: w.timed ? `${w.timed.words} WDS` : "--",
+    },
   ];
 
   // ---- transport clocks
@@ -265,6 +290,7 @@ function Room({ deck }: { deck: Deck }) {
         live={working}
         halted={halted}
         session={session}
+        day={state.name.trim() ? `${state.name.trim().toLowerCase()}'s` : "today"}
         started={`${pad2(wall.current.getHours())}:${pad2(wall.current.getMinutes())}:${pad2(wall.current.getSeconds())}`}
         timecode={timecode}
         progress={w.progress}
@@ -345,6 +371,21 @@ function consoleLines(w: Deck["state"]["work"], stampOf: (key: string) => number
         else if (k) out.push({ key: `${e.key}-tune`, t, src: "DEMUCS", text: `take ${e.index + 1}: no reading`, tone: "dim" });
         break;
       }
+      case "cover":
+        out.push({ key: e.key, t, src: "IMAGE 1.0", text: "the sleeve is painted", tone: "vu" });
+        break;
+      case "directed":
+        out.push({ key: e.key, t, src: "SPARK 1.3", text: `the video's shot list: ${e.shots} shots` });
+        break;
+      case "timed":
+        out.push({
+          key: e.key,
+          t,
+          src: "MMS",
+          text: `${e.words} words timed on the vocal, ${e.lines} of ${e.of} lines`,
+          tone: "cue",
+        });
+        break;
       case "verdict": {
         const k = w.takes[e.index];
         if (!k) break;
