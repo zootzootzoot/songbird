@@ -35,7 +35,9 @@ and the A&R verdict. [docs/META_LOG.md](docs/META_LOG.md) records every problem 
   It also holds the shelf of releases, why songs matter, and the desk where you make your own.
 - **The control room** (night): the live session. Every model is a lamp, takes arrive, and the tuner and A&R decide.
 - **The video**: full-screen, with its own art direction for each genre. It performs the director's shot list with
-  the cast band.
+  the cast band. "Save the video" gives you a 9:16 MP4 of it with the song, for Reels, Stories or a group chat (on a
+  phone it opens the share sheet). The server films the real video page in a headless browser and muxes the song
+  under it with ffmpeg ([server/songbird/render.py](server/songbird/render.py)).
 
 Design: [DESIGN.md](DESIGN.md). API contract: [docs/CONTRACT.md](docs/CONTRACT.md).
 

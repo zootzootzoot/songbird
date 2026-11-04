@@ -1,13 +1,28 @@
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from "react";
-import { BASE } from "../../lib/env";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from "react";
+import { BASE, RENDER } from "../../lib/env";
 import type { Player } from "../../lib/usePlayer";
+import { useShareVideo } from "../../lib/useShareVideo";
 import type { Tape } from "../../lib/types";
 import { Backdrop, Fx } from "./Backdrop";
 import { Lyrics } from "./Lyrics";
 import { pulse } from "./motion";
 import { freezeHold, plan, SINGLE, takeAt } from "./direct";
 import { Credits, Flash, LowerThird, TitleCard } from "./Overlays";
-import { buildTimeline, cueAt, lastCueAt, members, type Member } from "./schedule";
+import {
+  buildTimeline,
+  cueAt,
+  lastCueAt,
+  members,
+  type Member,
+} from "./schedule";
 import { Stage, type CameraLayers, type StageState } from "./Stage";
 import { resolveTheme, useThemeFonts } from "./themes";
 import { Transport } from "./Transport";
@@ -16,7 +31,10 @@ import "../../styles/video.css";
 import "./themes.css";
 
 function useViewport() {
-  const [vp, setVp] = useState(() => ({ W: window.innerWidth, H: window.innerHeight }));
+  const [vp, setVp] = useState(() => ({
+    W: window.innerWidth,
+    H: window.innerHeight,
+  }));
   useEffect(() => {
     const on = () => setVp({ W: window.innerWidth, H: window.innerHeight });
     window.addEventListener("resize", on);
@@ -26,7 +44,10 @@ function useViewport() {
 }
 
 function useReducedMotion() {
-  const [r, setR] = useState(() => window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false);
+  const [r, setR] = useState(
+    () =>
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false,
+  );
   useEffect(() => {
     const mq = window.matchMedia?.("(prefers-reduced-motion: reduce)");
     if (!mq) return;
@@ -38,8 +59,25 @@ function useReducedMotion() {
 }
 
 /** The result: the single's music video. See DESIGN.md "The video". */
-export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: Player; autoplay: boolean; onExit: () => void }) {
+export function Video({
+  tape,
+  player,
+  autoplay,
+  onExit,
+}: {
+  tape: Tape;
+  player: Player;
+  autoplay: boolean;
+  onExit: () => void;
+}) {
   const theme = useMemo(() => resolveTheme(tape), [tape]);
+  const video = useShareVideo(
+    tape.id,
+    `${tape.catalog ?? "sb"} ${tape.title}`
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, ""),
+  );
   useThemeFonts(theme);
   const duration = player.duration || tape.duration || 1;
   const tl = useMemo(() => buildTimeline(tape, duration), [tape, duration]);
@@ -54,9 +92,25 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   const prev = useRef({ t: 0, playing: false });
   useEffect(() => {
     const p = prev.current;
-    if (p.playing && !player.playing && player.time === 0 && p.t > duration - 1.5) setEnded(true);
+    if (
+      p.playing &&
+      !player.playing &&
+      player.time === 0 &&
+      p.t > duration - 1.5
+    )
+      setEnded(true);
     prev.current = { t: player.time, playing: player.playing };
   }, [player.time, player.playing, duration]);
+
+  // the recorder reads these: when playback started (wall clock, ms) and from where, and when it ended
+  useEffect(() => {
+    if (!RENDER) return;
+    const w = window as unknown as { __sb?: Record<string, number> };
+    w.__sb = w.__sb ?? {};
+    if (player.playing && w.__sb.start == null)
+      Object.assign(w.__sb, { start: Date.now(), from: player.time });
+    if (ended && w.__sb.end == null) w.__sb.end = Date.now();
+  }, [player.playing, player.time, ended]);
 
   // the cold open: a fresh or finished video waits a few bars before the first vocal, not at 0:00
   const armed = useRef(true);
@@ -84,12 +138,28 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   const cur = cueAt(cues, t);
   const last = lastCueAt(cues, t);
   const finished = cur >= 0 ? cur - 1 : last;
-  const out = finished >= 0 && t >= cues[finished].until && t < cues[finished].until + 0.45 ? finished : -1;
+  const out =
+    finished >= 0 &&
+    t >= cues[finished].until &&
+    t < cues[finished].until + 0.45
+      ? finished
+      : -1;
   // the opening: title card, then the roll call (one member onto the stage per beat), then the first vocal
   const inTitle = t < rollFrom && !ended;
   const inRoll = !ended && t >= rollFrom && t < titleEnd;
-  const rollStep = Math.max(0.16, Math.min(60 / bpm, (titleEnd - rollFrom) / Math.max(1, tape.photos.length + 0.5)));
-  const held = cur >= 0 ? cues[cur] : last >= 0 && t - cues[last].until < 2.5 ? cues[last] : null;
+  const rollStep = Math.max(
+    0.16,
+    Math.min(
+      60 / bpm,
+      (titleEnd - rollFrom) / Math.max(1, tape.photos.length + 0.5),
+    ),
+  );
+  const held =
+    cur >= 0
+      ? cues[cur]
+      : last >= 0 && t - cues[last].until < 2.5
+        ? cues[last]
+        : null;
   const credits = t >= creditsStart;
   const n = tape.photos.length;
 
@@ -124,19 +194,31 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
     side = single ? take.side : 0;
     if (!inTitle && !(credits && take.fx === "split")) {
       const [a, b] = take.subjects;
-      if (take.fx === "split") flashShown = b != null ? `${a}:left,${b}:right` : `${a}:left`;
+      if (take.fx === "split")
+        flashShown = b != null ? `${a}:left,${b}:right` : `${a}:left`;
       else if (take.shot === "photo") flashShown = `${a}:full`;
-      else if (take.shot === "close-up" && held && held.photo === a) flashShown = `${a}:full`;
+      else if (take.shot === "close-up" && held && held.photo === a)
+        flashShown = `${a}:full`;
     }
-    frozen = take.fx === "freeze" && t - take.from < freezeHold(bpm) && !inTitle;
+    frozen =
+      take.fx === "freeze" && t - take.from < freezeHold(bpm) && !inTitle;
     const who = introOf.get(take.index);
-    if (who != null && !inTitle && !credits && t < take.from + Math.max(4.2, Math.min(take.to - take.from, 6))) intro = band[who] ?? null;
+    if (
+      who != null &&
+      !inTitle &&
+      !credits &&
+      t < take.from + Math.max(4.2, Math.min(take.to - take.from, 6))
+    )
+      intro = band[who] ?? null;
   } else {
-    const verse = !inTitle && !credits && held && held.photo != null && !held.chorus;
+    const verse =
+      !inTitle && !credits && held && held.photo != null && !held.chorus;
     mode = inTitle ? "title" : verse ? "verse" : "lineup";
-    solo = !inTitle && !held && !credits && n > 1 ? Math.floor(beats / 8) % n : null;
+    solo =
+      !inTitle && !held && !credits && n > 1 ? Math.floor(beats / 8) % n : null;
     side = verse && held ? held.side : 0;
-    flashShown = !inTitle && held && held.photo != null ? `${held.photo}:full` : "";
+    flashShown =
+      !inTitle && held && held.photo != null ? `${held.photo}:full` : "";
   }
 
   if (inRoll) {
@@ -154,13 +236,27 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
       const c = cues[j];
       if (c.intro && c.photo != null) {
         // introduce them while they are the one fronting, for at least a few seconds
-        if (held && held.photo === c.photo && t < Math.max(c.until, c.start + 4.2)) intro = band[c.photo] ?? null;
+        if (
+          held &&
+          held.photo === c.photo &&
+          t < Math.max(c.until, c.start + 4.2)
+        )
+          intro = band[c.photo] ?? null;
         break;
       }
     }
   }
 
-  const live = useRef<StageState>({ mode, front: null, side, solo, credits, t, bpm, take });
+  const live = useRef<StageState>({
+    mode,
+    front: null,
+    side,
+    solo,
+    credits,
+    t,
+    bpm,
+    take,
+  });
   live.current = {
     mode,
     front: mode === "verse" && held ? held.photo : null,
@@ -176,7 +272,10 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   const setVf = useCallback((el: HTMLDivElement | null) => {
     layers.current.vf = el;
   }, []);
-  const shotFx = take && !inTitle && !inRoll && !reduced && !(credits && take.fx === "split") ? take.fx : "none";
+  const shotFx =
+    take && !inTitle && !inRoll && !reduced && !(credits && take.fx === "split")
+      ? take.fx
+      : "none";
 
   // per-frame beat values for CSS, written straight to the root
   useLayoutEffect(() => {
@@ -196,8 +295,10 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   playRef.current = player.play;
   useEffect(() => {
     if (!autoplay) return;
-    const ua = (navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }).userActivation;
-    if (ua && !ua.hasBeenActive) return;
+    const ua = (
+      navigator as Navigator & { userActivation?: { hasBeenActive: boolean } }
+    ).userActivation;
+    if (ua && !ua.hasBeenActive && !RENDER) return;
     const id = window.setTimeout(() => void playRef.current(), 900);
     return () => window.clearTimeout(id);
   }, [autoplay]);
@@ -263,13 +364,26 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   }, [tape.id]);
 
   // keyboard: space toggles, arrows seek, F fullscreen
-  const keys = useRef({ toggle, seek, toggleFull, wake, t: player.time, duration });
+  const keys = useRef({
+    toggle,
+    seek,
+    toggleFull,
+    wake,
+    t: player.time,
+    duration,
+  });
   keys.current = { toggle, seek, toggleFull, wake, t: player.time, duration };
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
       const el = e.target as HTMLElement | null;
-      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      if (
+        el &&
+        (el.tagName === "INPUT" ||
+          el.tagName === "TEXTAREA" ||
+          el.isContentEditable)
+      )
+        return;
       const k = keys.current;
       if (e.key === " " || e.code === "Space") {
         if (el?.tagName === "BUTTON") return;
@@ -289,8 +403,12 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
     return () => window.removeEventListener("keydown", on);
   }, []);
 
-  const creditsProgress = (t - creditsStart) / Math.max(1, duration - creditsStart);
-  const rootStyle = { "--beat": `${(60 / bpm).toFixed(4)}s`, "--bar": `${((240 / bpm)).toFixed(4)}s` } as CSSProperties;
+  const creditsProgress =
+    (t - creditsStart) / Math.max(1, duration - creditsStart);
+  const rootStyle = {
+    "--beat": `${(60 / bpm).toFixed(4)}s`,
+    "--bar": `${(240 / bpm).toFixed(4)}s`,
+  } as CSSProperties;
 
   return (
     <main
@@ -311,6 +429,7 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
       data-freeze={frozen ? 1 : 0}
       data-idle={show ? 0 : 1}
       data-reduced={reduced ? 1 : 0}
+      data-render={RENDER ? 1 : undefined}
       onPointerMove={wake}
       onPointerDown={(e) => {
         wake();
@@ -322,18 +441,41 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
           <Backdrop theme={theme} tape={tape} />
         </div>
         <Flash tape={tape} theme={theme} shown={flashShown} camRef={setVf} />
-        <Stage tape={tape} theme={theme} live={live} layers={layers} W={W} H={H} reduced={reduced} />
+        <Stage
+          tape={tape}
+          theme={theme}
+          live={live}
+          layers={layers}
+          W={W}
+          H={H}
+          reduced={reduced}
+        />
         <div className="vsx" aria-hidden="true">
           <i className="vsx-strobe" />
           <i className="vsx-split" />
           <i className="vsx-freeze" />
-          {take && !inTitle && take.fx === "flash" && !reduced && <i key={`cut${take.index}`} className="vsx-cut" />}
+          {take && !inTitle && take.fx === "flash" && !reduced && (
+            <i key={`cut${take.index}`} className="vsx-cut" />
+          )}
         </div>
         {(started || !inTitle) && (
-          <Lyrics cues={cues} cur={cur} out={out} t={t} theme={theme} layout={`${mode}:${side}:${credits ? 1 : 0}:${W}x${H}`} />
+          <Lyrics
+            cues={cues}
+            cur={cur}
+            out={out}
+            t={t}
+            theme={theme}
+            layout={`${mode}:${side}:${credits ? 1 : 0}:${W}x${H}`}
+          />
         )}
         <LowerThird member={intro} side={side} theme={theme} />
-        <Credits tape={tape} band={band} on={credits && !ended} progress={creditsProgress} theme={theme} />
+        <Credits
+          tape={tape}
+          band={band}
+          on={credits && !ended}
+          progress={creditsProgress}
+          theme={theme}
+        />
         <TitleCard tape={tape} theme={theme} on={inTitle} />
         <Fx theme={theme} />
       </div>
@@ -344,7 +486,7 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
         <span className="num">{tape.catalog}</span>
       </div>
 
-      {!started && (
+      {!started && !RENDER && (
         <button
           className="vplay"
           onPointerDown={(e) => e.stopPropagation()}
@@ -367,37 +509,58 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
           <div className="vend-cat num">{tape.catalog}</div>
           <div className="vend-title">{tape.title}</div>
           {tape.artist && <div className="vend-artist">{tape.artist}</div>}
-          <div className="vend-actions">
-            <button className="vend-btn is-primary" onClick={toggle}>
-              <span className="label">Play again</span>
-            </button>
-            <button className="vend-btn" onClick={() => void share()}>
-              <span className="label">{copied ? "Link copied" : "Copy link"}</span>
-            </button>
-            <button className="vend-btn" onClick={onExit}>
-              <span className="label">Back to the studio</span>
-            </button>
-          </div>
+          {RENDER && (
+            <div className="vend-made">your day, on record · songbird</div>
+          )}
+          {!RENDER && (
+            <div className="vend-actions">
+              <button
+                className="vend-btn is-primary"
+                onClick={() => void video.ask()}
+                data-busy={video.busy ? 1 : 0}
+              >
+                <span className="label">{video.label}</span>
+              </button>
+              <button className="vend-btn" onClick={toggle}>
+                <span className="label">Play again</span>
+              </button>
+              <button className="vend-btn" onClick={() => void share()}>
+                <span className="label">
+                  {copied ? "Link copied" : "Copy link"}
+                </span>
+              </button>
+              <button className="vend-btn" onClick={onExit}>
+                <span className="label">Back to the studio</span>
+              </button>
+            </div>
+          )}
         </div>
       )}
 
-      <div onPointerDown={(e) => e.stopPropagation()}>
-        <Transport
-          show={show}
-          playing={player.playing}
-          silent={player.silent}
-          time={t}
-          duration={duration}
-          cues={cues}
-          full={full}
-          copied={copied}
-          onToggle={toggle}
-          onSeek={seek}
-          onFull={toggleFull}
-          onShare={() => void share()}
-          onExit={onExit}
-        />
-      </div>
+      {!RENDER && (
+        <div onPointerDown={(e) => e.stopPropagation()}>
+          <Transport
+            show={show}
+            playing={player.playing}
+            silent={player.silent}
+            time={t}
+            duration={duration}
+            cues={cues}
+            full={full}
+            copied={copied}
+            onToggle={toggle}
+            onSeek={seek}
+            onFull={toggleFull}
+            onShare={() => void share()}
+            video={{
+              label: video.label,
+              busy: video.busy,
+              ask: () => void video.ask(),
+            }}
+            onExit={onExit}
+          />
+        </div>
+      )}
     </main>
   );
 }

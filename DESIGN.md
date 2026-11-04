@@ -111,7 +111,12 @@ cover, word-timed lyrics, bpm, band credits, genre/style. Structure, in every th
    puddle department").
 6. **Credits roll** at the end: the band, then the models.
 
-Minimal overlay transport (play/pause, scrub, time, fullscreen, back to the studio, share) that hides while playing.
+Minimal overlay transport (play/pause, scrub, time, fullscreen, back to the studio, copy link, save the video) that
+hides while playing.
+
+**The shareable MP4** is the same video, filmed in portrait (720x1280 css px at 1.5x = 1080x1920) in render mode
+(`?render=1`: no controls, no cursor, no audio, autoplays from the cold open). Its end slate drops the buttons for
+"your day, on record · songbird". Portrait layouts must hold up at 9:16: the band fills the frame above the lyrics.
 
 ### Genre themes
 

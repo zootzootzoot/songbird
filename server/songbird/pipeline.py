@@ -373,6 +373,11 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     job.tape = tape
     job.emit("progress", value=1.0)
     job.emit("done", tape=tape)
+    try:  # start filming the shareable MP4 now, so it's ready about when the viewer finishes watching
+        from . import render
+        render.queue(job.id)
+    except Exception:
+        traceback.print_exc()
 
 
 def _align(take: dict, sheet: list[dict]) -> list[dict] | None:

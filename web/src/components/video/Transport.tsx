@@ -15,6 +15,7 @@ export const Transport = memo(function Transport({
   onSeek,
   onFull,
   onShare,
+  video,
   onExit,
 }: {
   show: boolean;
@@ -29,6 +30,8 @@ export const Transport = memo(function Transport({
   onSeek: (t: number) => void;
   onFull: () => void;
   onShare: () => void;
+  /** the shareable MP4 */
+  video: { label: string; busy: boolean; ask: () => void };
   onExit: () => void;
 }) {
   const bar = useRef<HTMLDivElement | null>(null);
@@ -101,6 +104,9 @@ export const Transport = memo(function Transport({
         </div>
       </div>
       {silent && playing && <span className="vx-silent label">no audio</span>}
+      <button className="vx-btn vx-video" data-busy={video.busy ? 1 : 0} onClick={video.ask} title="A 9:16 MP4 of this video with the song, for Reels, Stories and chats">
+        <span className="label">{video.label}</span>
+      </button>
       <button className="vx-btn" onClick={onShare} title="Copy a link to this release">
         <span className="label">{copied ? "Link copied" : "Copy link"}</span>
       </button>

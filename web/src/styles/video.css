@@ -1151,3 +1151,24 @@
   background: var(--cut, #fff);
   animation: vf-hit 0.5s var(--ease) both;
 }
+
+/* the recorder filming the shareable MP4: no cursor, no controls, an end slate instead of buttons */
+.video[data-render="1"],
+.video[data-render="1"] * {
+  cursor: none !important;
+}
+
+.vend-made {
+  margin-top: 1.4em;
+  font-family: var(--sans);
+  font-size: clamp(14px, 1.6vmin, 22px);
+  letter-spacing: 0.02em;
+  opacity: 0.8;
+}
+
+/* the shareable MP4 while it's being cut */
+.vx-video[data-busy="1"],
+.vend-btn[data-busy="1"] {
+  opacity: 0.75;
+  cursor: progress;
+}

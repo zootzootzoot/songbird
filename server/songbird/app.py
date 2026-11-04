@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Streamin
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
-from . import config, meta, pipeline
+from . import config, meta, pipeline, render
 from .band import band
 
 app = FastAPI(title="songbird")
@@ -138,6 +138,31 @@ def get_tape(tid: str):
     if not tape:
         raise HTTPException(404, "not finished yet")
     return tape
+
+
+@app.get("/api/tapes/{tid}/share")
+def share_status(tid: str):
+    """The shareable MP4 (9:16, the music video with the song): its state, and its URL when ready."""
+    if not pipeline.load_tape(tid):
+        raise HTTPException(404, "no such release")
+    return render.status(tid)
+
+
+@app.get("/api/tapes/{tid}/share.mp4")
+def share_file(tid: str):
+    f = config.TAPES / tid / "share.mp4"
+    tape = pipeline.load_tape(tid)
+    if not tape or not f.exists():
+        raise HTTPException(404, "not cut yet")
+    name = re.sub(r"[^a-z0-9]+", "-", f"{tape.get('catalog', 'sb')} {tape.get('title', '')}".lower()).strip("-")
+    return FileResponse(f, media_type="video/mp4", filename=f"songbird-{name}.mp4")
+
+
+@app.post("/api/tapes/{tid}/share")
+def share_make(tid: str):
+    if not pipeline.load_tape(tid):
+        raise HTTPException(404, "no such release")
+    return render.queue(tid)
 
 
 @app.get("/api/samples")

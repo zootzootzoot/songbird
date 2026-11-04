@@ -73,13 +73,14 @@ function layout(st: StageState, n: number, W: number, H: number, portrait: boole
       const row = i < back ? 0 : 1;
       const count = row === 0 ? back : n - back;
       const j = row === 0 ? i : i - back;
-      const span = W * (row === 0 ? 0.86 : 0.94);
+      // phones and the shareable MP4 (9:16): the band fills the frame above the lyrics, not a cluster in the middle
+      const span = W * (row === 0 ? 0.9 : 1.02);
       const solo = st.solo === i;
       slots[i] = {
         cx: (W - span) / 2 + ((j + 0.5) * span) / count,
-        base: H * (row === 0 ? 0.53 : 0.43) - (st.mode === "title" ? H * 0.55 : 0),
-        boxW: (span / count) * 0.9,
-        boxH: H * (row === 0 ? 0.13 : 0.16) * (solo ? 1.15 : 1),
+        base: H * (row === 0 ? 0.55 : 0.39) - (st.mode === "title" ? H * 0.55 : 0),
+        boxW: (span / count) * 0.96,
+        boxH: H * (row === 0 ? 0.18 : 0.23) * (solo ? 1.15 : 1),
         o: st.mode === "title" ? 0 : row === 0 ? 0.92 : 1,
         z: row === 0 ? 2 : solo ? 4 : 3,
         role: solo ? "solo" : "line",
@@ -93,7 +94,7 @@ function layout(st: StageState, n: number, W: number, H: number, portrait: boole
   for (let i = 0; i < n; i += 1) {
     const off = mid > 0 ? Math.abs(i - mid) / mid : 0;
     const solo = st.solo === i;
-    const boxH = (portrait ? H * 0.2 : st.credits ? H * 0.32 : H * 0.48) * (1 - off * 0.14) * (solo ? 1.16 : 1);
+    const boxH = (portrait ? H * 0.27 : st.credits ? H * 0.32 : H * 0.48) * (1 - off * 0.14) * (solo ? 1.16 : 1);
     slots[i] = {
       cx: left + ((i + 0.5) * span) / n,
       base: (portrait ? H * 0.44 : H * 0.04) + off * H * 0.025,

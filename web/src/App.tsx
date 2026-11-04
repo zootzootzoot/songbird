@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { connect, getShelf, getTape, type Health } from "./lib/api";
 import { sound } from "./lib/audio";
-import { BASE } from "./lib/env";
+import { BASE, RENDER } from "./lib/env";
 import { useDeck } from "./lib/useDeck";
 import { keep } from "./lib/journal";
 import { usePlayer } from "./lib/usePlayer";
@@ -76,7 +76,7 @@ export default function App() {
         <Video
           tape={tape}
           player={player}
-          autoplay={state.source === "live" || state.source === "mock"}
+          autoplay={state.source === "live" || state.source === "mock" || RENDER}
           onExit={deck.eject}
         />
       )}

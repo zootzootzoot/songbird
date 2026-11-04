@@ -33,6 +33,9 @@ root-relative (`/tapes/<id>/...`).
 | `POST` | `/api/transcribe` | `multipart/form-data`: `audio` (browser recording, ≤ 60 s) → `{ "text": "..." }` via Muse Voice Transcribe |
 | `GET` | `/api/tapes/{id}/events` | Server-Sent Events (below). Replays everything so far on connect. Ends after `done` or `error`. |
 | `GET` | `/api/tapes/{id}` | `Tape` JSON (404 until done) |
+| `GET` | `/api/tapes/{id}/share` | the shareable MP4's state: `{ state: "none"\|"queued"\|"filming"\|"encoding"\|"ready"\|"error", progress, url? }` |
+| `POST` | `/api/tapes/{id}/share` | start cutting it (a live release starts on its own when it's done) |
+| `GET` | `/api/tapes/{id}/share.mp4` | the MP4 as a download: 1080x1920, 30 fps H.264 + AAC, the video from the cold open with the song |
 | `GET` | `/api/samples` | `{ "tapes": TapeSummary[] }` the label's back catalogue (the shelf) |
 | `GET` | `/api/health` | `{ ok, meta, band, busy }` |
 

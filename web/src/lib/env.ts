@@ -8,6 +8,9 @@
  *   an empty api means the studio is closed. Then pinged at /api/health.
  */
 
+/** `?render=1`: the server's recorder is filming this page for the shareable MP4 (no audio, no controls) */
+export const RENDER = typeof location !== "undefined" && new URLSearchParams(location.search).has("render");
+
 export const BASE = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 
 let API = "";

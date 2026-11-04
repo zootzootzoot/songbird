@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { sound } from "./audio";
 import type { Tape } from "./types";
+import { RENDER } from "./env";
 
 /**
  * Plays tape.audio. If the file is missing or the browser refuses it, the deck
@@ -28,7 +29,8 @@ export function usePlayer(tape: Tape | null) {
     clock.current = null;
     audio.current?.pause();
     audio.current = null;
-    if (!tape?.audio) {
+    if (!tape?.audio || RENDER) {
+      // no file, or the recorder is filming (it lays the song in afterwards): run on the clock
       failed.current = true;
       return;
     }
