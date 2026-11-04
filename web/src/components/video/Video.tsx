@@ -7,7 +7,7 @@ import {
   useState,
   type CSSProperties,
 } from "react";
-import { BASE, RENDER } from "../../lib/env";
+import { BASE, RENDER, RENDER_AT } from "../../lib/env";
 import type { Player } from "../../lib/usePlayer";
 import { useShareVideo } from "../../lib/useShareVideo";
 import type { Tape } from "../../lib/types";
@@ -129,11 +129,10 @@ export function Video({
   // what's on screen
   const { cues, titleEnd, creditsStart, openAt, rollFrom } = tl;
   useEffect(() => {
-    if (player.playing) armed.current = false;
-    else if (armed.current && player.time === 0 && openAt > 0) {
-      armed.current = false;
-      player.seek(openAt);
-    }
+    // stays armed until the seek sticks: the player resets a fresh tape to 0:00 in its own effect, which runs
+    // after this one (parent after child), and a one-shot seek here was lost to it outside dev's double effects
+    if (player.playing || player.time > 0) armed.current = false;
+    else if (armed.current && (openAt > 0 || RENDER_AT > 0)) player.seek(RENDER_AT > 0 ? RENDER_AT : openAt);
   }, [player, player.playing, player.time, openAt]);
   const cur = cueAt(cues, t);
   const last = lastCueAt(cues, t);

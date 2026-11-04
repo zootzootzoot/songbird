@@ -10,6 +10,8 @@
 
 /** `?render=1`: the server's recorder is filming this page for the shareable MP4 (no audio, no controls) */
 export const RENDER = typeof location !== "undefined" && new URLSearchParams(location.search).has("render");
+/** render mode only: `&at=<seconds>` starts the film there instead of the cold open (the demo's montage) */
+export const RENDER_AT = RENDER ? Number(new URLSearchParams(location.search).get("at") ?? NaN) : NaN;
 
 export const BASE = import.meta.env.BASE_URL.endsWith("/") ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}/`;
 
