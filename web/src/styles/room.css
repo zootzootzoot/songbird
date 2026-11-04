@@ -2238,3 +2238,14 @@ svg.rm-wave path {
     display: none;
   }
 }
+
+/* a replay of a finished release's session: amber, not the red of a live take */
+.rm-rec[data-on][data-replay] .rm-rec__tally {
+  color: #14110a;
+  background: #ffb21e;
+  border-color: #ffb21e;
+}
+
+.rm-rec[data-on][data-replay] .rm-rec__tally i {
+  background: #14110a;
+}

@@ -99,6 +99,8 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
   const status = !online ? "closed" : bandAway ? "warming" : "open";
   const micLabel =
     rec.state === "recording" ? "listening" : rec.state === "hearing" ? "writing it down" : rec.state === "denied" ? "mic blocked" : "hold to say it";
+  // the release the studio replays from the front door: the first on the shelf that kept its takes
+  const star = releases.find((t) => (t.takes?.length ?? 0) >= 2) ?? null;
   const demo = releases.find((t) => t.photos.some((p) => p.performer && p.cutout)) ?? null;
   const demoPhoto = demo?.photos.find((p) => p.performer && p.cutout) ?? null;
 
@@ -145,6 +147,12 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
             <a className="fr__ghost" href="#shelf">
               hear one first
             </a>
+            {star && (
+              <button className="fr__ghost fr__ghost--studio" onClick={() => deck.replay(star)}>
+                <i aria-hidden="true" />
+                watch one get made
+              </button>
+            )}
           </div>
           {now && (
             <button key={now.id} className="fr__now" onClick={() => onOpen(now.id)}>
@@ -193,14 +201,20 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
             const takes = t.takes?.length ?? 0;
             const cut = t.takes?.filter((x) => x.cut).length ?? 0;
             return (
-              <li key={t.id}>
+              <li key={t.id} className="fr__card-li">
+                {(t.takes?.length ?? 0) >= 2 && (
+                  <button className="fr__made" onClick={() => deck.replay(t)} title="replay this release's real session in the studio">
+                    <i aria-hidden="true" />
+                    watch it get made
+                  </button>
+                )}
                 <button className="fr__card" onClick={() => onOpen(t.id)}>
                   <span className="fr__media">
                     {t.cover && <img src={t.cover} alt="" loading="lazy" />}
-                    {k?.inKey != null && (
+                    {(k?.bandKey ?? t.key) && (
                       <span className="fr__pill">
                         <i />
-                        in key {pct(k.inKey)}
+                        in {k?.bandKey ?? t.key}
                       </span>
                     )}
                   </span>
@@ -268,6 +282,36 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
           <h2>how a day becomes a single.</h2>
           <p>nine models, ten jobs. three of them run on open weights, on our own GPU.</p>
         </header>
+        <div className="fr__studio">
+          <video
+            className="fr__studio-film"
+            src={asset("studio/room.mp4")}
+            poster={asset("studio/room.jpg")}
+            muted
+            loop
+            autoPlay
+            playsInline
+            preload="metadata"
+            aria-label="the studio making maya's single, sped up"
+          />
+          <div className="fr__studio-copy">
+            <span className="fr__studio-kick">
+              <i aria-hidden="true" />
+              the studio
+            </span>
+            <p>
+              every release is made in front of you. each lamp is a model, lit only while it works: the cut-outs land,
+              the producer writes the sheet, four takes roll, the tuner throws out the off-key ones and the A&amp;R keeps
+              one.
+            </p>
+            {star && (
+              <button className="fr__cta" onClick={() => deck.replay(star)}>
+                step inside: replay {star.name ?? "a"}'s session
+              </button>
+            )}
+            <span className="fr__studio-fine">the real session, from what the release kept. 3× speed, clocks in real time.</span>
+          </div>
+        </div>
         {demo && demoPhoto && (
           <ol className="fr__steps">
             <li>

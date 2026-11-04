@@ -13,11 +13,16 @@ most-used, least-revisited archive people own into something they will play agai
 ## For judges
 
 - **Watch:** the 3-minute demo (link in the submission form). It was filmed from the live site, not mocked up.
-- **Try it:** <https://zootzootzoot.github.io/songbird/>. Scroll to the desk, press **borrow someone's day** (or drop
-  in your own photos), then **produce my day**. About three minutes later you have a single, a sleeve and a music
-  video, and **Save the video** gives you a 9:16 MP4. The studio is one GPU, so a release can queue behind another.
-- **Look at:** the control room while it works. Eleven lamps, one per job, and a lamp is lit only while that model
-  is really working. Ten of the eleven jobs are done by eight Meta models.
+- **See the studio in one click:** <https://zootzootzoot.github.io/songbird/>, press **watch one get made**. The
+  control room replays a real release's session from what it kept (the cut-outs, the producer's sheet, all four takes
+  with their tuner readings and the A&R's verdicts, the sleeve), at 3x speed with the clocks in real time, and hands
+  you the music video at the end. Every single on the shelf has **watch it get made** too, and so does the player.
+- **Make one:** scroll to the desk, press **borrow someone's day** (eight days that aren't on the shelf, photographed
+  by Muse Image) or drop in your own photos, then **produce my day**. About three minutes later you have a single, a
+  sleeve and a music video, and **Save the video** gives you a 9:16 MP4. The studio is one GPU, so a release can
+  queue behind another.
+- **Look at:** the control room. Eleven lamps, one per job, and a lamp is lit only while that model is really
+  working. Ten of the eleven jobs are done by eight Meta models.
 - **Read:** [docs/META_LOG.md](docs/META_LOG.md), every decision a Meta model made or measured while we built this,
   with the numbers. The commit history runs from Oct 26 to Nov 4.
 

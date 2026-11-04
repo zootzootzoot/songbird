@@ -59,7 +59,7 @@ open it without signing in), with `film/demo/thumbnail.png` as the thumbnail.
   >
   > Everything in this video was filmed from the live product.
   >
-  > Try it: https://zootzootzoot.github.io/songbird/
+  > Try it: https://zootzootzoot.github.io/songbird/ ("watch one get made" replays a real session in the studio)
   > Code and the build log: https://github.com/zootzootzoot/songbird
   >
   > Meta models: Muse Spark 1.3, SAM 3.1, Muse Wonder 1.0, Muse Image 1.0, Muse Spark 1.2, Muse Voice Transcribe,
@@ -114,7 +114,7 @@ band instead of generic stock characters. Wonder makes the creative call and wri
 line by line. Muse Image makes those objects whole and in costume, and paints a sleeve from them rather than from a
 text prompt. That chain is what makes the result yours.
 
-The other half is that the label judges its own work. A song generator ships whatever it gets; Songbird records four
+The other half is that Songbird judges its own work. A song generator ships whatever it gets; Songbird records four
 takes and lets Meta models decide. Demucs pulls the voice apart from the band so a key clash can be measured,
 Spark 1.2 actually listens and keeps the best take, Voice Transcribe checks every line was sung, and MMS times every
 word. Without those ears there would be off-key takes, missing verses and lyrics that drift off the music, which is

@@ -39,7 +39,7 @@ PRODUCE_SCHEMA = {
     "properties": {
         "title": {"type": "string"},
         "artist": {"type": "string", "description": "an invented act name as it would be printed on the sleeve, in the genre's naming idiom, built around the star's name and the band you cast (e.g. 'jun & the sprinkler sound system', 'lady rosa and the puddle department', 'nico vortex'); never just the bare name"},
-        "genre": {"type": "string", "description": "the genre in a few words, with an era, e.g. '1974 philly soul ballad'"},
+        "genre": {"type": "string", "description": "the genre in a few words, e.g. 'gospel-choir funk', 'baggy madchester'; add a year only when the era is the joke or the point, e.g. '1986 hair metal'"},
         "style": {"type": "string", "enum": REPERTOIRE, "description": "the style the session band plays it in"},
         "why": {"type": "string", "description": "one sentence, under 25 words, in your voice: the detail that made this day this genre"},
         "caption": {"type": "string", "description": "production notes for the recording session: era, instruments, vocal type and delivery, mix, tempo feel. 20-45 words, comma separated"},
@@ -70,12 +70,12 @@ the day:
 The whole day: {day}
 {note}
 Make the single. Rules, every one matters:
-- Pick the genre with total conviction, the way a genius producer would: specific, with an era and a scene, and
-  surprising but RIGHT for this day. Find the one detail that decides it, and say so in "why". The range is the whole
+- Pick the genre with total conviction, the way a genius producer would: specific, with a scene (and a year only when
+  the era itself is the point), surprising but RIGHT for this day. Find the one detail that decides it, and say so in "why". The range is the whole
   history of recorded music. These are only examples of the move, never reuse them: a goose ambush is 1986 hair metal;
-  a rainy car ride is 1983 synth-pop; a bath is 1963 surf rock; a birthday is a 1990s eurodance anthem; a nap is 1962
-  bossa nova; a grocery run is 1979 funk; a lost tooth is 1977 punk; a cake is 1978 italo disco; a museum is 1940s
-  big band. Never "lullaby", never generic "pop" or "acoustic". The label has already released too much philly soul,
+  a rainy car ride is cold-wave synth-pop; a bath is surf rock; a birthday is a eurodance anthem; a nap is
+  bossa nova; a grocery run is p-funk; a lost tooth is 1977 punk; a cake is 1978 italo disco; a museum is 1940s
+  big band. Never "lullaby", never generic "pop" or "acoustic". Songbird has already released too much philly soul,
   disco and krautrock: do not pick them. The bigger the gap between how small the day was and how seriously the genre treats it,
   the better, as long as it is warm, never mean.
 - The session players who showed up today can play: {players}. "style" is the one of those your genre is played in

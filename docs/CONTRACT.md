@@ -36,7 +36,7 @@ root-relative (`/tapes/<id>/...`).
 | `GET` | `/api/tapes/{id}/share` | the shareable MP4's state: `{ state: "none"\|"queued"\|"filming"\|"encoding"\|"ready"\|"error", progress, url? }` |
 | `POST` | `/api/tapes/{id}/share` | start cutting it (a live release starts on its own when it's done) |
 | `GET` | `/api/tapes/{id}/share.mp4` | the MP4 as a download: 1080x1920, 30 fps H.264 + AAC, the video from the cold open with the song |
-| `GET` | `/api/samples` | `{ "tapes": TapeSummary[] }` the label's back catalogue (the shelf) |
+| `GET` | `/api/samples` | `{ "tapes": TapeSummary[] }` the shelf |
 | `GET` | `/api/health` | `{ ok, meta, band, busy }` |
 
 ## SSE events
@@ -73,7 +73,7 @@ type Box = [number, number, number, number];   // normalized x1,y1,x2,y2
 
 type Tape = {
   id: string;
-  catalog: string;              // "SB-0007", the label's catalogue number
+  catalog: string;              // "SB-0007", the release's catalogue number
   createdAt: string;
   title: string;                // the single, lowercase
   artist: string;               // e.g. "maya y la orquesta catorce"

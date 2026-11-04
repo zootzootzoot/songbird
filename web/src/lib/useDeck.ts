@@ -4,6 +4,8 @@ import { asset, BASE, media } from "./env";
 import { sound } from "./audio";
 import { downscale, urlToBlob } from "./image";
 import { mockSpeed, runMock } from "./mock";
+import { REPLAY_SPEED, runReplay } from "./replay";
+import { setRoomPace } from "../components/room/model";
 import type { Box, SongEvent, Stage, Tape } from "./types";
 
 /**
@@ -87,7 +89,7 @@ export const LINE_PHOTO_IS_SONG_ORDER = true;
 /** seconds between printed lines when the server sends them in one burst */
 export const LINE_STAGGER = 0.42;
 
-export type Source = "live" | "mock" | "shelf" | "link";
+export type Source = "live" | "mock" | "shelf" | "link" | "replay";
 
 export type DeckState = {
   phase: Phase;
@@ -109,6 +111,8 @@ export type DeckState = {
   reel: number;
   /** a short printed note from the tray, e.g. a clip that was too big */
   notice: string | null;
+  /** the room is replaying this finished release's session */
+  replay: { catalog: string; at: string } | null;
 };
 
 const emptyWork = (): Work => ({
@@ -147,6 +151,7 @@ const initial: DeckState = {
   source: null,
   reel: 0,
   notice: null,
+  replay: null,
 };
 
 type Action =
@@ -160,7 +165,8 @@ type Action =
   | { type: "event"; event: SongEvent }
   | { type: "fail"; message: string; stage?: Stage }
   | { type: "loadTape"; tape: Tape; source: Source }
-  | { type: "resume"; id: string };
+  | { type: "resume"; id: string }
+  | { type: "replay"; tape: Tape; photos: string[] };
 
 const MAX = 6;
 const MIN = 3;
@@ -399,6 +405,7 @@ function reducer(state: DeckState, action: Action): DeckState {
         error: null,
         tape: null,
         source: action.source,
+        replay: null,
       };
     }
     case "started":
@@ -424,6 +431,24 @@ function reducer(state: DeckState, action: Action): DeckState {
         source: action.source,
         name: action.tape.name ?? "",
         reel: state.reel + 1,
+      };
+    case "replay":
+      return {
+        ...state,
+        phase: "sending",
+        photos: action.photos.map((src, i) => ({ key: `${action.tape.id}-replay-${i}`, src })),
+        uploaded: [],
+        songSrcs: null,
+        reordered: true,
+        work: { ...emptyWork(), id: action.tape.id },
+        tape: null,
+        error: null,
+        source: "replay",
+        name: action.tape.name ?? "",
+        note: action.tape.note ?? "",
+        noteSpoken: false,
+        notice: null,
+        replay: { catalog: action.tape.catalog ?? action.tape.id, at: action.tape.createdAt },
       };
     case "resume":
       return {
@@ -602,6 +627,7 @@ export function useDeck() {
     window.setTimeout(() => sound.startMotor(), 250);
     closeRef.current?.();
 
+    setRoomPace(1);
     if (isMock()) {
       const params = new URLSearchParams(location.search);
       const failAt = (params.get("fail") as Stage | null) ?? null;
@@ -672,15 +698,38 @@ export function useDeck() {
     [loadTape, onEvent],
   );
 
+  /** watch a finished release get made: the room replays its real session from what it kept */
+  const prior = useRef<{ name: string; note: string } | null>(null);
+  const replay = useCallback(
+    (tape: Tape) => {
+      const s = stateRef.current;
+      if (s.phase === "sending" || s.phase === "working") return;
+      closeRef.current?.();
+      if (s.source !== "replay") prior.current = { name: s.name, note: s.note };
+      setRoomPace(REPLAY_SPEED);
+      const run = runReplay(tape, onEvent, REPLAY_SPEED);
+      dispatch({ type: "replay", tape, photos: run.photos });
+      closeRef.current = run.cancel;
+    },
+    [onEvent],
+  );
+
   const eject = useCallback(() => {
     closeRef.current?.();
     closeRef.current = null;
     sound.stopMotor();
+    const was = stateRef.current.source;
     dispatch({ type: "clear" });
+    // a replay borrowed the desk's name and note: give the visitor's own back
+    if (was === "replay" && prior.current) {
+      dispatch({ type: "name", value: prior.current.name });
+      dispatch({ type: "note", value: prior.current.note });
+      prior.current = null;
+    }
     setUrlTape(null);
   }, []);
 
-  return { state, addFiles, addSample, remove, setName, setNote, pull, loadTape, openById, eject, MIN, MAX };
+  return { state, addFiles, addSample, remove, setName, setNote, pull, loadTape, openById, replay, eject, MIN, MAX };
 }
 
 export type Deck = ReturnType<typeof useDeck>;

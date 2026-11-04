@@ -36,7 +36,7 @@ went wrong, a first solo trip, a seventy-fourth birthday at the allotment. Not a
    tango", with a dry, specific reason.
 3. **It is a real record.** Four takes, a tuner that cuts the off-key ones, an A&R ear that keeps one, lyrics sung
    and checked by Voice Transcribe, a sleeve, a video directed shot by shot.
-4. **It is a journal.** Releases are dated days. Catalogue numbers run like a label's (SB-0021). Every single you make
+4. **It is a journal.** Releases are dated days. Every release gets a catalogue number (SB-0021). Every single you make
    is kept on your device and shown on the front door as "your discography", so over time you get a record of your
    own life. No account needed.
 

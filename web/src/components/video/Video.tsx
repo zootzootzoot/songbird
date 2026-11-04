@@ -64,11 +64,14 @@ export function Video({
   player,
   autoplay,
   onExit,
+  onReplay,
 }: {
   tape: Tape;
   player: Player;
   autoplay: boolean;
   onExit: () => void;
+  /** replay this release's session in the studio */
+  onReplay?: () => void;
 }) {
   const theme = useMemo(() => resolveTheme(tape), [tape]);
   const video = useShareVideo(
@@ -528,6 +531,11 @@ export function Video({
                   {copied ? "Link copied" : "Copy link"}
                 </span>
               </button>
+              {onReplay && (
+                <button className="vend-btn" onClick={onReplay}>
+                  <span className="label">Watch it get made</span>
+                </button>
+              )}
               <button className="vend-btn" onClick={onExit}>
                 <span className="label">Back to the studio</span>
               </button>
@@ -557,6 +565,7 @@ export function Video({
               ask: () => void video.ask(),
             }}
             onExit={onExit}
+            onReplay={onReplay}
           />
         </div>
       )}

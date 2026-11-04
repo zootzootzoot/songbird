@@ -160,6 +160,11 @@ def get_tape(tid: str):
     tape = pipeline.load_tape(tid)
     if not tape:
         raise HTTPException(404, "not finished yet")
+    try:  # the session's stage marks, so the studio can replay it
+        t = json.loads((config.TAPES / tid / "log.json").read_text())["timings"]
+        tape = {**tape, "session": {k: t[k] for k in ("look", "produce", "record", "listen")}}
+    except Exception:
+        pass
     return tape
 
 

@@ -13,7 +13,7 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 | Produce | **Muse Wonder 1.0** (structured output) | Picks the genre with conviction, writes the session notes, the lyrics (every verse line tied to a photo), band credits, liner notes. A mechanical checker (syllables, photo coverage, chorus repeats, banned clichés) sends it back until it passes | Wonder writes better songs than Spark (see build log); the checker loop makes it reliable |
 | Hear your note | **Muse Voice Transcribe** | You hold the mic and say one thing the photos can't show ("i cried at the speech and again at the cake"); it ends up in the song | Turns a 5-second voice note into the most personal line of the song |
 | Tune | **Demucs** (Meta FAIR, open weights; Hybrid Demucs via torchaudio) | Splits every take into singer and band, then our tuner checks how much of the singing sits on the band's scale; takes under 75% are cut before anyone hears them | The off-key problem was invisible until the voice could be heard apart from the band (see build log 10) |
-| A&R | **Muse Spark 1.2** (audio in) | Listens to every take that passed the tuner and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets the label judge its own output instead of shipping the first take |
+| A&R | **Muse Spark 1.2** (audio in) | Listens to every take that passed the tuner and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets Songbird judge its own output instead of shipping the first take |
 | Sleeve | **Muse Image 1.0** (edits, references) | Redraws the day's SAM cut-outs as the band on a square record sleeve made the way that genre's sleeves really looked (2 Tone checkerboard for ska, a hand-tinted oval frame for 1950s tango) (~15 s, $0.01) | Multi-reference edits: the cover is made *from that day's actual objects*, not from a text prompt |
 | Cast | **Muse Image 1.0 + SAM 3.1** | Redraws each SAM cut-out as its band role in the genre's wardrobe (the rubber duck on contrabass in a 1930s pinstripe suit), on a colour screen chosen to contrast with the object; keyed out, with SAM's mask of the object keeping its body solid | A photo cut-out can only be as good as a casual snapshot; a cast performer is whole, in costume, holding its instrument |
 | Direct | **Muse Spark 1.3** | Reads the finished single (lyrics, band, roles, genre) and writes the video's shot list: per line a shot (close-up, duet, wide, solo, lineup, photo, low-angle), who is in frame, a camera move and an effect | The staging follows the song and changes every release, instead of a template |
@@ -58,8 +58,8 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     zero, so this was not a detuned singer but a melody written in the wrong key. A four-way trial found the cause:
     ACE-Step's 5Hz LM writes the melody as audio codes while the DiT renders the band in the requested key, and the two
     disagree on every take. With the LM planning only the metadata, all takes measured **0.80-0.90** in key, and
-    recording got **6x faster** (12 s for two takes instead of 80 s). The split-and-measure step now ships as the
-    label's tuner: the band records four takes, Demucs cuts the off-key ones, and Spark 1.2 judges taste among the rest.
+    recording got **6x faster** (12 s for two takes instead of 80 s). The split-and-measure step now ships as
+    Songbird's tuner: the band records four takes, Demucs cuts the off-key ones, and Spark 1.2 judges taste among the rest.
     First release through it (SB-0002): four takes at 85-90% in key; Spark kept take 3 (voice 7, words 8).
 11. **Muse Wonder's effort setting (Nov 2).** Every release spent 47-60 s on a first draft that came back with no
     lyrics at all, then another 40-60 s on a send-back round whose rewritten "why" leaked meta-talk ("unfollow
@@ -90,7 +90,7 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     clip) and Spark 1.2 scored every one. Synthwave (8.0), funk (7.0), italo disco (7.0), hard rock and big band (6.5)
     convinced it; opera ("a mall dj doing karaoke on a tuesday"), gospel, trap, k-pop, bluegrass and progressive rock
     scored 1-2, which matched our two weakest releases (bluegrass, prog) exactly. The repertoire is now the 19 styles
-    Spark believed, and each session the producer gets a random ten of them, so the label's catalogue stays varied.
+    Spark believed, and each session the producer gets a random ten of them, so the shelf stays varied.
     First releases after: "1979 two-tone ska revival" (kept take voice 7, words 8, genre 7), "1987 arena power ballad",
     "1930s golden-age argentine tango".
 16. **Muse Voice Transcribe found the singer skipping half the song (Nov 3).** ACE-Step's own lyric timestamps were

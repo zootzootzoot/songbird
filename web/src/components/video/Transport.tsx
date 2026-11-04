@@ -17,6 +17,7 @@ export const Transport = memo(function Transport({
   onShare,
   video,
   onExit,
+  onReplay,
 }: {
   show: boolean;
   playing: boolean;
@@ -33,6 +34,7 @@ export const Transport = memo(function Transport({
   /** the shareable MP4 */
   video: { label: string; busy: boolean; ask: () => void };
   onExit: () => void;
+  onReplay?: () => void;
 }) {
   const bar = useRef<HTMLDivElement | null>(null);
   const drag = useRef(false);
@@ -107,6 +109,12 @@ export const Transport = memo(function Transport({
       <button className="vx-btn vx-video" data-busy={video.busy ? 1 : 0} onClick={video.ask} title="A 9:16 MP4 of this video with the song, for Reels, Stories and chats">
         <span className="label">{video.label}</span>
       </button>
+      {onReplay && (
+        <button className="vx-btn vx-made" onClick={onReplay} title="Replay this release's real session in the studio">
+          <i aria-hidden="true" />
+          <span className="label">How it was made</span>
+        </button>
+      )}
       <button className="vx-btn" onClick={onShare} title="Copy a link to this release">
         <span className="label">{copied ? "Link copied" : "Copy link"}</span>
       </button>

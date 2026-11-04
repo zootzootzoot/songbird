@@ -11,9 +11,11 @@ type Props = {
   progress: number;
   lamps: Lamp[];
   onStop: () => void;
+  /** replaying a finished release's session: the tally says so, and how fast */
+  replay?: string;
 };
 
-export function TopStrip({ live, halted, session, day, started, timecode, progress, lamps, onStop }: Props) {
+export function TopStrip({ live, halted, session, day, started, timecode, progress, lamps, onStop, replay }: Props) {
   return (
     <header className="rm-top">
       <div className="rm-brand">
@@ -40,10 +42,10 @@ export function TopStrip({ live, halted, session, day, started, timecode, progre
         </div>
       </dl>
 
-      <div className="rm-rec" data-on={live || undefined} data-halted={halted || undefined}>
+      <div className="rm-rec" data-on={live || undefined} data-halted={halted || undefined} data-replay={replay ? true : undefined}>
         <span className="rm-rec__tally">
           <i />
-          {halted ? "HALT" : "REC"}
+          {halted ? "HALT" : replay ?? "REC"}
         </span>
         <span className="rm-rec__tc num">{timecode}</span>
       </div>
@@ -63,7 +65,7 @@ export function TopStrip({ live, halted, session, day, started, timecode, progre
 
       <button type="button" className="rm-stop" onClick={onStop}>
         <i />
-        <span className="label">Stop</span>
+        <span className="label">{replay ? "Leave" : "Stop"}</span>
       </button>
     </header>
   );

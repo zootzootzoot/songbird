@@ -1172,3 +1172,12 @@
   opacity: 0.75;
   cursor: progress;
 }
+
+/* replay this release's session in the studio */
+.vx-made i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--vu, #ffb21e);
+  box-shadow: 0 0 8px var(--vu, #ffb21e);
+}

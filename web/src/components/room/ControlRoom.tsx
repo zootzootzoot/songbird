@@ -6,7 +6,7 @@ import { Talkback, type Call, type LogLine, type SheetLine } from "./Talkback";
 import { Takes, type LaneView } from "./Takes";
 import { TopStrip, type Lamp } from "./TopStrip";
 import { Transport } from "./Transport";
-import { IN_KEY, STEPS, TAKE_COUNT, clock, derive, pad2, useNow, useReducedMotion, useStamps, type StepId } from "./model";
+import { IN_KEY, STEPS, TAKE_COUNT, clock, derive, pad2, roomNow, roomSpeed, useNow, useReducedMotion, useStamps, type StepId } from "./model";
 
 /**
  * The making view. See DESIGN.md "The control room".
@@ -61,7 +61,7 @@ function Room({ deck }: { deck: Deck }) {
     if (step.state !== "idle") st.mark(`s:${s.id}`);
     if (step.state === "done") st.mark(`e:${s.id}`);
   }
-  const now = halted ? st.mark("halt") : performance.now();
+  const now = halted ? st.mark("halt") : roomNow();
   const since = (t: number | null) => (t === null ? 0 : now - t);
 
   // ---- the call: genre + why
@@ -254,7 +254,11 @@ function Room({ deck }: { deck: Deck }) {
   const secs = Math.floor(elapsed / 1000);
   const timecode = `${pad2(Math.floor(secs / 3600))}:${pad2(Math.floor(secs / 60) % 60)}:${pad2(secs % 60)}:${pad2(fr)}`;
   const stageAt = w.stage ? st.get(`stage:${w.stage}`) : null;
-  const session = w.id ?? (state.source === "mock" ? "MOCK REPLAY" : state.phase === "sending" ? "UPLOADING" : "----");
+  const replayOf = state.source === "replay" ? state.replay : null;
+  const session = replayOf
+    ? replayOf.catalog
+    : w.id ?? (state.source === "mock" ? "MOCK REPLAY" : state.phase === "sending" ? "UPLOADING" : "----");
+  const madeAt = replayOf ? new Date(replayOf.at) : null;
 
   const halt = halted ? (
     <div className="rm-halt" role="alert">
@@ -291,7 +295,11 @@ function Room({ deck }: { deck: Deck }) {
         halted={halted}
         session={session}
         day={state.name.trim() ? `${state.name.trim().toLowerCase()}'s` : "today"}
-        started={`${pad2(wall.current.getHours())}:${pad2(wall.current.getMinutes())}:${pad2(wall.current.getSeconds())}`}
+        started={(() => {
+          const d = madeAt && !Number.isNaN(madeAt.getTime()) ? madeAt : wall.current;
+          return `${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+        })()}
+        replay={replayOf ? `REPLAY ${roomSpeed()}×` : undefined}
         timecode={timecode}
         progress={w.progress}
         lamps={lamps}

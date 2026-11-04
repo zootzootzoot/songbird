@@ -70,6 +70,62 @@ DAYS = {
     "a birthday cake with a single candle on a garden table, garden gloves beside it"]},
 }
 
+# the days behind "borrow someone's day": other people, other days, so a judge who borrows one makes a new single
+# instead of re-making one already on the shelf. usage: gen_days.py --borrow
+BORROW = {
+ "driving-test": {"name": "omar", "note": "passed my driving test on the third try. the examiner nearly smiled.", "photos": [
+    "a red L-plate stuck on the rear window of a small hatchback, drizzle on the glass",
+    "a hand resting on a gear stick, dashboard and wet windscreen beyond, grey morning",
+    "a mini roundabout seen through a car windscreen, wipers mid-sweep",
+    "a driving test pass certificate held in one hand against the bonnet of a car, thumb in shot",
+    "a drive-through milkshake in a car cupholder at night, dashboard lights glowing"]},
+ "power-cut": {"name": "hana", "note": "power cut on the whole street. cooked everything in the freezer before it melted.", "photos": [
+    "a row of lit candles in jars on a dark kitchen counter",
+    "a camping gas stove on a back step with a frying pan of sizzling dumplings, night",
+    "a melting tub of ice cream on a garden wall with several spoons stuck in it",
+    "a dark terraced street at night with every window black, one torch beam on the pavement",
+    "a board game laid out on a table lit only by a camping lantern, hands reaching in"]},
+ "first-gig": {"name": "luca", "note": "first gig with the band. eleven people came. we played the last song twice.", "photos": [
+    "a handwritten setlist gaffer-taped to a scuffed stage floor next to a guitar pedal",
+    "a bass guitar case and a snare drum squeezed into the boot of a small car",
+    "a pint glass of water standing on top of a guitar amp, red stage light",
+    "a tiny pub stage seen from the back of the room, warm light, a handful of people's backs",
+    "a stack of folded band t-shirts and a cash tin on a trestle table after the show"]},
+ "snow-day": {"name": "nadia", "note": "snowed in. office shut. built something that was meant to be a snowman.", "photos": [
+    "a row of parked cars buried under thick fresh snow on a quiet street, early light",
+    "deep boot prints in untouched snow leading to a front gate",
+    "a lopsided small snowman with a carrot nose and a woolly hat in a back garden",
+    "wet mittens and a scarf drying on a radiator under a steamed-up window",
+    "a mug of hot chocolate piled with marshmallows on a windowsill, snow falling outside"]},
+ "coast-ride": {"name": "felix", "note": "cycled to the coast. two punctures, one sea.", "photos": [
+    "a road bike leaning on a wooden farm gate on a country lane at sunrise",
+    "a punctured inner tube, tyre levers and a mini pump on the grass verge",
+    "a white road sign pointing to the coast, 12 miles, cow parsley around it",
+    "a bicycle lying on a pebble beach at golden hour, the sea calm behind",
+    "a paper tray of fish and chips with a wooden fork on a sea wall, a bike helmet beside it"]},
+ "night-ward": {"name": "ines", "note": "twelve hours on the ward. somebody brought doughnuts at 4am.", "photos": [
+    "an empty hospital corridor at night, soft blue floor lights, no people",
+    "an open box of glazed doughnuts on a break-room table next to a stethoscope",
+    "a pair of comfortable clogs beside a staff locker, a lanyard hanging from the door",
+    "the glowing front of a hospital vending machine in a dark waiting area",
+    "a pink sunrise over a multi-storey car park, seen from a car's driver seat"]},
+ "work-karaoke": {"name": "marcus", "note": "work karaoke. said i wouldn't sing. sang three.", "photos": [
+    "a karaoke microphone lying on a sticky table under pink and blue neon",
+    "a thick laminated karaoke song binder open on a sofa, a finger running down the list",
+    "a tray of small glasses of something bright green on a bar counter",
+    "a karaoke booth screen glowing with coloured bars, the room dark, people's silhouettes from behind",
+    "the top deck of an empty night bus, city lights streaking past the front window"]},
+ "thesis-day": {"name": "yuki", "note": "handed the thesis in. three years, two hundred pages, one nap.", "photos": [
+    "a thick stack of pages coming out of an office printer, a hand waiting",
+    "a freshly bound blue thesis lying on a university reception counter",
+    "empty coffee cups and sticky notes crowding a small desk at night, a laptop glowing",
+    "a quiet university library at night, rows of desks with green lamps, nobody there",
+    "a crumpled duvet on an unmade bed in bright afternoon sun, curtains half open"]},
+}
+if "--borrow" in sys.argv:
+    sys.argv.remove("--borrow")
+    DAYS = BORROW
+
 root = Path(__file__).resolve().parents[1] / "samples"
 
 

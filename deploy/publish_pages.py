@@ -47,6 +47,15 @@ def write_live(api: str | None):
     (WT / "live.json").write_text(json.dumps({"api": api or ""}))
 
 
+def session_marks(src: Path) -> dict | None:
+    """when looking, producing, recording and listening finished, in seconds from the click (from log.json)"""
+    try:
+        t = json.loads((src / "log.json").read_text())["timings"]
+        return {"look": t["look"], "produce": t["produce"], "record": t["record"], "listen": t["listen"]}
+    except Exception:
+        return None
+
+
 def copy_tapes():
     ids = json.loads(SHELF.read_text()) if SHELF.exists() else []
     dest = WT / "tapes"
@@ -69,6 +78,7 @@ def copy_tapes():
         if tape.get("cover"):  # the png is ~3.5 MB; a high-quality jpeg is a tenth of that
             Image.open(src / "cover.png").convert("RGB").save(out / "cover.jpg", quality=88, optimize=True)
             tape["cover"] = f"/tapes/{tid}/cover.jpg"
+        tape["session"] = session_marks(src)  # the studio's replay places every event by these
         (out / "tape.json").write_text(json.dumps(tape))
         summaries.append({k: tape.get(k) for k in ("id", "catalog", "artist", "genre", "style", "title", "dedication", "cover", "duration", "palette")}
                          | {"photos": len(tape["photos"]), "name": tape.get("name")})

@@ -43,7 +43,7 @@ finished single.
 
 **7 · how it works**
 > Under the hood, that's eleven jobs. Ten of them are done by eight Meta models, and three run on open weights, on my
-> own GPU. The hard part wasn't making a song. It was making the label judge its own work. Demucs caught our singer
+> own GPU. The hard part wasn't making a song. It was teaching Songbird to throw out its own bad takes. Demucs caught our singer
 > in a different key from the band. MMS moved the lyrics from drifting to landing on the beat. Every one of those
 > decisions is in the log.
 
@@ -52,4 +52,4 @@ finished single.
 > Save it as a vertical video for the group chat, and it stays in your discography. One day, one song.
 
 **9 · the close**
-> Songbird. Your days, on record. It's live right now. Make one.
+> Songbird. Your days, on record. It's live right now: make one, or watch one get made.

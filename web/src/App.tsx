@@ -87,8 +87,9 @@ export default function App() {
         <Video
           tape={tape}
           player={player}
-          autoplay={state.source === "live" || state.source === "mock" || RENDER}
+          autoplay={state.source === "live" || state.source === "mock" || state.source === "replay" || RENDER}
           onExit={deck.eject}
+          onReplay={!RENDER && (tape.takes?.length ?? 0) >= 2 ? () => deck.replay(tape) : undefined}
         />
       )}
     </div>

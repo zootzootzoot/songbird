@@ -146,9 +146,25 @@ export function derive(state: DeckState): Facts {
 
 /* ------------------------------------------------------------------ time */
 
-/** performance.now(), re-rendered at `fps` while `on` */
+/**
+ * The room's clock: performance.now(), except during a replay, when it runs on the replayed session's time
+ * (`speed`x faster) so every clock in the room reads what the real session took.
+ */
+let pace = { speed: 1, t0: 0 };
+export function setRoomPace(speed: number) {
+  pace = { speed, t0: performance.now() };
+}
+export function roomSpeed() {
+  return pace.speed;
+}
+export function roomNow(): number {
+  const t = performance.now();
+  return pace.t0 + (t - pace.t0) * pace.speed;
+}
+
+/** the room's clock (roomNow), re-rendered at `fps` while `on` */
 export function useNow(fps: number, on = true): number {
-  const [now, setNow] = useState(() => performance.now());
+  const [now, setNow] = useState(() => roomNow());
   useEffect(() => {
     if (!on) return;
     let raf = 0;
@@ -157,7 +173,7 @@ export function useNow(fps: number, on = true): number {
     const tick = (t: number) => {
       if (t - last >= gap) {
         last = t;
-        setNow(performance.now());
+        setNow(roomNow());
       }
       raf = requestAnimationFrame(tick);
     };
@@ -179,7 +195,7 @@ export function useStamps() {
       mark(key: string): number {
         let t = map.current.get(key);
         if (t === undefined) {
-          t = performance.now();
+          t = roomNow();
           map.current.set(key, t);
         }
         return t;
