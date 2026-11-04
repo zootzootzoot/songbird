@@ -31,6 +31,8 @@ export type Line = {
   start: number;
   end: number;
   words: Word[];
+  /** aligned: every word placed on the vocal by the MMS forced aligner; heard: Voice Transcribe phrase times */
+  timing?: "aligned" | "heard";
 };
 
 export type Credit = { role: string; model: string };

@@ -248,7 +248,7 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     if not caption.lower().endswith(style.lower()):
         caption = f"{caption}, {style}"
     # ~11 beats a line: at 8 the singer dropped lines to fit (SB-0012: 12-18 of 21 sung at 90 s, 19-20 at 120 s)
-    duration = max(75.0, min(195.0, len(sheet) * 11 * 60 / bpm + 14))
+    duration = max(75.0, min(180.0, len(sheet) * 11 * 60 / bpm + 14))
     taken = band.record(caption=caption, lyrics=lyrics, bpm=bpm, key=song["key"], duration=duration,
                         out_dir=str(d / "takes"), takes=TAKES, seed=int(time.time()) % 10000,
                         on_take=lambda m: job.emit("take", index=m["index"],
@@ -289,9 +289,16 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
     else:
         kept_lines = list(range(len(sheet)))
         timed = _timeline(sheet, taken[best].get("lrc", ""), length)
+    if aligned.get(best) and taken[best].get("vocal"):
+        # Voice Transcribe said which lines were sung; Meta's MMS aligner says exactly when, word by word
+        try:
+            timed = band.retime(lines=timed, vocal=taken[best]["vocal"])
+        except Exception:
+            traceback.print_exc()
+    mark("retime")
 
     # 6. press ---------------------------------------------------------------------------------
-    job.stage("pressing", "pressing the cassette", 0.88)
+    job.stage("pressing", "pressing the record", 0.88)
     cover = None
     try:
         cover = cover_fut.result(timeout=150)
@@ -351,6 +358,9 @@ def _make(job: Job, d: Path, photos: list[Image.Image], name: str | None, note: 
             {"role": "session band", "model": "ACE-Step 1.5 XL (open source)"},
             {"role": "tuned the takes (split the singer from the band)", "model": "Demucs (Meta, open source)"},
             {"role": "listened back, picked the take", "model": "Muse Spark 1.2"},
+            {"role": "checked every line was sung", "model": "Muse Voice Transcribe"} if aligned.get(best) else None,
+            {"role": "timed every word to the singing", "model": "MMS forced aligner (Meta, open weights)"}
+            if any(ln.get("timing") == "aligned" for ln in timed) else None,
             {"role": "painted the sleeve", "model": "Muse Image 1.0"} if cover else None,
             {"role": "dressed the band for the genre", "model": "Muse Image 1.0 + SAM 3.1"} if any(performers.values()) else None,
             {"role": "directed the video", "model": "Muse Spark 1.3"} if direction else None,

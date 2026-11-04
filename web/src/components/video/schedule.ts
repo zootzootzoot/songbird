@@ -31,6 +31,10 @@ export type Cue = {
 
 export type Timeline = {
   cues: Cue[];
+  /** where the video opens: a few bars before the first vocal, on a bar line (0 for a short intro) */
+  openAt: number;
+  /** the band's roll call runs from here to the first vocal (titleEnd); equal to titleEnd when there's no room */
+  rollFrom: number;
   /** title card holds until here */
   titleEnd: number;
   /** credits roll from here to `end` */
@@ -51,27 +55,44 @@ function weight(w: string) {
   return 0.6 + Math.max(1, vowels) * 0.7 + letters.length * 0.05;
 }
 
+/** seconds of the song before the first vocal that the video keeps */
+const OPEN = 5.5;
+
 export function buildTimeline(tape: Tape, duration: number): Timeline {
   const source = tape.lines.map((l, i) => ({ l, i })).filter(({ l }) => l.text && l.text.trim());
   const lines = source.map(({ l }) => l);
   const n = lines.length;
   const end = Math.max(duration, 1);
-  if (!n) return { cues: [], titleEnd: Math.min(8, end * 0.4), creditsStart: Math.max(end * 0.5, end - 14), end };
+  if (!n) return { cues: [], openAt: 0, rollFrom: Math.min(8, end * 0.4), titleEnd: Math.min(8, end * 0.4), creditsStart: Math.max(end * 0.5, end - 14), end };
 
   const spb = 60 / (tape.bpm > 30 ? tape.bpm : 100);
   // a word every beat at ballad tempo, every half-ish beat when it's fast
   const spw = clamp(spb > 0.55 ? spb : spb * 1.05, 0.3, 0.78);
   const words = lines.map((l) => tokens(l.text));
   const need = words.map((w) => clamp(w.length * spw * 0.92, 1.3, 5.2));
-  const raw = lines.map((l) => (Number.isFinite(l.start) ? Math.max(0, l.start) : NaN));
+  // a line whose words were placed on the singing (forced alignment on the vocal stem) is played exactly as timed
+  const timed = lines.map((l) => {
+    const ws = l.words ?? [];
+    return (
+      l.timing === "aligned" &&
+      ws.length > 0 &&
+      ws.every((w, k) => Number.isFinite(w.start) && Number.isFinite(w.end) && (k === 0 || w.start >= ws[k - 1].start - 0.01))
+    );
+  });
+  const raw = lines.map((l, i) =>
+    timed[i] ? Math.max(0, l.words[0].start) : Number.isFinite(l.start) ? Math.max(0, l.start) : NaN,
+  );
 
-  // anchors: stamps that leave room for everything sung since the last anchor
+  // anchors: real stamps, plus heard stamps that leave room for everything sung since the last anchor
   const anchors: number[] = [0];
   if (!Number.isFinite(raw[0])) raw[0] = 0;
   let due = raw[0] + need[0];
   for (let i = 1; i < n; i += 1) {
     const s = raw[i];
-    if (Number.isFinite(s) && s >= due - 0.3 && s < end - 0.5) {
+    if (timed[i] && s < end - 0.5 && s > raw[anchors[anchors.length - 1]]) {
+      anchors.push(i);
+      due = s + need[i];
+    } else if (Number.isFinite(s) && s >= due - 0.3 && s < end - 0.5) {
       anchors.push(i);
       due = s + need[i];
     } else {
@@ -111,21 +132,35 @@ export function buildTimeline(tape: Tape, duration: number): Timeline {
     const start = starts[i];
     const next = i + 1 < n ? starts[i + 1] : Math.min(end, start + need[i] * 2.2);
     const anchored = anchors.includes(i);
-    const rawEnd = anchored && Number.isFinite(l.end) && l.end > start + 0.4 ? l.end : start + need[i] * 1.25;
-    const lineEnd = clamp(Math.max(rawEnd, start + need[i]), start + 0.6, Math.max(start + 0.6, next - 0.04));
+    const exact = timed[i] && anchored;
+    let lineEnd: number;
+    let cw: CueWord[];
+    if (exact) {
+      // the words land where they were sung; the line holds a breath past its last word
+      const ws = l.words;
+      const last = ws[ws.length - 1].end;
+      lineEnd = clamp(last + 0.15, start + 0.6, Math.max(start + 0.6, next - 0.04));
+      cw = ws.map((w, k) => ({
+        text: w.text,
+        start: Math.max(start, w.start),
+        end: Math.min(Math.max(w.end, w.start + 0.08), k + 1 < ws.length ? ws[k + 1].start : lineEnd),
+      }));
+    } else {
+      const rawEnd = anchored && Number.isFinite(l.end) && l.end > start + 0.4 ? l.end : start + need[i] * 1.25;
+      lineEnd = clamp(Math.max(rawEnd, start + need[i]), start + 0.6, Math.max(start + 0.6, next - 0.04));
+      // no word times: sing the words at pace from the line's start, never slower than the window allows
+      const ws = words[i];
+      const singFor = Math.min(lineEnd - start, ws.length * spw * 1.12 + 0.25);
+      const totalW = ws.reduce((s, w) => s + weight(w), 0) || 1;
+      let at = start;
+      cw = ws.map((w) => {
+        const d = (singFor * weight(w)) / totalW;
+        const word = { text: w, start: at, end: at + d };
+        at += d;
+        return word;
+      });
+    }
     const until = Math.max(lineEnd, Math.min(next, lineEnd + 1.2));
-
-    // sing the words at pace from the line's start, never slower than the window allows
-    const ws = words[i];
-    const singFor = Math.min(lineEnd - start, ws.length * spw * 1.12 + 0.25);
-    const totalW = ws.reduce((s, w) => s + weight(w), 0) || 1;
-    let at = start;
-    const cw: CueWord[] = ws.map((w) => {
-      const d = (singFor * weight(w)) / totalW;
-      const word = { text: w, start: at, end: at + d };
-      at += d;
-      return word;
-    });
 
     const photo = l.photo != null && l.photo >= 0 && l.photo < tape.photos.length ? l.photo : null;
     const chorus = l.kind === "chorus" || l.kind === "refrain" || /chorus|refrain|hook/i.test(l.section ?? "");
@@ -152,11 +187,20 @@ export function buildTimeline(tape: Tape, duration: number): Timeline {
     });
   }
 
+  // the cold open: nobody should wait through a long instrumental intro. Open OPEN seconds before the first vocal,
+  // cut on a bar line; the title lands first, then the band is called onto the stage one member per beat
   const first = cues[0].start;
-  const titleEnd = clamp(Math.max(first - 0.1, 6), 3, Math.max(3, end * 0.35));
+  const bar = spb * 4;
+  const bars = Math.max(1, Math.round(OPEN / bar));
+  const openAt = first - bars * bar > 1.5 ? first - bars * bar : 0;
+  const titleEnd = Math.max(first - 0.05, openAt + 2.5);
+  const room = titleEnd - openAt;
+  // title for about 40% of the opening (at least 1.6 s), on a beat; the roll call needs at least 1.2 s
+  let rollFrom = openAt + Math.ceil(Math.max(1.6, room * 0.4) / spb) * spb;
+  if (titleEnd - rollFrom < 1.2) rollFrom = titleEnd;
   const last = cues[cues.length - 1];
   const creditsStart = clamp(Math.min(last.end + 0.6, end - 14), Math.min(titleEnd + 6, end - 4), end - 4);
-  return { cues, titleEnd, creditsStart, end };
+  return { cues, openAt, rollFrom, titleEnd, creditsStart, end };
 }
 
 /** the cue on screen at t (held through its breath), or -1 */

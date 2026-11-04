@@ -18,6 +18,7 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 | Cast | **Muse Image 1.0 + SAM 3.1** | Redraws each SAM cut-out as its band role in the genre's wardrobe (the rubber duck on contrabass in a 1930s pinstripe suit), on a colour screen chosen to contrast with the object; keyed out, with SAM's mask of the object keeping its body solid | A photo cut-out can only be as good as a casual snapshot; a cast performer is whole, in costume, holding its instrument |
 | Direct | **Muse Spark 1.3** | Reads the finished single (lyrics, band, roles, genre) and writes the video's shot list: per line a shot (close-up, duet, wide, solo, lineup, photo, low-angle), who is in frame, a camera move and an effect | The staging follows the song and changes every release, instead of a template |
 | Lyrics on the record | **Muse Voice Transcribe** (on Demucs's isolated vocal) | Hears the kept take phrase by phrase; a word-level alignment puts every lyric line where it was actually sung, and drops lines the singer skipped | The video's karaoke is timed from what was sung, not from what was written |
+| Every word on the beat | **MMS forced aligner** (Meta FAIR, open weights; torchaudio MMS_FA) | On the kept take's Demucs vocal, places every sung word of the lyric sheet to the 20 ms frame; a second pass re-aligns any unsure line inside the gap between its neighbours | The video lights each word as it's sung instead of guessing at a pace |
 
 ## In the build
 
@@ -134,3 +135,20 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     the sardine tin, the sleeping cat; 20 objects, keyed out with the same backdrop key as the band) and painted the
     sky they float in. Each object on the front door opens the single its day became, so the hero is the product's
     own output rather than decoration. All nine days were then released through the real pipeline.
+
+21. **Meta's MMS aligner put the words where they were sung (Nov 3).** The owner said the lyrics were "not synced
+    properly most of the time". Two causes. Voice Transcribe returns words without timestamps, so each heard phrase
+    (up to 7 s) had its words spread evenly across it. And the video ignored even those word times, re-spreading
+    every line "at pace". We added Meta's MMS forced aligner (wav2vec2, open weights, via torchaudio) on Demucs's
+    isolated vocal of the kept take. Voice Transcribe still decides *which* lines were sung; MMS decides *when*,
+    word by word, with a star token between lines to absorb ad-libs. It keeps a line's times only where it is
+    confident and in order, and re-tries unsure lines inside the gap between their neighbours. Measured on the nine
+    shelf releases: lines whose first word lands on a vocal onset went from 38-81% to 79-100% (the eurodance single
+    from 38% to 100%), and word starts moved by a median 0.27 s and up to 15 s. It adds about 4 s to a release.
+    The video now plays those word times exactly.
+
+22. **The band ran out of GPU memory on a slow song (Nov 3).** A 64 bpm tango asked for the 195 s maximum, and the
+    second take failed its VRAM check, which took down the whole release. Each take now hands its GPU memory back
+    before the next one, a failed take is retried once and then skipped (the release goes on with the takes it has),
+    and songs are capped at 180 s. The shelf showed tango at 64 bpm scoring 4.3 and 5.45 against 6-7.5 at 122-128
+    bpm, so the producer's checker now sends back a tango under 100 bpm.

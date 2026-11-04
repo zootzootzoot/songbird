@@ -97,7 +97,18 @@ export function usePlayer(tape: Tape | null) {
     if (el && !failed.current) {
       try {
         el.currentTime = from;
+        // starting mid-song (the cold open, or a resume): a short fade so the music doesn't start on a click
+        el.volume = from > 0.5 ? 0 : 1;
         await el.play();
+        if (from > 0.5) {
+          const t0 = performance.now();
+          const up = () => {
+            const k = Math.min(1, (performance.now() - t0) / 420);
+            el.volume = k * k;
+            if (k < 1) requestAnimationFrame(up);
+          };
+          requestAnimationFrame(up);
+        }
         clock.current = null;
         setSilent(false);
         setPlaying(true);

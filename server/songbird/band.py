@@ -54,8 +54,17 @@ class Band:
                 cb(msg)
         self.ready.clear()
 
+    def retime(self, *, lines: list[dict], vocal: str, timeout: float = 180) -> list[dict]:
+        """Word times for the record's lines by forced alignment on the kept take's vocal (songbird/fa.py)."""
+        got = self._run({"op": "retime", "lines": lines, "vocal": vocal}, timeout)
+        return got[0]["lines"] if got else lines
+
     def record(self, *, caption: str, lyrics: str, bpm: int | None, key: str, duration: float, out_dir: str,
                takes: int = 2, seed: int = 7, on_take=None, timeout: float = 900) -> list[dict]:
+        return self._run({"caption": caption, "lyrics": lyrics, "bpm": bpm, "key": key, "duration": duration,
+                          "takes": takes, "seed": seed, "out_dir": out_dir}, timeout, on_take)
+
+    def _run(self, payload: dict, timeout: float, on_take=None) -> list[dict]:
         if not (self.proc and self.proc.poll() is None):
             self.start()
         if not self.ready.wait(300):
@@ -73,6 +82,9 @@ class Band:
                         on_take(msg)
                 elif msg["event"] == "done":
                     done.set()
+                elif msg["event"] == "retimed":
+                    got.append(msg)
+                    done.set()
                 elif msg["event"] == "error":
                     err.update(msg)
                     done.set()
@@ -80,9 +92,7 @@ class Band:
             self._listeners[jid] = cb
             try:
                 assert self.proc and self.proc.stdin
-                self.proc.stdin.write(json.dumps({"id": jid, "caption": caption, "lyrics": lyrics, "bpm": bpm, "key": key,
-                                                  "duration": duration, "takes": takes, "seed": seed,
-                                                  "out_dir": out_dir}) + "\n")
+                self.proc.stdin.write(json.dumps({"id": jid, **payload}) + "\n")
                 self.proc.stdin.flush()
                 if not done.wait(timeout):
                     raise RuntimeError("the session ran over")

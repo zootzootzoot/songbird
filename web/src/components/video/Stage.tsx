@@ -18,6 +18,8 @@ export type StageState = {
   bpm: number;
   /** the director's take on screen; null for tapes without a shot list (the fixed layout above) */
   take: Take | null;
+  /** the roll call: member i walks on at from + i * step */
+  roll?: { from: number; step: number } | null;
 };
 
 /** layers behind the band that the camera also moves, with less depth */
@@ -83,7 +85,7 @@ function layout(st: StageState, n: number, W: number, H: number, portrait: boole
         role: solo ? "solo" : "line",
       };
     }
-    return slots;
+    return rollCall(st, slots, H);
   }
   const span = portrait ? W * 0.94 : st.credits ? W * 0.56 : W * 0.9;
   const left = portrait ? (W - span) / 2 : st.credits ? W * 0.04 : (W - span) / 2;
@@ -103,6 +105,19 @@ function layout(st: StageState, n: number, W: number, H: number, portrait: boole
     };
     if (st.mode === "title") slots[i].base -= H * 0.55;
   }
+  return rollCall(st, slots, H);
+}
+
+/** before their beat in the roll call a member waits below the stage */
+function rollCall(st: StageState, slots: Slot[], H: number): Slot[] {
+  if (!st.roll) return slots;
+  const { from, step } = st.roll;
+  slots.forEach((s, i) => {
+    if (st.t < from + i * step) {
+      s.o = 0;
+      s.base -= H * 0.55;
+    }
+  });
   return slots;
 }
 

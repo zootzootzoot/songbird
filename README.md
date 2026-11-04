@@ -20,7 +20,8 @@ most-used, least-revisited archive people own into something they will play agai
 | cast | Muse Image 1.0 + SAM 3.1 | dresses each thing as its band role, in the genre's wardrobe |
 | record | ACE-Step 1.5 XL (open weights, local GPU) | records four takes |
 | tune | Demucs (open weights, local GPU) | splits the vocal out and cuts any take under 75% in key |
-| check | Muse Voice Transcribe | listens back and aligns the lyrics to what was actually sung |
+| check | Muse Voice Transcribe | listens to the isolated vocal and finds which lyric lines were actually sung |
+| time | MMS forced aligner (Meta, open weights, local GPU) | places every sung word on the vocal to the 20 ms frame, for the video's lyrics |
 | A&R | Muse Spark 1.2 (audio in) | hears the surviving takes and keeps one |
 | press | Muse Image 1.0 | paints a genre-authentic sleeve |
 | direct | Muse Spark 1.3 | writes the video's shot list from the lyrics, the band and the genre |

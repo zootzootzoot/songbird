@@ -29,6 +29,10 @@ REPERTOIRE = [
     "rockabilly", "eurodance", "surf rock", "synth-pop", "chiptune", "punk", "ska", "tango", "salsa",
 ]
 
+# the slowest tempo the band still sounds like itself (from the shelf: tango at 64 bpm kept takes scoring 4.3 and
+# 5.45 and ran the song past the GPU's memory; at 122-128 bpm, 6-7.5). Everything else: 80.
+SLOWEST = {"tango": 100}
+
 PRODUCE_SCHEMA = {
     "type": "object", "additionalProperties": False,
     "required": ["title", "artist", "genre", "style", "why", "caption", "bpm", "key", "vocal", "sections", "band", "liner"],
@@ -128,8 +132,10 @@ def problems(song: dict, n_photos: int) -> list[str]:
         bad = BANNED & set(re.findall(r"[a-z]+", ln["text"].lower()))
         if bad:
             out.append(f'"{ln["text"]}" uses a banned word ({", ".join(bad)})')
-    if not 50 <= int(song.get("bpm", 0)) <= 180:
-        out.append("bpm must be 50 to 180")
+    bpm, floor = int(song.get("bpm", 0)), SLOWEST.get(song.get("style", ""), 80)
+    if not floor <= bpm <= 180:
+        out.append(f"bpm must be {floor} to 180 for {song.get('style')}: slower than that the session band drags "
+                   f"(a 64 bpm tango came out as a dirge and an over-long song)")
     if "lullaby" in song["genre"].lower():
         out.append("no lullabies")
     return out

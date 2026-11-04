@@ -98,11 +98,15 @@ When `done` arrives: the room holds for a beat on KEPT, then hard-cuts to the vi
 Full-screen, plays with the song. Built from the tape: SAM cutouts (and moving stickers), the original photos, the
 cover, word-timed lyrics, bpm, band credits, genre/style. Structure, in every theme:
 
-1. **Title card** until the first sung line: release number, title, artist, genre, cover.
+0. **Cold open.** The video starts a whole number of bars before the first vocal (about 5.5 s; from 0 when the intro
+   is short), with a 0.4 s fade-in. Nobody waits through a 24 s intro. The full song is still there on the scrub bar.
+1. **Title card** for the first ~40% of the opening: release number, title, artist, genre, cover.
+1b. **Roll call** for the rest of it: the band walks on one member per beat, each with their name tag, so the whole
+   band is on stage when the first word is sung.
 2. **The band on stage**: every cutout on screen, the current line's photo cutout is the frontman (large,
    lit); the rest perform smaller, moving on the beat (60/bpm). Moving stickers play where present.
 3. **Photo flashes**: on a line tied to a photo, that photo goes full-bleed behind the band, treated in the theme.
-4. **Kinetic lyrics**, word-timed; chorus lines bigger. Theme decides the type and motion.
+4. **Kinetic lyrics**, lit word by word at the times the MMS aligner found on the vocal; chorus lines bigger. Theme decides the type and motion.
 5. **Lower thirds** introduce each band member the first time they front a line ("THE YELLOW BOOTS — kick drum,
    puddle department").
 6. **Credits roll** at the end: the band, then the models.

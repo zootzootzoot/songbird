@@ -16,6 +16,7 @@ const CHAIN: { model: string; job: string; open?: boolean }[] = [
   { model: "ACE-Step 1.5 XL", job: "records four takes", open: true },
   { model: "Demucs", job: "splits the vocal out and cuts any take that drifts off key", open: true },
   { model: "Muse Voice Transcribe", job: "listens back and checks every line was actually sung" },
+  { model: "MMS aligner", job: "times every word to the singing, to the 20 ms frame", open: true },
   { model: "Muse Spark 1.2", job: "hears the takes that are left and keeps one" },
   { model: "Muse Spark 1.3", job: "directs the video, shot by shot" },
 ];
@@ -265,7 +266,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
       <section className="fr__how" id="how">
         <header className="fr__head">
           <h2>how a day becomes a single.</h2>
-          <p>eight models, nine jobs. two of them run on open weights, on our own GPU.</p>
+          <p>nine models, ten jobs. three of them run on open weights, on our own GPU.</p>
         </header>
         {demo && demoPhoto && (
           <ol className="fr__steps">

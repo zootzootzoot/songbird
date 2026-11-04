@@ -15,6 +15,7 @@ photos/clips ──► Muse Spark 1.3   looks: each item's hero (a noun phrase),
              ──► Demucs (Meta)    tuner: splits singer from band, cuts takes with < 75% of the singing in the band's key
              ──► Voice Transcribe lyric check: hears the isolated vocal phrase by phrase, aligns each line to where it
                                   was sung, drops lines the singer skipped
+             ──► MMS aligner      times every sung word on the kept take's vocal (Meta, open weights, our GPU)
              ──► Muse Spark 1.2   A&R: listens to every take that passed (audio in), scores voice / words / genre, keeps one
              ──► Muse Image 1.0   the sleeve, made the way that genre's sleeves looked, from the day's cut-outs
 Muse Voice Transcribe also writes down a spoken note about the day, which goes into the song.
@@ -106,7 +107,8 @@ type Line = {
   section: string;              // "Verse 1" | "Chorus" | ...
   kind: "verse" | "chorus" | "other";
   photo: number | null;
-  start: number; end: number;   // seconds in song.mp3, aligned to the sung vocal (Voice Transcribe on Demucs's stem)
+  start: number; end: number;   // seconds in song.mp3, aligned to the sung vocal
+  timing?: "aligned" | "heard"; // aligned: every word placed by the MMS forced aligner; heard: Voice Transcribe phrases
   words: { text: string; start: number; end: number }[];
 };
 ```

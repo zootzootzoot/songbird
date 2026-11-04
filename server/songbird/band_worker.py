@@ -12,6 +12,7 @@ different key from the band on every take we measured (F# minor over F major); t
 and is 6x faster. See tuner.py and docs/META_LOG.md.
        {"id", "event": "done"} | {"id", "event": "error", "message"}
 """
+import gc
 import json
 import os
 import shutil
@@ -40,6 +41,7 @@ from acestep.llm_inference import LLMHandler  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tuner  # noqa: E402
+import fa  # noqa: E402
 
 CK = ACE / "checkpoints"
 DIT = os.environ.get("ACE_DIT", "acestep-v15-xl-turbo")  # the owner preferred XL over the 2B by ear
@@ -52,6 +54,12 @@ if LM != "none":  # the LM only plans metadata now, and we hand the DiT bpm, key
 send({"id": None, "event": "ready"})
 
 
+def free():
+    """Hand back what the last take and the tuner held on the GPU."""
+    gc.collect()
+    torch.cuda.empty_cache()
+
+
 def record(job):
     out = Path(job["out_dir"])
     out.mkdir(parents=True, exist_ok=True)
@@ -61,12 +69,20 @@ def record(job):
                               duration=float(job.get("duration", -1)), thinking=THINK,
                               use_cot_caption=False)  # play the producer's session notes as written
     seeds = [int(job.get("seed", 7)) + 101 * k for k in range(takes)]
-    for k, seed in enumerate(seeds):  # one take at a time: the XL band leaves no room on 16 GB for a batch
+    k, last_error = 0, "generation failed"
+    for seed in seeds:  # one take at a time: the XL band leaves no room on 16 GB for a batch
         t = time.time()
-        res = generate_music(dit, lm, params, GenerationConfig(batch_size=1, audio_format="mp3", use_random_seed=False,
-                                                               seeds=[seed]), save_dir=str(out / "raw"))
-        if not res.success:
-            raise RuntimeError(res.error or "generation failed")
+        res = None
+        for attempt in range(2):  # a long slow song can leave the next take short of VRAM: free it and try once more
+            res = generate_music(dit, lm, params, GenerationConfig(batch_size=1, audio_format="mp3", use_random_seed=False,
+                                                                   seeds=[seed]), save_dir=str(out / "raw"))
+            if res.success:
+                break
+            last_error = res.error or last_error
+            free()
+        if not res.success:  # skip this seed; take indexes stay contiguous, and the session goes on
+            print(f"take with seed {seed} failed: {last_error}", file=sys.stderr, flush=True)
+            continue
         eo, a = res.extra_outputs, res.audios[0]
         took = round(time.time() - t, 1)
         dest = out / f"take-{k}.mp3"
@@ -96,6 +112,11 @@ def record(job):
         send({"id": job["id"], "event": "take", "index": k, "path": str(dest), "lrc": lrc, "seconds": took,
               "seed": seed, "key": meta.get("keyscale"), "bpm": meta.get("bpm"), "tuning": tuning,
               "vocal": str(out / f"vocal-{k}.wav") if (out / f"vocal-{k}.wav").exists() else None})  # a["key"] is the file id
+        k += 1
+        del res, eo, a
+        free()
+    if k == 0:
+        raise RuntimeError(last_error)
     send({"id": job["id"], "event": "done"})
 
 
@@ -106,7 +127,10 @@ for raw in sys.stdin:
     job = None
     try:
         job = json.loads(raw)
-        record(job)
+        if job.get("op") == "retime":  # word times for the kept take (Meta's MMS aligner on the Demucs vocal)
+            send({"id": job["id"], "event": "retimed", "lines": fa.retime(job["lines"], job["vocal"])})
+        else:
+            record(job)
     except Exception as e:
         traceback.print_exc()
         send({"id": job.get("id") if isinstance(job, dict) else None, "event": "error", "message": str(e)[:500]})

@@ -58,18 +58,37 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
     prev.current = { t: player.time, playing: player.playing };
   }, [player.time, player.playing, duration]);
 
+  // the cold open: a fresh or finished video waits a few bars before the first vocal, not at 0:00
+  const armed = useRef(true);
+  useEffect(() => {
+    armed.current = true;
+  }, [tape]);
+  useEffect(() => {
+    if (ended) armed.current = true;
+  }, [ended]);
+
   const t = ended ? duration : player.time;
   const started = player.playing || player.time > 0 || ended;
   const bpm = tape.bpm > 30 ? tape.bpm : 100;
   const beats = (t * bpm) / 60;
 
   // what's on screen
-  const { cues, titleEnd, creditsStart } = tl;
+  const { cues, titleEnd, creditsStart, openAt, rollFrom } = tl;
+  useEffect(() => {
+    if (player.playing) armed.current = false;
+    else if (armed.current && player.time === 0 && openAt > 0) {
+      armed.current = false;
+      player.seek(openAt);
+    }
+  }, [player, player.playing, player.time, openAt]);
   const cur = cueAt(cues, t);
   const last = lastCueAt(cues, t);
   const finished = cur >= 0 ? cur - 1 : last;
   const out = finished >= 0 && t >= cues[finished].until && t < cues[finished].until + 0.45 ? finished : -1;
-  const inTitle = t < titleEnd && !ended;
+  // the opening: title card, then the roll call (one member onto the stage per beat), then the first vocal
+  const inTitle = t < rollFrom && !ended;
+  const inRoll = !ended && t >= rollFrom && t < titleEnd;
+  const rollStep = Math.max(0.16, Math.min(60 / bpm, (titleEnd - rollFrom) / Math.max(1, tape.photos.length + 0.5)));
   const held = cur >= 0 ? cues[cur] : last >= 0 && t - cues[last].until < 2.5 ? cues[last] : null;
   const credits = t >= creditsStart;
   const n = tape.photos.length;
@@ -120,7 +139,17 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
     flashShown = !inTitle && held && held.photo != null ? `${held.photo}:full` : "";
   }
 
-  if (!take && !inTitle && !credits) {
+  if (inRoll) {
+    mode = "lineup";
+    side = 0;
+    solo = null;
+    flashShown = "";
+    frozen = false;
+    const who = Math.min(n - 1, Math.floor((t - rollFrom) / rollStep));
+    intro = who >= 0 ? (band[who] ?? null) : null;
+  }
+
+  if (!take && !inTitle && !inRoll && !credits) {
     for (let j = last; j >= 0 && cues[j].start > t - 5; j -= 1) {
       const c = cues[j];
       if (c.intro && c.photo != null) {
@@ -132,12 +161,22 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
   }
 
   const live = useRef<StageState>({ mode, front: null, side, solo, credits, t, bpm, take });
-  live.current = { mode, front: mode === "verse" && held ? held.photo : null, side, solo, credits, t, bpm, take };
+  live.current = {
+    mode,
+    front: mode === "verse" && held ? held.photo : null,
+    side,
+    solo,
+    credits,
+    t,
+    bpm,
+    take: inRoll ? null : take,
+    roll: inRoll ? { from: rollFrom, step: rollStep } : null,
+  };
   const layers = useRef<CameraLayers>({ bd: null, vf: null });
   const setVf = useCallback((el: HTMLDivElement | null) => {
     layers.current.vf = el;
   }, []);
-  const shotFx = take && !inTitle && !reduced && !(credits && take.fx === "split") ? take.fx : "none";
+  const shotFx = take && !inTitle && !inRoll && !reduced && !(credits && take.fx === "split") ? take.fx : "none";
 
   // per-frame beat values for CSS, written straight to the root
   useLayoutEffect(() => {
