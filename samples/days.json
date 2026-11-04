@@ -1,0 +1,110 @@
+[
+ {
+  "slug": "first-day",
+  "name": "maya",
+  "note": "first day at the new job. didn't get lost once. ok, once.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "moving-day",
+  "name": "theo",
+  "note": "moved out of the old place. four flights, no lift.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "half-marathon",
+  "name": "priya",
+  "note": "first half marathon. 2:14. legs are gone.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "bakery-nights",
+  "name": "jonas",
+  "note": "night shift at the bakery. six hundred croissants. first tram home.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "rain-sunday",
+  "name": "sol",
+  "note": "did absolutely nothing. it rained all day.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "the-wedding",
+  "name": "kemi",
+  "note": "dami got married. i cried at the speech and again at the cake.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "pitch-day",
+  "name": "dev",
+  "note": "spilled coffee on my laptop twenty minutes before the pitch. pitched anyway.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "lisbon-solo",
+  "name": "lena",
+  "note": "first solo trip. lisbon. not coming back.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ },
+ {
+  "slug": "allotment",
+  "name": "ruth",
+  "note": "seventy-four today. spent it at the allotment, as you do.",
+  "photos": [
+   "photo-01.jpg",
+   "photo-02.jpg",
+   "photo-03.jpg",
+   "photo-04.jpg",
+   "photo-05.jpg"
+  ]
+ }
+]

@@ -1,0 +1,122 @@
+[
+ {
+  "src": "objects/first-day-1.webp",
+  "day": "first-day",
+  "label": "the new badge",
+  "tid": "t_421fd82f"
+ },
+ {
+  "src": "objects/first-day-2.webp",
+  "day": "first-day",
+  "label": "the 7am latte",
+  "tid": "t_421fd82f"
+ },
+ {
+  "src": "objects/moving-day-1.webp",
+  "day": "moving-day",
+  "label": "box marked kitchen??",
+  "tid": "t_8439984e"
+ },
+ {
+  "src": "objects/moving-day-2.webp",
+  "day": "moving-day",
+  "label": "the new key",
+  "tid": "t_8439984e"
+ },
+ {
+  "src": "objects/half-marathon-1.webp",
+  "day": "half-marathon",
+  "label": "the left shoe",
+  "tid": "t_ed545738"
+ },
+ {
+  "src": "objects/half-marathon-2.webp",
+  "day": "half-marathon",
+  "label": "the medal",
+  "tid": "t_ed545738"
+ },
+ {
+  "src": "objects/bakery-nights-1.webp",
+  "day": "bakery-nights",
+  "label": "croissant no. 600",
+  "tid": "t_c1630f26"
+ },
+ {
+  "src": "objects/bakery-nights-2.webp",
+  "day": "bakery-nights",
+  "label": "the night radio",
+  "tid": "t_c1630f26"
+ },
+ {
+  "src": "objects/rain-sunday-1.webp",
+  "day": "rain-sunday",
+  "label": "the record player",
+  "tid": "t_23b4a3b9"
+ },
+ {
+  "src": "objects/rain-sunday-2.webp",
+  "day": "rain-sunday",
+  "label": "the cat, asleep",
+  "tid": "t_23b4a3b9"
+ },
+ {
+  "src": "objects/the-wedding-1.webp",
+  "day": "the-wedding",
+  "label": "the kicked-off heel",
+  "tid": "t_eb1ee467"
+ },
+ {
+  "src": "objects/the-wedding-2.webp",
+  "day": "the-wedding",
+  "label": "the disposable camera",
+  "tid": "t_eb1ee467"
+ },
+ {
+  "src": "objects/pitch-day-1.webp",
+  "day": "pitch-day",
+  "label": "the consolation ramen",
+  "tid": "t_e9e0c8d5"
+ },
+ {
+  "src": "objects/pitch-day-2.webp",
+  "day": "pitch-day",
+  "label": "the laptop, deceased",
+  "tid": "t_e9e0c8d5"
+ },
+ {
+  "src": "objects/lisbon-solo-1.webp",
+  "day": "lisbon-solo",
+  "label": "pastel de nata",
+  "tid": "t_650febc7"
+ },
+ {
+  "src": "objects/lisbon-solo-2.webp",
+  "day": "lisbon-solo",
+  "label": "the sardine tin",
+  "tid": "t_650febc7"
+ },
+ {
+  "src": "objects/lisbon-solo-3.webp",
+  "day": "lisbon-solo",
+  "label": "tram 28",
+  "tid": "t_650febc7"
+ },
+ {
+  "src": "objects/allotment-1.webp",
+  "day": "allotment",
+  "label": "the first tomatoes",
+  "tid": "t_8eb80edd"
+ },
+ {
+  "src": "objects/allotment-2.webp",
+  "day": "allotment",
+  "label": "the watering can",
+  "tid": "t_8eb80edd"
+ },
+ {
+  "src": "objects/allotment-3.webp",
+  "day": "allotment",
+  "label": "seventy-four",
+  "tid": "t_8eb80edd"
+ }
+]
