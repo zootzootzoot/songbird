@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { getTape, type Health } from "../../lib/api";
-import { asset } from "../../lib/env";
+import { asset, media } from "../../lib/env";
 import type { Deck } from "../../lib/useDeck";
 import { useRecorder } from "../../lib/useRecorder";
 import type { Tape, TapeSummary } from "../../lib/types";
@@ -170,7 +170,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
               {mine.map((e) => (
                 <li key={e.id}>
                   <button className="fr__mine-item" onClick={() => onOpen(e.id)} title={`${e.title} · ${e.genre ?? ""}`}>
-                    <span className="fr__mine-sleeve">{e.cover ? <img src={e.cover} alt="" loading="lazy" /> : <i />}</span>
+                    <span className="fr__mine-sleeve">{e.cover ? <img src={media(e.cover) ?? e.cover} alt="" loading="lazy" /> : <i />}</span>
                     <span className="fr__mine-day num">{day(e.at)}</span>
                     <b>{e.title}</b>
                     <span>{e.genre}</span>

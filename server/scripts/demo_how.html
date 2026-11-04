@@ -1,0 +1,149 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112,100..800&display=block" rel="stylesheet">
+<style>
+  :root { --bg: #0b0b0d; --card: #141418; --hair: #26272c; --fg: #f2f2f0; --mute: #8b9099; --meta: #3d7bff;
+          --open: #1fbf5b; --vu: #ffb21e; --tally: #ff3d1f; }
+  html, body { margin: 0; width: 1920px; height: 1080px; background: var(--bg); color: var(--fg); overflow: hidden;
+               font-family: "Archivo", sans-serif; -webkit-font-smoothing: antialiased; }
+  .stage { position: absolute; inset: 0; padding: 64px 110px; box-sizing: border-box; }
+  h1 { margin: 0; font-weight: 760; font-size: 60px; letter-spacing: -.045em; font-variation-settings: "wdth" 108; }
+  h1 .soft { color: var(--mute); }
+  .sub { margin-top: 10px; font-size: 24px; color: var(--mute); letter-spacing: -.01em; }
+
+  .rows { margin-top: 40px; display: grid; gap: 20px; }
+  .row { display: grid; grid-template-columns: 170px 1fr; align-items: center; gap: 26px; }
+  .rowlabel { font: 600 17px/1 "Martian Mono", monospace; letter-spacing: .08em; color: var(--mute); text-transform: uppercase; }
+  .flow { display: flex; align-items: center; gap: 14px; }
+  .node { position: relative; min-width: 0; padding: 12px 18px 12px; border-radius: 20px; background: var(--card);
+          border: 1px solid var(--hair); opacity: 0; transform: translateY(14px) scale(.98);
+          transition: opacity .45s cubic-bezier(.2,.8,.2,1), transform .45s cubic-bezier(.2,.8,.2,1), border-color .3s, background .3s; }
+  .node.on { opacity: 1; transform: none; }
+  .node.lit { border-color: rgba(255,178,30,.7); background: #1d1a12; box-shadow: 0 0 0 1px rgba(255,178,30,.25), 0 12px 40px rgba(255,178,30,.12); }
+  .node .job { font: 700 15px/1 "Martian Mono", monospace; letter-spacing: .08em; color: var(--vu); }
+  .node .model { margin-top: 7px; font-weight: 720; font-size: 24px; letter-spacing: -.02em; white-space: nowrap; }
+  .node .what { margin-top: 5px; font-size: 17px; color: var(--mute); white-space: nowrap; }
+  .badge { position: absolute; top: -11px; right: 14px; padding: 5px 10px; border-radius: 999px; font: 600 12px/1 "Martian Mono", monospace;
+           letter-spacing: .06em; background: var(--open); color: #04210f; }
+  .badge.meta { background: #fff; color: #0c1424; }
+  .arrow { flex: none; width: 34px; height: 2px; background: var(--hair); position: relative; opacity: 0; transition: opacity .4s; }
+  .arrow.on { opacity: 1; }
+  .arrow::after { content: ""; position: absolute; right: -2px; top: -5px; border: 6px solid transparent; border-left-color: #3a3b42; border-right: 0; }
+  .par { display: flex; flex-direction: column; gap: 8px; }
+  .par .node { padding: 8px 16px 8px; }
+  .par .node .model { font-size: 20px; margin-top: 4px; }
+
+  .judge { position: relative; }
+  .bracket { position: absolute; left: 196px; right: 0; top: -16px; bottom: -16px; border: 2px dashed rgba(255,61,31,0); border-radius: 30px;
+             transition: border-color .6s; pointer-events: none; }
+  .bracket.on { border-color: rgba(255,61,31,.75); }
+  .bracket span { position: absolute; right: 28px; top: -17px; padding: 6px 14px; border-radius: 999px; background: var(--tally); color: #fff;
+                  font-weight: 700; font-size: 21px; letter-spacing: -.01em; opacity: 0; transition: opacity .5s; }
+  .bracket.on span { opacity: 1; }
+
+  /* the measured wins */
+  .wins { position: absolute; left: 110px; right: 110px; bottom: 96px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+          opacity: 0; transform: translateY(20px); transition: opacity .6s, transform .6s cubic-bezier(.2,.8,.2,1); }
+  .wins.on { opacity: 1; transform: none; }
+  .win { background: var(--card); border: 1px solid var(--hair); border-radius: 24px; padding: 18px 26px 20px; }
+  .win .k { font: 600 16px/1 "Martian Mono", monospace; letter-spacing: .08em; color: var(--mute); text-transform: uppercase; }
+  .win .h { margin-top: 9px; font-weight: 720; font-size: 27px; letter-spacing: -.025em; }
+  .bars { margin-top: 14px; display: grid; gap: 10px; }
+  .bar { display: grid; grid-template-columns: 150px 1fr 150px; align-items: center; gap: 16px; font-size: 21px; color: var(--mute); }
+  .track { height: 18px; border-radius: 999px; background: #1e1f24; overflow: hidden; }
+  .fill { height: 100%; width: 0; border-radius: 999px; transition: width 1.6s cubic-bezier(.2,.8,.2,1); }
+  .before .fill { background: #5a5d66; }
+  .after .fill { background: var(--open); }
+  .bar .v { font: 700 24px/1 "Martian Mono", monospace; color: var(--fg); text-align: right; }
+</style>
+</head>
+<body>
+<div class="stage">
+  <h1>eleven jobs. <span class="soft">ten done by eight meta models.</span></h1>
+  <div class="sub">three run on open weights, on our own gpu. every decision is logged in docs/META_LOG.md.</div>
+
+  <div class="rows">
+    <div class="row">
+      <div class="rowlabel">see the day</div>
+      <div class="flow">
+        <div class="node" data-at="1.0"><div class="job">LOOK</div><div class="model">Muse Spark 1.3</div><div class="what">what each photo is about</div></div>
+        <div class="arrow" data-at="1.4"></div>
+        <div class="node" data-at="1.6"><div class="job">CUT</div><div class="model">SAM 3.1</div><div class="what">cuts the things out: the band</div></div>
+        <div class="arrow" data-at="2.0"></div>
+        <div class="node" data-at="2.2"><div class="job">PRODUCE</div><div class="model">Muse Wonder 1.0</div><div class="what">calls the genre, writes the song</div></div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="rowlabel">make it</div>
+      <div class="flow">
+        <div class="par">
+          <div class="node" data-at="3.4"><div class="job">DRESS</div><div class="model">Muse Image 1.0 + SAM</div></div>
+          <div class="node" data-at="3.6"><div class="job">SLEEVE</div><div class="model">Muse Image 1.0</div></div>
+          <div class="node" data-at="3.8"><div class="job">DIRECT</div><div class="model">Muse Spark 1.3</div></div>
+        </div>
+        <div class="arrow" data-at="4.2"></div>
+        <div class="node" data-at="4.4"><span class="badge">OPEN WEIGHTS</span><div class="job">RECORD</div><div class="model">ACE-Step 1.5 XL</div><div class="what">four takes, while the painters work</div></div>
+      </div>
+    </div>
+    <div class="row judge">
+      <div class="rowlabel">judge it</div>
+      <div class="flow">
+        <div class="node" data-at="5.6"><span class="badge">META · OPEN</span><div class="job">TUNE</div><div class="model">Demucs</div><div class="what">splits singer from band; &lt;75% in key is cut</div></div>
+        <div class="arrow" data-at="6.0"></div>
+        <div class="node" data-at="6.2"><div class="job">A&amp;R</div><div class="model">Muse Spark 1.2</div><div class="what">listens, keeps one take</div></div>
+        <div class="arrow" data-at="6.6"></div>
+        <div class="node" data-at="6.8"><div class="job">CHECK</div><div class="model">Voice Transcribe</div><div class="what">was every line sung?</div></div>
+        <div class="arrow" data-at="7.2"></div>
+        <div class="node" data-at="7.4"><span class="badge">META · OPEN</span><div class="job">TIME</div><div class="model">MMS aligner</div><div class="what">every word, to 20 ms</div></div>
+      </div>
+      <div class="bracket" data-at="9.0"><span>the label judges its own work</span></div>
+    </div>
+  </div>
+
+  <div class="wins" data-at="14.0">
+    <div class="win">
+      <div class="k">Demucs caught it</div>
+      <div class="h">the singer was in a different key from the band</div>
+      <div class="bars">
+        <div class="bar before"><span>before</span><div class="track"><div class="fill" data-w="64"></div></div><span class="v">64%</span></div>
+        <div class="bar after"><span>now</span><div class="track"><div class="fill" data-w="85"></div></div><span class="v">80–90%</span></div>
+      </div>
+    </div>
+    <div class="win">
+      <div class="k">MMS fixed it</div>
+      <div class="h">lyric lines that land on the sung beat</div>
+      <div class="bars">
+        <div class="bar before"><span>before</span><div class="track"><div class="fill" data-w="60"></div></div><span class="v">38–81%</span></div>
+        <div class="bar after"><span>now</span><div class="track"><div class="fill" data-w="90"></div></div><span class="v">79–100%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // a fixed timeline (seconds from start, scaled by ?speed): nodes appear, then light in pipeline order, then the wins
+  const q = new URLSearchParams(location.search);
+  const speed = Number(q.get("speed") || 1);
+  const els = [...document.querySelectorAll("[data-at]")];
+  const nodes = [...document.querySelectorAll(".node")];
+  const t0 = performance.now();
+  let lit = -1;
+  function tick() {
+    const t = (performance.now() - t0) / 1000 * speed;
+    for (const e of els) if (t >= Number(e.dataset.at)) e.classList.add("on");
+    // a lamp runs through the jobs in order, like the room
+    const k = t < 9.5 ? -1 : Math.floor((t - 9.5) / 0.32);
+    if (k !== lit && k < nodes.length + 2) {
+      nodes.forEach((n, i) => n.classList.toggle("lit", i === k));
+      lit = k;
+    }
+    if (t >= 14.6) document.querySelectorAll(".before .fill").forEach(f => (f.style.width = f.dataset.w + "%"));
+    if (t >= 15.6) document.querySelectorAll(".after .fill").forEach(f => (f.style.width = f.dataset.w + "%"));
+    window.__sb = window.__sb || {}; if (!window.__sb.start) window.__sb.start = Date.now();
+    requestAnimationFrame(tick);
+  }
+  document.fonts.ready.then(() => requestAnimationFrame(tick));
+</script>
+</body>
+</html>

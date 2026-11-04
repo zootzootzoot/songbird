@@ -249,7 +249,7 @@ async def front(s: Shot):
 
 async def live(s: Shot):
     """the real journey: borrow a day, produce, the room, into the video"""
-    await s.until("document.querySelector('.fr__desk')", 30)
+    await s.until("!!document.querySelector('.fr__desk')", 30)
     await s.scroll_to(".fr__desk", 60, 0.01)
     await s.wait(1.5)
     s.mark("desk")
@@ -259,7 +259,7 @@ async def live(s: Shot):
     s.mark("produce")
     await s.click("button", "produce my day")
     await s.hide_cursor()
-    await s.until("document.querySelector('.room')", 30)
+    await s.until("!!document.querySelector('.room')", 30)
     s.mark("room")
     checks = {
         "seen": "!!document.querySelector('.rm-call[data-mode=audition]')",
@@ -288,7 +288,40 @@ def render_shot(tid: str, at: float | None, hold: float):
     return q, script
 
 
-SHOTS = {"front": (SITE, front, 120), "live": (SITE, live, 420)}
+async def how(s: Shot):
+    await s.wait(21.0)
+
+
+def journal_entries() -> list[dict]:
+    """the releases this machine made live, newest first, as the front door's journal keeps them"""
+    tapes = ROOT / "server" / "data" / "tapes"
+    shelf = set(json.loads((ROOT / "server" / "data" / "samples.json").read_text()))
+    out = []
+    for d in tapes.iterdir():
+        f = d / "tape.json"
+        if not f.exists() or d.name in shelf:
+            continue
+        t = json.loads(f.read_text())
+        if not t.get("cover") or not t.get("catalog"):
+            continue
+        out.append({"id": t["id"], "title": t["title"], "genre": t.get("genre"), "cover": t["cover"],
+                    "catalog": t["catalog"], "at": t["createdAt"]})
+    return sorted(out, key=lambda e: e["at"], reverse=True)[:8]
+
+
+async def journal(s: Shot):
+    entries = json.dumps(journal_entries())
+    await s.js(f"localStorage.setItem('songbird.journal.v1', JSON.stringify({entries})); location.reload(); 1")
+    await s.wait(2.5)
+    await s.until("!!document.querySelector('.fr__mine')", 20)
+    await s.scroll_to(".fr__mine", 140, 0.01)
+    await s.wait(1.2)
+    s.mark("shown")
+    await s.wait(8)
+
+
+HOW = (Path(__file__).with_name("demo_how.html")).as_uri()
+SHOTS = {"front": (SITE, front, 120), "live": (SITE, live, 420), "how": (HOW, how, 60), "journal": (LOCAL, journal, 60)}
 
 
 if __name__ == "__main__":

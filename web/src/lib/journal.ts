@@ -1,3 +1,4 @@
+import { apiBase } from "./env";
 import type { Tape } from "./types";
 
 /** Your own releases, kept on this device: the journal. Never required, never shared. */
@@ -16,7 +17,10 @@ export function readJournal(): Entry[] {
 }
 
 export function keep(t: Tape): Entry[] {
-  const entry: Entry = { id: t.id, title: t.title, genre: t.genre, cover: t.cover, catalog: t.catalog, at: t.createdAt };
+  // the cover as a path: the studio's address (a tunnel) changes, the path doesn't
+  const api = apiBase();
+  const cover = t.cover && api && t.cover.startsWith(api) ? t.cover.slice(api.length) : t.cover;
+  const entry: Entry = { id: t.id, title: t.title, genre: t.genre, cover, catalog: t.catalog, at: t.createdAt };
   const next = [entry, ...readJournal().filter((e) => e.id !== t.id)].slice(0, 365);
   try {
     localStorage.setItem(KEY, JSON.stringify(next));

@@ -25,7 +25,7 @@ Songbird is a music journal: every day you live becomes a single.
 Drop in five photos from today. Songbird looks at the day, calls its genre with total conviction ("1981 new wave of
 british heavy metal", for a first half marathon), casts the things in your photos as the band (the running shoe on
 galloping lead guitar), writes the song, records four takes, throws out the off-key ones, keeps the best, paints the
-sleeve and cuts a music video, directed shot by shot. About two and a half minutes, and you get a 9:16 MP4 to send.
+sleeve and cuts a music video, directed shot by shot. Two to three minutes, and you get a 9:16 MP4 to send.
 
 The problem: people take more than two trillion photos a year and look back at almost none of them. A camera roll
 keeps what a day looked like, but not how it felt. Songs are the memory format people never lose (memories cued by

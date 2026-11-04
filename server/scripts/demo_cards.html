@@ -11,7 +11,7 @@
   .wrap { position: absolute; inset: 0; }
 
   /* lower-third caption: a frosted ink pill, a model tag, one or two lowercase lines */
-  .cap { position: absolute; left: 64px; bottom: 64px; max-width: 1040px; display: flex; flex-direction: column;
+  .cap { position: absolute; left: 64px; bottom: 150px; max-width: 1040px; display: flex; flex-direction: column;
          gap: 10px; align-items: flex-start; }
   .cap.right { left: auto; right: 72px; align-items: flex-end; text-align: right; }
   .cap.top { bottom: auto; top: 150px; }
@@ -27,6 +27,15 @@
           letter-spacing: -.025em; font-variation-settings: "wdth" 104; box-shadow: 0 18px 60px rgba(0,0,0,.35); }
   .line b { font-weight: 800; color: #fff; }
   .line em { font-style: normal; color: #ffd37a; }
+
+  /* subtitles: the voiceover's words, bottom centre */
+  .sub { position: absolute; left: 0; right: 0; bottom: 44px; display: flex; justify-content: center; }
+  .sub span { max-width: 1500px; padding: 10px 22px 12px; border-radius: 16px; background: rgba(0,0,0,.66); color: #fff;
+              font-weight: 600; font-size: 40px; line-height: 1.18; letter-spacing: -.015em; text-align: center;
+              font-variation-settings: "wdth" 100; }
+  /* a ring around one lamp of the control room's rack */
+  .ring { position: absolute; border-radius: 8px; border: 3px solid #ffb21e;
+          box-shadow: 0 0 0 4px rgba(255,178,30,.25), 0 0 34px rgba(255,178,30,.55), inset 0 0 18px rgba(255,178,30,.25); }
 
   /* full-frame cards */
   .card { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
@@ -66,6 +75,10 @@
   if (spec.kind === "cap") {
     w.innerHTML = `<div class="cap ${spec.pos || ""}">${spec.tag ? `<span class="tag ${spec.tone || ""}"><i></i>${esc(spec.tag)}</span>` : ""}
       ${spec.text ? `<div class="line">${esc(spec.text)}</div>` : ""}</div>`;
+  } else if (spec.kind === "sub") {
+    w.innerHTML = `<div class="sub"><span>${esc(spec.text)}</span></div>`;
+  } else if (spec.kind === "ring") {
+    w.innerHTML = `<div class="ring" style="left:${spec.x - 3}px;top:${spec.y - 5}px;width:${spec.w}px;height:${spec.h + 4}px"></div>`;
   } else if (spec.kind === "card") {
     w.innerHTML = `<div class="card ${spec.tone || "day"}">${spec.tone === "day" ? '<div class="halo"></div>' : ""}
       <div style="position:relative"><p class="big">${esc(spec.text)}</p>${spec.src ? `<div class="src">${esc(spec.src)}</div>` : ""}</div></div>`;
