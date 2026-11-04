@@ -9,8 +9,11 @@ finished single.
   clothes is perfect). Hold the phone a hand's width from your mouth, slightly to the side.
 - Read each numbered part, then **pause for two full seconds** before the next one. I split the file on those pauses
   and lay each part over its moment, so the cut fits your pace, not the other way round.
+- Read at your own pace; don't try to match the draft's stand-in voice. The cut follows your words: each part's
+  footage stretches to fit it, the subtitles and lamp rings land on your words, and on the desk the name, the
+  photos and the note go in as you say them.
 - Talk like you're showing a friend, not presenting. Slightly slower than feels natural. If you fumble a line, pause
-  and just say that part again; I'll use the last take.
+  and say that whole part again, then tell me which parts you redid; I'll keep the last take of each.
 - Drop the file in `film/demo/` (any format: m4a, mp3, wav).
 
 ## The script
@@ -24,7 +27,7 @@ finished single.
 > So I built Songbird. A music journal, where every day you live becomes a single.
 
 **3 · the day** *(the desk)* ✱
-> This is Maya's day. First day at a new job. Five photos, and one line: "Didn't get lost once. OK, once."
+> This is Maya's day. Five photos, and one line: "First day at the new job. Didn't get lost once. OK, once."
 > Let's make it a song.
 
 **4 · the room, first half** *(look, cut, produce)*

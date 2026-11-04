@@ -311,8 +311,11 @@ def main():
     d1 = vo_len(1) + 1.3
     s1 = sentences(1)
     third = s1[2]["start"] + 0.5 if len(s1) > 2 else d1 * 0.6
-    tl.clip(front, 0.0, third - 0.15)
-    tl.clip(front, 14.2, d1 - (third - 0.15))
+    fm = json.loads((FILM / "front.json").read_text())["marks"]
+    s2 = s1[1]["start"] + 0.5 if len(s1) > 1 else 3.0  # "A camera roll remembers..."
+    src1 = max(0.0, fm.get("hoverA", 5.0) - 0.25 - s2)  # the label is up as the sentence starts
+    tl.clip(front, src1, third - 0.15)
+    tl.clip(front, fm.get("shelf", 14.2) + 0.2, d1 - (third - 0.15))
     specs["b1"] = {"kind": "card", "tone": "day", "text": "two trillion photos a year.<br><span class='soft'>almost none looked at again.</span>",
                    "src": "petapixel, 2025"}
     specs["b4"] = {"kind": "card", "tone": "night", "text": "but you still know every word<br>of a song you loved at fifteen.",
@@ -325,7 +328,7 @@ def main():
     # 2 · the product: the front door, a pill on one of the floating things
     t2 = tl.t
     d2 = vo_len(2) + 1.2
-    tl.clip(front, 4.0, d2)
+    tl.clip(front, max(0.0, fm.get("hoverB", 4.0) - 0.55), d2)
     tl.say(2, t2 + 0.35)
 
     # 3 · the day: the desk (zoomed), borrow, the click on "produce my day", then the dusk
@@ -333,9 +336,28 @@ def main():
     desk0, prod = marks["desk"], marks["produce"]
     click = marks["room"] - 0.1  # the room mounts the moment the button is pressed and the sky starts to fall
     d3 = vo_len(3) + 0.8
-    sp = max(0.55, min(1.6, (click - desk0) / d3))
-    tl.clip(live, desk0, d3, speed=sp, crop=tuple(cfg["desk_crop"]))
-    tl.say(3, t3 + 0.25)
+    say3 = 0.25
+    steps = [("named", "five photos"), ("photos_end", "and one line"), ("noted", "let's make")]
+    dm = {**marks, **cfg.get("desk_marks", {})}  # footage filmed before the steps were marked names them in cut.json
+    desk0 = dm.get("desk", desk0)
+    if all(k in dm for k, _ in steps) and all(spoken(3, w) is not None for _, w in steps):
+        # name typed under "This is Maya's day", photos land under "Five photos", the note types itself under
+        # the line as it is read, produce under "Let's make it a song"
+        src = [desk0] + [dm[k] for k, _ in steps] + [click]
+        dst = [0.0] + [say3 + spoken(3, w) - 0.15 for _, w in steps] + [d3]
+        # when a step runs longer than 2.4x can fit, keep the part that matters: the typing ends on the name, the
+        # photos land, the note starts typing, the click ends on produce
+        keep_end = [True, False, False, True]
+        slowest = [0.15, 0.6, 0.6, 0.6]  # the first step is a still desk: it may hold
+        for k, ((a, b), (x, y)) in enumerate(zip(zip(src, src[1:]), zip(dst, dst[1:]))):
+            dur = max(0.3, y - x)
+            sp = max(slowest[k], min(2.4, (b - a) / dur))
+            start = max(src[0], b - sp * dur) if keep_end[k] else a  # never before the desk (an earlier day)
+            tl.clip(live, start, dur, speed=sp, crop=tuple(cfg["desk_crop"]))
+    else:
+        sp = max(0.55, min(1.6, (click - desk0) / d3))
+        tl.clip(live, desk0, d3, speed=sp, crop=tuple(cfg["desk_crop"]))
+    tl.say(3, t3 + say3)
     dusk = marks["room"] + 0.08  # cut on the click, straight into the falling sky
     dusk_src = cfg.get("dusk_len", 1.2)  # how long the sky takes to fall in the footage, played over two seconds
     t_dusk = tl.t

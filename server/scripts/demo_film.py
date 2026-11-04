@@ -120,6 +120,18 @@ class Shot:
             await asyncio.sleep(dur / steps)
         self.cx, self.cy = x, y
 
+    async def type_text(self, text: str, per_char: float = 0.07):
+        """type into the focused field one character at a time (real input events, so React sees each one)"""
+        for ch in text:
+            await self.call("Input.insertText", text=ch)
+            await asyncio.sleep(per_char * (2.2 if ch in ".,:" else 1.0))
+
+    async def drop_files(self, selector: str, files: list[str]):
+        """what the file picker would hand the page: set the hidden input's files and fire its change event"""
+        doc = await self.call("DOM.getDocument", depth=0)
+        q = await self.call("DOM.querySelector", nodeId=doc["root"]["nodeId"], selector=selector)
+        await self.call("DOM.setFileInputFiles", nodeId=q["nodeId"], files=files)
+
     async def hide_cursor(self):
         await self.js("(()=>{const c=document.getElementById('sb-cursor'); if(c) c.style.opacity=0;})()")
 
@@ -146,7 +158,7 @@ class Shot:
           const goal = window.scrollY + e.getBoundingClientRect().top - {offset};
           const from = window.scrollY, t0 = performance.now(), d = {dur * 1000};
           const step = (now) => {{ const k = Math.min(1, (now - t0) / d), e2 = k < .5 ? 4*k*k*k : 1 - Math.pow(-2*k + 2, 3)/2;
-            window.scrollTo(0, from + (goal - from) * e2); if (k < 1) requestAnimationFrame(step); }};
+            window.scrollTo({{top: from + (goal - from) * e2, behavior: 'instant'}}); if (k < 1) requestAnimationFrame(step); }};
           requestAnimationFrame(step);
         }})()""")
         await asyncio.sleep(dur + 0.1)
@@ -223,15 +235,35 @@ async def run(shot_name: str, url: str, script, limit: float = 420):
 async def front(s: Shot):
     """the front door: the sky, an object's pill, then down through the page"""
     await s.wait(4.0)
-    s.mark("hover")
-    r = await s.rect(".fl__thing")
     things = await s.js("[...document.querySelectorAll('.fl__thing')].map(e=>{const r=e.getBoundingClientRect();"
-                        "return [r.left+r.width/2, r.top+r.height/2, e.getAttribute('aria-label')||'']})")
-    # pick a thing on the right side, away from the wordmark
-    pick = sorted([t for t in things if t[0] > W * 0.62 and 200 < t[1] < H - 160], key=lambda t: t[1])
-    tx, ty, _ = (pick[0] if pick else (r["x"], r["y"], ""))
-    await s.glide(tx, ty, 1.1)
-    await s.wait(2.4)
+                        "return [r.left+r.width/2, r.top+r.height/2, e.getAttribute('aria-label')||e.textContent||'']})") or []
+    title = await s.js("(()=>{const r=document.querySelector('.fr__title').getBoundingClientRect();"
+                       "return [r.left, r.top, r.right, r.bottom]})()")
+
+    def clear(t):  # its label pops out beside it, toward the middle: it has to fit before the wordmark
+        x, y = t[0], t[1]
+        beside = x > title[2] + 230 or x < title[0] - 230
+        return (beside or not (title[1] - 40 < y < title[3] + 40)) and 140 < y < H - 150
+
+    def find(word, side):
+        hit = [t for t in things if word in t[2].lower() and clear(t)]
+        if hit:
+            return hit[0]
+        pool = sorted([t for t in things if clear(t) and ((t[0] > W / 2) == (side == "r"))], key=lambda t: t[1])
+        return pool[0] if pool else things[0]
+
+    a = find("pastel", "r")
+    b = find("badge", "l")
+    if b == a:
+        b = find("record", "l")
+    s.mark("hover")  # the first thing: "...almost never look at them again"
+    await s.glide(a[0], a[1], 1.1)
+    s.mark("hoverA")
+    await s.wait(2.8)
+    await s.glide((a[0] + b[0]) / 2, H * 0.9, 0.8)
+    await s.glide(b[0], b[1], 0.9)
+    s.mark("hoverB")  # the second: "so I built Songbird"
+    await s.wait(3.2)
     await s.glide(W * 0.5, H * 0.86, 0.9)
     await s.hide_cursor()
     s.mark("shelf")
@@ -272,27 +304,71 @@ def live_for(who: str | None):
         if note:
             await s.glide(note["x"], note["y"], 0.6)
         await s.wait(2.0)
-        s.mark("produce")
-        await s.click("button", "produce my day")
-        await s.hide_cursor()
-        await s.until("!!document.querySelector('.room')", 30)
-        s.mark("room")
-        checks = {
-            "seen": "!!document.querySelector('.rm-call[data-mode=audition]')",
-            "genre": "!!document.querySelector('.rm-call[data-mode=call]')",
-            "cover": "!!document.querySelector('.rm-sleeve')",
-            "take1": "document.querySelectorAll('.rm-take:not([data-status=armed]):not([data-status=rec])').length >= 1",
-            "kept": "!!document.querySelector('.rm-take[data-status=kept]')",
-            "video": "!!document.querySelector('[data-surface=video]')",
-        }
-        t0 = time.time()
-        while time.time() - t0 < 330 and "video" not in s.marks:  # every mark is checked on every tick, none blocks
-            state = await s.js("({" + ",".join(f"{json.dumps(k)}: {v}" for k, v in checks.items()) + "})") or {}
-            for k, v in state.items():
-                if v and k not in s.marks:
-                    s.mark(k)
-            await asyncio.sleep(0.25)
-        await s.wait(12)
+        await room_part(s)
+    return live
+
+
+async def room_part(s: Shot):
+    """press produce, then watch the room until the video is on screen"""
+    s.mark("produce")
+    await s.click("button", "produce my day")
+    await s.hide_cursor()
+    await s.until("!!document.querySelector('.room')", 30)
+    s.mark("room")
+    checks = {
+        "seen": "!!document.querySelector('.rm-call[data-mode=audition]')",
+        "genre": "!!document.querySelector('.rm-call[data-mode=call]')",
+        "cover": "!!document.querySelector('.rm-sleeve')",
+        "take1": "document.querySelectorAll('.rm-take:not([data-status=armed]):not([data-status=rec])').length >= 1",
+        "kept": "!!document.querySelector('.rm-take[data-status=kept]')",
+        "video": "!!document.querySelector('[data-surface=video]')",
+    }
+    t0 = time.time()
+    while time.time() - t0 < 330 and "video" not in s.marks:  # every mark is checked on every tick, none blocks
+        state = await s.js("({" + ",".join(f"{json.dumps(k)}: {v}" for k, v in checks.items()) + "})") or {}
+        for k, v in state.items():
+            if v and k not in s.marks:
+                s.mark(k)
+        await asyncio.sleep(0.25)
+    await s.wait(12)
+
+
+def desk_for(slug: str):
+    """a visitor's own journey: the name, five photos, the line, produce. Each step is marked so the edit can lay it
+    under the words that describe it."""
+    day = json.loads((ROOT / "server" / "samples" / slug / "day.json").read_text())
+    files = [str(f) for f in sorted((ROOT / "server" / "samples" / slug).glob("photo-*.jpg"))][:5]
+
+    async def live(s: Shot):
+        await s.until("!!document.querySelector('.fr__desk')", 30)
+        await s.scroll_to(".fr__desk", 60, 0.01)
+        await s.wait(1.0)
+        s.mark("desk")
+        name = await s.rect('input[placeholder="your name"]')
+        await s.click_at(name["x"], name["y"])
+        s.mark("name")
+        await s.type_text(day["name"], 0.12)
+        s.mark("named")
+        await s.wait(0.4)
+        add = await s.rect(".fr__add")
+        await s.glide(add["x"], add["y"], 0.6)
+        s.mark("photos")
+        await s.drop_files('.fr__desk input[type="file"]', files)
+        await s.until("document.querySelectorAll('.fr__slot img').length >= 5", 10)
+        await s.wait(0.5)
+        slots = await s.js("[...document.querySelectorAll('.fr__slot img')].map(e=>{const r=e.getBoundingClientRect();"
+                           "return [r.left+r.width/2,r.top+r.height/2]})")
+        for x, y in (slots or [])[:5]:
+            await s.glide(x, y, 0.45)
+            await s.wait(0.25)
+        s.mark("photos_end")
+        note = await s.rect("#fr-note")
+        await s.click_at(note["x"], note["y"])
+        s.mark("note")
+        await s.type_text(day["note"], 0.055)
+        s.mark("noted")
+        await s.wait(0.6)
+        await room_part(s)
     return live
 
 
@@ -364,6 +440,9 @@ if __name__ == "__main__":
         elif arg.startswith("journal:"):  # journal:<tid> -> the discography, that release first
             JOURNAL_HERO = arg.split(":", 1)[1]
             asyncio.run(run("journal", LOCAL, journal, 60))
+        elif arg.startswith("desk:"):  # desk:<sample slug> -> type the name, drop in that day's photos, the note, produce
+            slug = arg.split(":", 1)[1]
+            asyncio.run(run(f"live_{slug}", SITE, desk_for(slug), 480))
         elif arg.startswith("live:"):  # live:<name> -> borrow that person's day
             who = arg.split(":", 1)[1]
             asyncio.run(run(f"live_{who}", SITE, live_for(who), 480))

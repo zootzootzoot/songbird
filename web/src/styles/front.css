@@ -1364,3 +1364,16 @@ button.fr__ghost {
     padding: 24px 22px 26px;
   }
 }
+
+/* a hovered thing's label rises above the wordmark instead of sliding under it */
+.fl {
+  pointer-events: none;
+}
+
+.fl__thing {
+  pointer-events: auto;
+}
+
+.fl:has(.fl__thing[data-hover="true"]) {
+  z-index: 4;
+}

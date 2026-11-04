@@ -14,7 +14,7 @@ out.mkdir(parents=True, exist_ok=True)
 
 # (day, photo index, the thing, label shown on hover)
 OBJECTS = [
-    ("first-day", 0, "the staff ID badge on its black lanyard", "the new badge"),
+    ("first-day", 0, "the office access pass in its clear sleeve on a navy lanyard", "the new badge"),
     ("first-day", 1, "the paper coffee cup", "the 7am latte"),
     ("moving-day", 0, "one cardboard moving box with KITCHEN?? written on it in marker", "box marked kitchen??"),
     ("moving-day", 4, "the house key on its keyring", "the new key"),
