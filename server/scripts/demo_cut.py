@@ -328,21 +328,22 @@ def main():
     tl.clip(front, 4.0, d2)
     tl.say(2, t2 + 0.35)
 
-    # 3 · the day: the desk (zoomed), borrow, produce, then dusk
+    # 3 · the day: the desk (zoomed), borrow, the click on "produce my day", then the dusk
     t3 = tl.t
     desk0, prod = marks["desk"], marks["produce"]
+    click = marks["room"] - 0.1  # the room mounts the moment the button is pressed and the sky starts to fall
     d3 = vo_len(3) + 0.8
-    span = prod + 0.35 - desk0
-    sp = max(0.55, min(1.6, span / d3))
+    sp = max(0.55, min(1.6, (click - desk0) / d3))
     tl.clip(live, desk0, d3, speed=sp, crop=tuple(cfg["desk_crop"]))
     tl.say(3, t3 + 0.25)
-    dusk = desk0 + d3 * sp
+    dusk = marks["room"] + 0.08  # cut on the click, straight into the falling sky
+    dusk_src = cfg.get("dusk_len", 1.2)  # how long the sky takes to fall in the footage, played over two seconds
     t_dusk = tl.t
     cur = cfg.get("dusk_cursor")  # the stand-in cursor lingers on the button while the sky comes down
-    tl.clip(live, dusk, 2.0, clock=prod, fix=f"delogo=x={cur[0] - 20}:y={cur[1] - 20}:w=40:h=40" if cur else None)
+    tl.clip(live, dusk, 2.0, speed=dusk_src / 2.0, fix=f"delogo=x={cur[0] - 20}:y={cur[1] - 20}:w=40:h=40" if cur else None)
 
     # 4 + 5 · the control room, speed-ramped onto the voice
-    room0 = dusk + 2.0
+    room0 = dusk + dusk_src
     g, cov, kept = marks["genre"], marks["cover"], marks["kept"]
     t4 = tl.t
     a_len = vo_len(4) + 0.9
@@ -365,7 +366,7 @@ def main():
     tl.clip(live, f2[0], o2, speed=(f2[1] - f2[0]) / o2, clock=prod)
     tl.clip(live, slow_b[1][0], slow_b[1][1] - slow_b[1][0], clock=prod)
     specs["clock"] = {"kind": "clock"}
-    tl.over("clock", t_dusk + 0.3, tl.t)
+    tl.over("clock", t4, tl.t)
     tl.say(5, t5 + 0.35)
     for n, t_part in ((4, t4 + 0.35), (5, t5 + 0.35)):  # a ring finds each lamp as it is named
         for k, (phrase,) in enumerate(LAMPS):
@@ -385,7 +386,7 @@ def main():
     d6 = cfg.get("result_len", 30.0)
     tl.clip(FILM / f"{hero}.mp4", 0.5, d6)
     tl.say(6, t6 + 0.5)
-    took = marks["video"] - prod  # measured on the live footage: produce pressed -> the video is on screen
+    took = marks["video"] - click  # measured on the live footage: "produce my day" pressed -> the video is on screen
     release_time = cfg.get("release_time") or f"{int(took // 60)} MIN {int(took % 60):02d} S"
     specs["e1"] = cap(f"{cfg['catalog']} · {release_time} LATER", f"{day}, as a <b>{genre}</b>. with its own music video.")
     tl.over("e1", t6 + 0.3, t6 + 5.4)
@@ -440,7 +441,7 @@ def main():
                              ["80–90%", "of the singing in the band's key, up from 64% once demucs found the bug"],
                              ["79–100%", "of lyric lines land on the sung beat with meta's mms aligner, up from 38–81%"],
                              ["4 takes", "per song: the off-key ones cut, the best one kept by spark 1.2's ear"],
-                             ["~3 min", "from five photos to a single, its sleeve and a directed music video"]]}
+                             [f"{int(took // 60)}:{int(took % 60):02d}", f"from five photos to {who}'s single, its sleeve and a directed music video, live"]]}
     tl.still("0x0b0b0d", d9)
     tl.over("h1", t9, t9 + d9)
     tl.say(9, t9 + 0.4)

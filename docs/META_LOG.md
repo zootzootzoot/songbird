@@ -168,6 +168,6 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     longer to record. The shelf's good singles score 7.3-8.5, so we trusted the ear and ran the same five photos
     again. The second run called 1989 new jack swing; the tuner cut two of four takes (74% and 70% in key), Spark 1.2
     kept one at 7.35 (*"oat milk and lanyards ain't exactly a coronation bop my dude"*), MMS timed 16 of 20 lines,
-    and it was done 3:40 after "produce". That release (SB-0040) is the one in the demo and on the shelf. The demo's
+    and it was done 3:38 after "produce my day" was pressed. That release (SB-0040) is the one in the demo and on the shelf. The demo's
     subtitles, and the rings that find each lamp as the voiceover names its model, are timed by the same MMS
     aligner, run on the narration.
