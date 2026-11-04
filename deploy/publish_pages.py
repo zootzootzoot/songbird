@@ -60,7 +60,7 @@ def copy_tapes():
         out = dest / tid
         out.mkdir()
         for f in src.iterdir():
-            if (f.name.startswith(("photo-", "cut-", "move-", "clip-", "cast-")) and "-art" not in f.name) or f.name == "song.mp3":
+            if (f.name.startswith(("photo-", "cut-", "move-", "clip-", "cast-")) and "-art" not in f.name) or f.name in ("song.mp3", "share.mp4"):
                 shutil.copy2(f, out / f.name)
         if (src / "takes").is_dir():  # the session sheet plays every take, the cut ones too
             (out / "takes").mkdir()
@@ -120,11 +120,14 @@ def main():
             push("Point the deck at the live server")
         return
     if not a.no_build:
-        subprocess.run(f"npm run build -- --base={BASE}", cwd=WEB, check=True, shell=True)  # npm is npm.cmd on Windows
+        # its own out dir: web/dist stays the local build the server serves (and the MP4 recorder films)
+        subprocess.run(f"npm run build -- --base={BASE} --outDir dist-pages --emptyOutDir", cwd=WEB, check=True, shell=True)
     for p in WT.iterdir():
         if p.name not in (".git",):
             shutil.rmtree(p) if p.is_dir() else p.unlink()
-    shutil.copytree(WEB / "dist", WT, dirs_exist_ok=True)
+    shutil.copytree(WEB / "dist-pages", WT, dirs_exist_ok=True)
+    index = WT / "index.html"  # link previews need absolute image urls
+    index.write_text(index.read_text(encoding="utf-8").replace('content="og.jpg"', f'content="{SITE}og.jpg"'), encoding="utf-8")
     shutil.copy2(WT / "index.html", WT / "404.html")  # deep links fall back to the app
     (WT / ".nojekyll").write_text("")
     shelf = copy_tapes()
