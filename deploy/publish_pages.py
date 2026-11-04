@@ -82,7 +82,7 @@ def share_page(tape: dict):
     tid = tape["id"]
     e = lambda s: html.escape(s or "", quote=True)
     title = f"{tape['title']} · songbird"
-    desc = f"a {tape.get('genre') or 'small'} single by {tape.get('artist') or 'the small days'}. {tape.get('liner', '')}"
+    desc = f"a {tape.get('genre') or 'new'} single by {tape.get('artist') or 'songbird'}. {tape.get('liner', '')}"
     img = SITE.rstrip("/") + tape["cover"] if tape.get("cover") else SITE + f"tapes/{tid}/photo-0.jpg"
     page = f"""<!doctype html><html><head><meta charset="utf-8"><title>{e(title)}</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">

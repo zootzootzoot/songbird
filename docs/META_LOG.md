@@ -9,9 +9,9 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 |---|---|---|---|
 | Look | **Muse Spark 1.3** (vision, structured output) | Looks at all photos/clips in one call: names each one's *hero* as a noun phrase SAM can find ("rubber duck", "red balloon"), what happened, 3 sensory details, time of day, and orders the day | One multimodal call sees the whole day at once, so it can order it (wet hair → bath is evening) and pick what a child would point at |
 | Cast | **SAM 3.1** (image) | Cuts each hero out as a clean sticker, from Spark's noun phrase. ~1–2 s per photo | Spark → SAM is a model-to-model handoff: one model decides *what* matters, the other cuts exactly that |
-| Cast | **SAM 3.1** (video) | For a clip, tracks the hero through every frame → an animated sticker that moves (45 frames in 3.5 s) | Text-prompted video tracking turns a parent's 3-second phone clip into a moving band member |
+| Cast | **SAM 3.1** (video) | For a clip, tracks the hero through every frame → an animated sticker that moves (45 frames in 3.5 s) | Text-prompted video tracking turns a 3-second phone clip into a moving band member |
 | Produce | **Muse Wonder 1.0** (structured output) | Picks the genre with conviction, writes the session notes, the lyrics (every verse line tied to a photo), band credits, liner notes. A mechanical checker (syllables, photo coverage, chorus repeats, banned clichés) sends it back until it passes | Wonder writes better songs than Spark (see build log); the checker loop makes it reliable |
-| Hear your note | **Muse Voice Transcribe** | A parent holds the mic and says one thing the photos can't show ("he named the snail gary"); it ends up in the song ("you named the snail Gary that day") | Turns a 5-second voice note into the most personal line of the song |
+| Hear your note | **Muse Voice Transcribe** | You hold the mic and say one thing the photos can't show ("i cried at the speech and again at the cake"); it ends up in the song | Turns a 5-second voice note into the most personal line of the song |
 | Tune | **Demucs** (Meta FAIR, open weights; Hybrid Demucs via torchaudio) | Splits every take into singer and band, then our tuner checks how much of the singing sits on the band's scale; takes under 75% are cut before anyone hears them | The off-key problem was invisible until the voice could be heard apart from the band (see build log 10) |
 | A&R | **Muse Spark 1.2** (audio in) | Listens to every take that passed the tuner and scores voice, words and genre, with a one-line verdict; the best take is kept | Audio understanding lets the label judge its own output instead of shipping the first take |
 | Sleeve | **Muse Image 1.0** (edits, references) | Redraws the day's SAM cut-outs as the band on a square record sleeve made the way that genre's sleeves really looked (2 Tone checkerboard for ska, a hand-tinted oval frame for 1950s tango) (~15 s, $0.01) | Multi-reference edits: the cover is made *from that day's actual objects*, not from a text prompt |
@@ -123,3 +123,14 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     pipeline breaks up any run of four identical moves. It writes the list from the lyric sheet while the band
     records, and the shots are mapped onto the lines that were actually sung.
 
+20. **Muse Image made the sample days and the front door's world (Nov 3).** The owner pointed out that every song on
+    the shelf was about "Ada": every sample photo was a toddler's day, left over from Songbird's first life as a
+    bedtime toy, so the product read as a kids' novelty. We repositioned it as a music journal for anyone with a camera
+    roll (PRODUCT.md) and had Muse Image photograph nine new days as candid phone snapshots (45 photos, adults, faces
+    turned away): a first day at a new job, moving day, a first half marathon, a bakery night shift, a rainy Sunday, a
+    friend's wedding, a pitch that went wrong, a solo trip to Lisbon, a 74th birthday at the allotment. Its filter
+    refused "pizza and two beer bottles" three times, and "two cans of lemonade" went straight through. Then Muse Image
+    redrew one or two things from each day's own photos as glossy studio objects (the staff badge, the KITCHEN?? box,
+    the sardine tin, the sleeping cat; 20 objects, keyed out with the same backdrop key as the band) and painted the
+    sky they float in. Each object on the front door opens the single its day became, so the hero is the product's
+    own output rather than decoration. All nine days were then released through the real pipeline.

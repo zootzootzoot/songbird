@@ -30,11 +30,11 @@ LOOK_SCHEMA = {
                 "hero": {"type": "string", "description": "1-3 word noun phrase naming ONE concrete, visible, cut-out-able thing that makes this photo special (an animal, toy, object, food). Not a face or a whole person. e.g. 'snail', 'rubber duck', 'red balloon'"},
                 "hero_alt": {"type": "string", "description": "a simpler, more generic noun phrase for the same thing, used if the first finds nothing"},
                 "seen": {"type": "string", "description": "what is happening, max 12 words, plain present tense"},
-                "details": {"type": "array", "items": {"type": "string"}, "description": "3 small concrete sensory details a parent would remember (colour, texture, sound, smell)"},
+                "details": {"type": "array", "items": {"type": "string"}, "description": "3 small concrete sensory details the person would remember (colour, texture, sound, smell)"},
                 "time_of_day": {"type": "string", "enum": ["morning", "midday", "afternoon", "evening", "night"]},
                 "mood": {"type": "string", "enum": MOODS},
             }}},
-        "order": {"type": "array", "items": {"type": "integer"}, "description": "photo indexes in the order the day most likely happened, morning to bedtime"},
+        "order": {"type": "array", "items": {"type": "integer"}, "description": "photo indexes in the order the day most likely happened, morning to night"},
         "day": {"type": "string", "description": "one warm sentence about the whole day"},
         "palette": {"type": "array", "items": {"type": "string"}, "description": "3 hex colours that recur in the photos"},
     }}

@@ -3,6 +3,7 @@ import { connect, getShelf, getTape, type Health } from "./lib/api";
 import { sound } from "./lib/audio";
 import { BASE } from "./lib/env";
 import { useDeck } from "./lib/useDeck";
+import { keep } from "./lib/journal";
 import { usePlayer } from "./lib/usePlayer";
 import type { TapeSummary } from "./lib/types";
 import { Front } from "./components/front/Front";
@@ -47,9 +48,12 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // refresh the catalogue when a new release lands
+  // a new release of your own: into your journal (this device), and refresh the catalogue
   useEffect(() => {
-    if (tape && state.source === "live") void getShelf().then(setShelf);
+    if (tape && state.source === "live") {
+      keep(tape);
+      void getShelf().then(setShelf);
+    }
   }, [tape, state.source]);
 
   const openRelease = useCallback(

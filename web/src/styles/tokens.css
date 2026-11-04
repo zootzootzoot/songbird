@@ -78,12 +78,13 @@ button {
   font-variant-numeric: tabular-nums;
 }
 
+/* the mark: lowercase, wide, tight (same as the front door) */
 .wordmark {
   font-family: var(--sans);
-  font-variation-settings: "wdth" 125;
-  font-weight: 900;
-  letter-spacing: -0.02em;
-  text-transform: uppercase;
+  font-variation-settings: "wdth" 112;
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  text-transform: none;
   line-height: 0.9;
 }
 

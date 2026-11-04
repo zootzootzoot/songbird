@@ -300,7 +300,7 @@ export function Video({ tape, player, autoplay, onExit }: { tape: Tape; player: 
       </div>
 
       <div className="vwm" aria-hidden="true">
-        <span className="wordmark">Songbird</span>
+        <span className="wordmark">songbird</span>
         <i className="vwm-dot" />
         <span className="num">{tape.catalog}</span>
       </div>

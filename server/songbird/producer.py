@@ -21,10 +21,12 @@ from . import compose, meta
 # times in its training tags (acestep/genres_vocab.txt; "krautrock" and "philly soul" appear zero times), then
 # auditioned the band in all 63 of them with one neutral lyric and had Muse Spark 1.2 score each clip
 # (scripts/audition.py, judge_audition.py). These are the ones it played convincingly (genre >= 4.5 / 10): opera,
-# gospel, trap, k-pop, bluegrass and prog all came out as "elevator music".
+# gospel, trap, k-pop, bluegrass and prog all came out as "elevator music". Power ballad was dropped later: the
+# producer reached for it on every triumphant day, and the band's voice is weakest in it (audition voice 3.5; live
+# releases kept takes scoring 4-5).
 REPERTOIRE = [
     "synthwave", "funk", "italo disco", "indie rock", "hard rock", "big band", "soul", "bossa nova", "rock and roll",
-    "rockabilly", "eurodance", "power ballad", "surf rock", "synth-pop", "chiptune", "punk", "ska", "tango", "salsa",
+    "rockabilly", "eurodance", "surf rock", "synth-pop", "chiptune", "punk", "ska", "tango", "salsa",
 ]
 
 PRODUCE_SCHEMA = {
@@ -32,7 +34,7 @@ PRODUCE_SCHEMA = {
     "required": ["title", "artist", "genre", "style", "why", "caption", "bpm", "key", "vocal", "sections", "band", "liner"],
     "properties": {
         "title": {"type": "string"},
-        "artist": {"type": "string", "description": "an invented act name as it would be printed on the sleeve, in the genre's naming idiom, built around the star's name and the band you cast (e.g. 'ada & the sprinkler sound system', 'lady ada and the puddle department', 'ada vortex'); never just the bare name"},
+        "artist": {"type": "string", "description": "an invented act name as it would be printed on the sleeve, in the genre's naming idiom, built around the star's name and the band you cast (e.g. 'jun & the sprinkler sound system', 'lady rosa and the puddle department', 'nico vortex'); never just the bare name"},
         "genre": {"type": "string", "description": "the genre in a few words, with an era, e.g. '1974 philly soul ballad'"},
         "style": {"type": "string", "enum": REPERTOIRE, "description": "the style the session band plays it in"},
         "why": {"type": "string", "description": "one sentence, under 25 words, in your voice: the detail that made this day this genre"},
@@ -94,7 +96,7 @@ Make the single. Rules, every one matters:
   tambourine"). Funny and affectionate.
 - why: one sentence, under 25 words, naming the one detail that decided the genre.
 - artist: the act's name on the sleeve. Invent it in the genre's own naming idiom, around the star and the band you
-  cast: "ada & the sprinkler sound system" (ska), "lady ada and the puddle department" (soul), "ada vortex"
+  cast: "jun & the sprinkler sound system" (ska), "lady rosa and the puddle department" (soul), "nico vortex"
   (synthwave). Never just the bare name.
 - title: the single's title, 1 to 5 words, lowercase, like a real song title.
 - liner: 2 or 3 sentences of liner notes in your voice: lowercase, dry, opinionated, warm, a bit unhinged about
@@ -146,7 +148,7 @@ def write(look: dict, order: list[int], name: str | None, note: str | None, on_t
     schema["properties"]["style"]["enum"] = players
     prompt = PRODUCE_PROMPT.format(
         players=", ".join(players), who=f" for {name}" if name else "", photos=photos, day=look.get("day", ""),
-        note=f'The parent added: "{note}" (use it, it matters more than anything in the photos).\n' if note else "")
+        note=f'The person whose day it was added: "{note}" (use it, it matters more than anything in the photos).\n' if note else "")
     messages = [{"role": "user", "content": prompt}]
     # at effort "high" or "medium" Wonder returned the single with no sections at all (4/4 times); at "low" it writes
     # the whole song first time in ~25 s, but still drops the sections about 1 time in 4. So it writes two demos at

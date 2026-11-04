@@ -507,7 +507,7 @@ def _cover(d: Path, look: dict, order: list[int], cuts: dict, photos: list[Image
               f"would date it at a glance. The band is {things}: redraw them from the reference images as the stars of "
               "the cover, posed like the band on a classic sleeve of that genre. "
               + (f"The look: {COVER_LOOK[song.get('style')]}. " if song.get("style") in COVER_LOOK else "")
-              + "Square. No text, no letters, no logos, no people, no faces of children.")
+              + "Square. No text, no letters, no logos, no people, no faces.")
     try:
         im = meta.paint(prompt, refs, size="1024x1024")
     except RuntimeError as e:  # Muse Image's filter refused a look once ("pyro"); the plain brief still makes a sleeve

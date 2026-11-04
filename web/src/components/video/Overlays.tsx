@@ -166,7 +166,7 @@ export function Credits({
           <div className="vc-cat num">{tape.catalog}</div>
           <div className="vc-title">{tape.title}</div>
           {tape.artist && <div className="vc-role">{tape.artist}</div>}
-          <div className="vc-mark wordmark">Songbird</div>
+          <div className="vc-mark wordmark">songbird</div>
         </div>
       </div>
     </aside>

@@ -8,23 +8,44 @@ The old toy-cassette / riso / family-keepsake look is retired and is an anti-ref
 crafty or nostalgic-for-the-sake-of-it. The product is a record producer; it should feel like walking into a serious
 studio at 3 a.m. where something slightly unhinged is being made with total conviction.
 
-Two worlds, one product:
+Identity: **a music journal, every day you live becomes a single** (PRODUCT.md). Three worlds, in the order a day
+goes through them:
 
-1. **The shell + control room** (front door, making-of, catalogue): one consistent, restrained, hardware-precise
-   identity. This is where the brand lives.
-2. **The video** (the result): full-screen, every genre gets its own art direction. The brand recedes to a small
+1. **The front door is daylight.** The day happens out here. A real sky (painted by Muse Image) with the things from
+   people's days floating in it, each a glossy object Muse Image redrew from a sample photo. Hover one and a pill names
+   it and whose day it came from; click it and its single plays. Below: the shelf, the manifesto, how it works, the desk.
+2. **The control room is the studio at night**, where the day gets made: restrained, hardware-precise, dark.
+3. **The video is the record**: full-screen, every genre gets its own art direction. The brand recedes to a small
    watermark and the transport.
+
+## Front door
+
+References: corner.inc (a world of floating objects in a sky, a lowercase manifesto voice, a black "about" band) and
+sanctum.so (calm white space, soft rounded cards, small white proof pills with a status dot). Neither is copied.
+
+- Palette: sky photo; white `#fff`; paper `#f6f5f1`; card `#f3f2ee`; ink `#0c1424`; ink-2 `#3b414d`; mute `#6c717b`;
+  live dot `#1fbf5b`. One black band (`#0b0b0d`) for "why songs".
+- Type: Archivo only (Martian Mono for catalogue numbers). Wordmark huge, lowercase, wdth 112, weight 800, -0.06em.
+  Section heads lowercase with a full stop ("this week on songbird."), weight 750, -0.04em.
+- Shapes: pills (999px) for every action and proof; cards 26px outer / 20px media radius; no hairline panels here.
+- Proof pills quote the tape, never a made-up number: "in key 91%", "4 takes, 3 off key, 1 kept", "every line sung".
+- Motion: objects bob slowly (7–14 s), drift with pointer parallax by depth, the sky drifts over 60 s; text rises in
+  once. Reduced motion stops all of it.
+- Sections: hero (wordmark, "every day has a genre.", black pill CTA, a live "maya's day was 1930s tango" pill) ·
+  your discography (only when you have made some here: a row of your own sleeves with their dates) · the shelf (3-up cards: sleeve, whose day, their note, the genre, title, proof, the photo roll) · why songs
+  (manifesto with two cited facts) · how a day becomes a single (one real release: photo → cut-out → band member →
+  sleeve, then the model chain) · the desk (photos, whose day, the note, produce) · footer (sample-day disclosure).
 
 ## Name and voice
 
 - The product is **Songbird**. Never "songbird records", never "a label for small days".
-- Wordmark: `SONGBIRD` in Archivo, width 125, weight 900, tracking -0.02em, with a tally-red dot after it when live.
-- Voice: the producer talks in lowercase, dry, confident, a little unhinged, never cute, never "magic", never emoji.
+- Wordmark: `songbird`, lowercase, Archivo width 112, weight 800, tracking -0.045em, on every surface.
+- Voice: lowercase, warm, dry, sure of itself; the producer is a little unhinged. Never cute, never "magic", never emoji.
   UI labels are uppercase hardware engraving: `LOOK`, `CAST`, `PRODUCE`, `RECORD`, `TUNE`, `A&R`, `PRESS`.
 - Release numbers stay (`SB-0012`). Models are named exactly as credits: Muse Spark 1.3, SAM 3.1, Muse Wonder 1.0,
   ACE-Step 1.5 XL, Demucs, Muse Spark 1.2, Muse Image 1.0, Muse Voice Transcribe.
 
-## Shell tokens (control room)
+## Control room tokens
 
 | token | value | use |
 |---|---|---|

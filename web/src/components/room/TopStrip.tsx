@@ -15,7 +15,7 @@ export function TopStrip({ live, halted, session, started, timecode, progress, l
   return (
     <header className="rm-top">
       <div className="rm-brand">
-        <span className="wordmark rm-brand__mark">SONGBIRD</span>
+        <span className="wordmark rm-brand__mark">songbird</span>
         <i className="rm-brand__dot" data-on={live || undefined} />
       </div>
 
