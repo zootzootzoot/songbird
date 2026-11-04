@@ -169,8 +169,10 @@ class Timeline:
         self.music: list[dict] = []
         self.voice: list[tuple[int, float]] = []
 
-    def clip(self, src, ss, dur, speed=1.0, crop=None):
-        self.clips.append({"src": str(src), "ss": ss, "dur": dur, "speed": speed, "crop": crop, "at": self.t})
+    def clip(self, src, ss, dur, speed=1.0, crop=None, clock=None, fix=None):
+        """clock: the footage second that the studio clock reads 0:00 at (shown over sped-up live footage)"""
+        self.clips.append({"src": str(src), "ss": ss, "dur": dur, "speed": speed, "crop": crop, "at": self.t, "clock": clock,
+                           "fix": fix})
         self.t += dur
 
     def still(self, color, dur):
@@ -200,6 +202,8 @@ def render_clip(k: int, c: dict, overlays) -> Path:
         args += ["-loop", "1", "-t", f"{c['dur']:.3f}", "-i", str(WORK / f"{p}.png")]
     f = []
     chain = "null" if "color" in c else f"setpts=(PTS-STARTPTS)/{c['speed']:.5f}"
+    if c.get("fix"):  # a filter for this clip alone (painting out a stray cursor)
+        chain += "," + c["fix"]
     if c.get("crop"):
         x, y, w, h = c["crop"]
         chain += f",crop={w}:{h}:{x}:{y},scale=1920:1080:flags=lanczos"
@@ -213,6 +217,11 @@ def render_clip(k: int, c: dict, overlays) -> Path:
         f.append(f"[{i + 1}:v]format=rgba,{','.join(fi)}[o{i}]")
         f.append(f"{v}[o{i}]overlay=0:0:shortest=1[v{i}]")
         v = f"[v{i}]"
+    if c.get("clock") is not None:  # honest about the edit: how fast this live footage is playing
+        font = r"fontfile='C\:/Windows/Fonts/CascadiaMono.ttf'"
+        sp = "REAL SPEED" if abs(c["speed"] - 1) < 0.06 else f"▶▶ {c['speed']:.1f}× SPEED"
+        f.append(f"{v}drawtext={font}:text='{sp}':fontsize=22:fontcolor=0xffc65a:x=1920-150-125-tw/2:y=43-th/2[ck]")
+        v = "[ck]"
     args += ["-filter_complex", ";".join(f), "-map", v, "-t", f"{c['dur']:.3f}", "-an", "-c:v", "libx264",
              "-preset", "medium", "-crf", "17", "-r", str(FPS), "-pix_fmt", "yuv420p", str(out)]
     subprocess.run(args, check=True)
@@ -282,7 +291,9 @@ def main():
     live = FILM / cfg["live"]
     marks = json.loads((FILM / cfg["live"].replace(".mp4", ".json")).read_text())["marks"]
     hero_song = TAPES / hero_tid / "song.mp3"
-    bed = TAPES / hero_tid / "takes" / f"take-{cfg.get('bed_take', 1)}.mp3"
+    tape = json.loads((TAPES / hero_tid / "tape.json").read_text(encoding="utf-8"))
+    kept_take = next((i for i, t in enumerate(tape.get("takes") or []) if t.get("kept")), 0)
+    bed = TAPES / hero_tid / "takes" / f"take-{cfg.get('bed_take', kept_take)}.mp3"  # never a take the tuner cut
     tl = Timeline()
     specs: dict[str, dict] = {}
 
@@ -326,7 +337,9 @@ def main():
     tl.clip(live, desk0, d3, speed=sp, crop=tuple(cfg["desk_crop"]))
     tl.say(3, t3 + 0.25)
     dusk = desk0 + d3 * sp
-    tl.clip(live, dusk, 2.0)
+    t_dusk = tl.t
+    cur = cfg.get("dusk_cursor")  # the stand-in cursor lingers on the button while the sky comes down
+    tl.clip(live, dusk, 2.0, clock=prod, fix=f"delogo=x={cur[0] - 20}:y={cur[1] - 20}:w=40:h=40" if cur else None)
 
     # 4 + 5 · the control room, speed-ramped onto the voice
     room0 = dusk + 2.0
@@ -336,9 +349,9 @@ def main():
     slow_a = [(room0, room0 + 3.0), (g - 0.2, g + 3.6)]
     fast_a = (room0 + 3.0, g - 0.2)
     out_a = max(1.5, a_len - sum(e - s for s, e in slow_a))
-    tl.clip(live, slow_a[0][0], slow_a[0][1] - slow_a[0][0])
-    tl.clip(live, fast_a[0], out_a, speed=(fast_a[1] - fast_a[0]) / out_a)
-    tl.clip(live, slow_a[1][0], slow_a[1][1] - slow_a[1][0])
+    tl.clip(live, slow_a[0][0], slow_a[0][1] - slow_a[0][0], clock=prod)
+    tl.clip(live, fast_a[0], out_a, speed=(fast_a[1] - fast_a[0]) / out_a, clock=prod)
+    tl.clip(live, slow_a[1][0], slow_a[1][1] - slow_a[1][0], clock=prod)
     tl.say(4, t4 + 0.35)
     t5 = tl.t
     b_len = vo_len(5) + 0.9
@@ -347,10 +360,12 @@ def main():
     out_b = max(2.0, b_len - sum(e - s for s, e in slow_b))
     share = max(0.2, (f1[1] - f1[0]) / ((f1[1] - f1[0]) + (f2[1] - f2[0])))
     o1, o2 = out_b * share, out_b * (1 - share)
-    tl.clip(live, f1[0], o1, speed=(f1[1] - f1[0]) / o1)
-    tl.clip(live, slow_b[0][0], slow_b[0][1] - slow_b[0][0])
-    tl.clip(live, f2[0], o2, speed=(f2[1] - f2[0]) / o2)
-    tl.clip(live, slow_b[1][0], slow_b[1][1] - slow_b[1][0])
+    tl.clip(live, f1[0], o1, speed=(f1[1] - f1[0]) / o1, clock=prod)
+    tl.clip(live, slow_b[0][0], slow_b[0][1] - slow_b[0][0], clock=prod)
+    tl.clip(live, f2[0], o2, speed=(f2[1] - f2[0]) / o2, clock=prod)
+    tl.clip(live, slow_b[1][0], slow_b[1][1] - slow_b[1][0], clock=prod)
+    specs["clock"] = {"kind": "clock"}
+    tl.over("clock", t_dusk + 0.3, tl.t)
     tl.say(5, t5 + 0.35)
     for n, t_part in ((4, t4 + 0.35), (5, t5 + 0.35)):  # a ring finds each lamp as it is named
         for k, (phrase,) in enumerate(LAMPS):
@@ -370,7 +385,9 @@ def main():
     d6 = cfg.get("result_len", 30.0)
     tl.clip(FILM / f"{hero}.mp4", 0.5, d6)
     tl.say(6, t6 + 0.5)
-    specs["e1"] = cap(f"{cfg['catalog']} · {cfg['release_time']} LATER", f"{day}, as a {genre}. with its own music video.")
+    took = marks["video"] - prod  # measured on the live footage: produce pressed -> the video is on screen
+    release_time = cfg.get("release_time") or f"{int(took // 60)} MIN {int(took % 60):02d} S"
+    specs["e1"] = cap(f"{cfg['catalog']} · {release_time} LATER", f"{day}, as a <b>{genre}</b>. with its own music video.")
     tl.over("e1", t6 + 0.3, t6 + 5.4)
     tl.song(hero_song, song_at(hero, 0.5), t6, d6 + 0.4, vol=1.0, fout=1.0)
 
@@ -410,7 +427,8 @@ def main():
     specs["g1"] = cap("SAVE THE VIDEO", "1080×1920, with the song,<br>for reels, stories, the group chat", pos="right mid wide")
     tl.over("g1", t8 + b3 + 0.1, t8 + b4 - 0.05)
     tl.song(hero_song, cfg["share_song_at"], t8 + b3, d8 - b3 + 0.3, vol=0.8, fin=0.05, fout=0.35)  # on under the discography
-    tl.clip(FILM / "journal.mp4", 1.0, d8 - b4)
+    shown = json.loads((FILM / "journal.json").read_text())["marks"]["shown"]  # the discography, already in view
+    tl.clip(FILM / "journal.mp4", max(0.0, shown - 0.3), d8 - b4)
     tl.say(8, t8 + 0.5)
 
     # 9 · the close

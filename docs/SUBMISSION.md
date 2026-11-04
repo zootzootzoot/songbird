@@ -12,7 +12,8 @@ Indie
 
 ## Problem statement
 
-(pick from the form's list; see the note at the end)
+Build for Your World. (The other option is "Push the Frontier": software, robotics, manufacturing, energy,
+materials. Songbird is the first kind: a problem everyone with a camera roll knows firsthand.)
 
 ## Most Viral Track: X post
 
@@ -25,7 +26,7 @@ Songbird is a music journal: every day you live becomes a single.
 Drop in five photos from today. Songbird looks at the day, calls its genre with total conviction ("1981 new wave of
 british heavy metal", for a first half marathon), casts the things in your photos as the band (the running shoe on
 galloping lead guitar), writes the song, records four takes, throws out the off-key ones, keeps the best, paints the
-sleeve and cuts a music video, directed shot by shot. Two to three minutes, and you get a 9:16 MP4 to send.
+sleeve and cuts a music video, directed shot by shot. About three minutes, and you get a 9:16 MP4 to send.
 
 The problem: people take more than two trillion photos a year and look back at almost none of them. A camera roll
 keeps what a day looked like, but not how it felt. Songs are the memory format people never lose (memories cued by
@@ -46,7 +47,23 @@ https://github.com/zootzootzoot/songbird
 
 ## 3-Minute Demo Video
 
-(YouTube link)
+(YouTube link). Upload `film/demo/songbird-demo.mp4` as **Public** or **Unlisted** (not Private: judges must be able to
+open it without signing in), with `film/demo/thumbnail.png` as the thumbnail.
+
+- Title: `Songbird: every day you live becomes a single (Meta Global AI Developer Hackathon)`
+- Description:
+
+  > Songbird is a music journal. Five photos from your day go in; Meta's models look at the day, call its genre,
+  > turn the things in your photos into the band, write and record the song, throw out the off-key takes, keep the
+  > best one, paint the sleeve and direct the music video. About three minutes, live.
+  >
+  > Everything in this video was filmed from the live product.
+  >
+  > Try it: https://zootzootzoot.github.io/songbird/
+  > Code and the build log: https://github.com/zootzootzoot/songbird
+  >
+  > Meta models: Muse Spark 1.3, SAM 3.1, Muse Wonder 1.0, Muse Image 1.0, Muse Spark 1.2, Muse Voice Transcribe,
+  > Demucs and the MMS forced aligner (open weights). Band: ACE-Step 1.5 XL (open weights).
 
 ## Describe your use of Meta products to build the submitted project
 
@@ -71,7 +88,7 @@ In the product, every release runs through these Meta models (credited on the re
 
 The painters (sleeve, costumes, shot list) run while the band records, so four lamps are lit at once.
 
-In the build, Meta models were our test bench (23 logged decisions in docs/META_LOG.md):
+In the build, Meta models were our test bench (24 logged decisions in docs/META_LOG.md):
 
 - Muse Spark 1.2 was our critic. It confirmed our first singing stack was "100% uncanny valley", and that verdict
   replaced the whole stack. It then auditioned the session band in 63 styles (124 clips); the 19 it believed are
@@ -81,6 +98,8 @@ In the build, Meta models were our test bench (23 logged decisions in docs/META_
 - Muse Voice Transcribe measured our first singer's intelligibility (72% of words) and later found the singer
   skipping half the song, which set the song-length rule (12-18 of 21 lines sung at 90 s, 19-20 at 120 s).
 - MMS raised the share of lyric lines that start on a sung onset from 38-81% to 79-100% across the shelf.
+- Muse Spark 1.2 chose the single in our demo: the first live run of Maya's day scored 5.15 ("lobby music with a
+  cowbell you found in the hallway"), so we ran the same photos again and kept the 7.35 new jack swing it liked.
 - Muse Image photographed the nine sample days, redrew 20 of their objects for the front door, and painted its sky,
   so no real person's photos are used.
 
@@ -107,15 +126,17 @@ and speech, one platform carries the whole record, from photo to music video.
 
 ## Notes
 
-- Problem statement: the form has a dropdown we haven't seen. Pick the one closest to creativity / personal media /
-  consumer apps.
-- Draft X post (for the Most Viral track; the owner posts it):
+- Deadline: 9:00 PM ET, Nov 4 (02:00 UTC Nov 5), per the organizer's event page.
+- Draft X post (for the Most Viral track; the owner posts it). Attach `film/demo/x_post.mp4` (40 s, 1080x1920: the
+  sleeve, the first verse and the first chorus of SB-0040, cut from the 9:16 MP4 Songbird itself rendered):
 
   > every day has a genre.
   >
-  > i gave songbird five photos from a first half marathon. meta's models called it 1981 new wave of british heavy
-  > metal, cast the running shoe on lead guitar, recorded four takes, cut the off-key ones and made the video.
+  > maya's first day at a new job. five photos and one line: "didn't get lost once. ok, once."
+  >
+  > meta's models called it 1989 new jack swing, put the staff badge on sax and the coffee cup on guitar, recorded
+  > four takes, threw out the two that were off-key, and cut the video. under four minutes.
   >
   > your days, on record → https://zootzootzoot.github.io/songbird/
   >
-  > [the 9:16 MP4 attached]
+  > built for the @AIatMeta global AI developer hackathon

@@ -39,12 +39,12 @@
   .bracket { position: absolute; left: 196px; right: 0; top: -16px; bottom: -16px; border: 2px dashed rgba(255,61,31,0); border-radius: 30px;
              transition: border-color .6s; pointer-events: none; }
   .bracket.on { border-color: rgba(255,61,31,.75); }
-  .bracket span { position: absolute; right: 28px; top: -17px; padding: 6px 14px; border-radius: 999px; background: var(--tally); color: #fff;
+  .bracket span { position: absolute; left: auto; right: 28px; top: auto; bottom: -19px; padding: 6px 14px; border-radius: 999px; background: var(--tally); color: #fff;
                   font-weight: 700; font-size: 21px; letter-spacing: -.01em; opacity: 0; transition: opacity .5s; }
   .bracket.on span { opacity: 1; }
 
   /* the measured wins */
-  .wins { position: absolute; left: 110px; right: 110px; bottom: 96px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
+  .wins { position: absolute; left: 110px; right: 110px; bottom: 150px; display: grid; grid-template-columns: 1fr 1fr; gap: 28px;
           opacity: 0; transform: translateY(20px); transition: opacity .6s, transform .6s cubic-bezier(.2,.8,.2,1); }
   .wins.on { opacity: 1; transform: none; }
   .win { background: var(--card); border: 1px solid var(--hair); border-radius: 24px; padding: 18px 26px 20px; }

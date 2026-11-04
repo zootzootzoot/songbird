@@ -37,6 +37,10 @@
   .ring { position: absolute; border-radius: 8px; border: 3px solid #ffb21e;
           box-shadow: 0 0 0 4px rgba(255,178,30,.25), 0 0 34px rgba(255,178,30,.55), inset 0 0 18px rgba(255,178,30,.25); }
 
+  /* the speed chip over sped-up live footage (ffmpeg writes the speed into it) */
+  .clock { position: absolute; right: 150px; top: 20px; width: 250px; height: 46px; border-radius: 999px;
+           background: rgba(255, 178, 30, .14); border: 1.5px solid rgba(255, 178, 30, .55); box-sizing: border-box; }
+
   /* full-frame cards */
   .card { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
           padding: 0 150px; box-sizing: border-box; }
@@ -77,6 +81,8 @@
       ${spec.text ? `<div class="line">${esc(spec.text)}</div>` : ""}</div>`;
   } else if (spec.kind === "sub") {
     w.innerHTML = `<div class="sub"><span>${esc(spec.text)}</span></div>`;
+  } else if (spec.kind === "clock") {
+    w.innerHTML = `<div class="clock"></div>`;
   } else if (spec.kind === "ring") {
     w.innerHTML = `<div class="ring" style="left:${spec.x - 3}px;top:${spec.y - 5}px;width:${spec.w}px;height:${spec.h + 4}px"></div>`;
   } else if (spec.kind === "card") {

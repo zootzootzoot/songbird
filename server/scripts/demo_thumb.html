@@ -1,0 +1,37 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112,100..800&display=block" rel="stylesheet">
+<style>
+  /* the YouTube thumbnail: 1280x720. ?cover=<sleeve url>&who=&day=&genre= */
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; background: #0b0b0d; color: #f2f2f0;
+               font-family: "Archivo", sans-serif; -webkit-font-smoothing: antialiased; }
+  .glow { position: absolute; left: -120px; top: -80px; width: 900px; height: 900px; border-radius: 50%;
+          background: radial-gradient(closest-side, rgba(255,178,30,.28), rgba(255,178,30,0)); }
+  .sleeve { position: absolute; left: 70px; top: 80px; width: 560px; height: 560px; border-radius: 10px; object-fit: cover;
+            transform: rotate(-4deg); box-shadow: 0 40px 90px rgba(0,0,0,.65), 0 0 0 1px rgba(255,255,255,.08); }
+  .text { position: absolute; left: 690px; right: 56px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: center; }
+  .brand { display: flex; align-items: center; gap: 12px; font: 700 22px/1 "Martian Mono", monospace; letter-spacing: .12em;
+           color: #ffb21e; font-variation-settings: "wdth" 90; }
+  .brand i { width: 14px; height: 14px; border-radius: 50%; background: #ff3d1f; box-shadow: 0 0 14px #ff3d1f; }
+  h1 { margin: 22px 0 0; font-weight: 800; font-size: 88px; line-height: .93; letter-spacing: -.05em; font-variation-settings: "wdth" 108; }
+  .day { margin-top: 30px; font-weight: 650; font-size: 31px; line-height: 1.2; letter-spacing: -.02em; color: #c8ccd3; }
+  .day b { color: #ffd37a; font-weight: 750; }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<img class="sleeve" id="cover" alt="">
+<div class="text">
+  <div class="brand"><i></i>SONGBIRD</div>
+  <h1>every day has a genre.</h1>
+  <div class="day" id="day"></div>
+</div>
+<script>
+  const q = new URLSearchParams(location.search);
+  document.getElementById("cover").src = q.get("cover") || "";
+  document.getElementById("day").innerHTML = `${q.get("who") || ""}'s ${q.get("day") || ""}<br>→ <b>${q.get("genre") || ""}</b>`;
+</script>
+</body>
+</html>

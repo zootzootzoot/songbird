@@ -251,7 +251,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
           </p>
           <p>
             so songbird turns the day you just had into a song you'll want to play again. the things in your photos become
-            the band. the day picks the genre. two minutes later it's on record, yours to keep and to send to whoever was
+            the band. the day picks the genre. three minutes later it's on record, yours to keep and to send to whoever was
             there.
           </p>
           <p className="fr__sign">one day, one single. a year of them is your discography.</p>
@@ -326,7 +326,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
           <header className="fr__desk-head">
             <h2>make today's single.</h2>
             <p>
-              three to {MAX} photos from one day, or a three-second clip. no account. about two minutes.{" "}
+              three to {MAX} photos from one day, or a three-second clip. no account. about three minutes.{" "}
               <button className="fr__link" onClick={() => void deck.addSample()}>
                 or borrow someone's day
               </button>

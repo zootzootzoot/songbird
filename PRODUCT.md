@@ -5,7 +5,7 @@
 **Songbird is a music journal. Every day you live becomes a single.**
 
 Drop in a few photos from today. Songbird hears what kind of day it was, calls its genre, turns the things in your
-photos into the band, records the song, and cuts the music video. About two minutes, and it is yours to keep and to send.
+photos into the band, records the song, and cuts the music video. About three minutes, and it is yours to keep and to send.
 
 Hook: *every day has a genre.* Sign-off: *your days, on record.*
 

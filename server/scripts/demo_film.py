@@ -247,36 +247,53 @@ async def front(s: Shot):
     await s.wait(3.5)
 
 
-async def live(s: Shot):
-    """the real journey: borrow a day, produce, the room, into the video"""
-    await s.until("!!document.querySelector('.fr__desk')", 30)
-    await s.scroll_to(".fr__desk", 60, 0.01)
-    await s.wait(1.5)
-    s.mark("desk")
-    await s.click("button", "borrow someone")
-    await s.until("[...document.querySelectorAll('.fr__slot img')].length >= 3", 20)
-    await s.wait(2.6)
-    s.mark("produce")
-    await s.click("button", "produce my day")
-    await s.hide_cursor()
-    await s.until("!!document.querySelector('.room')", 30)
-    s.mark("room")
-    checks = {
-        "seen": "!!document.querySelector('.rm-call[data-mode=audition]')",
-        "genre": "!!document.querySelector('.rm-call[data-mode=call]')",
-        "cover": "!!document.querySelector('.rm-sleeve')",
-        "take1": "document.querySelectorAll('.rm-take:not([data-status=armed]):not([data-status=rec])').length >= 1",
-        "kept": "!!document.querySelector('.rm-take[data-status=kept]')",
-        "video": "!!document.querySelector('[data-surface=video]')",
-    }
-    t0 = time.time()
-    while time.time() - t0 < 330 and "video" not in s.marks:  # every mark is checked on every tick, none blocks
-        state = await s.js("({" + ",".join(f"{json.dumps(k)}: {v}" for k, v in checks.items()) + "})") or {}
-        for k, v in state.items():
-            if v and k not in s.marks:
-                s.mark(k)
-        await asyncio.sleep(0.25)
-    await s.wait(12)
+def live_for(who: str | None):
+    async def live(s: Shot):
+        """the real journey: borrow `who`'s day, linger on it, produce, the room, into the video"""
+        await s.until("!!document.querySelector('.fr__desk')", 30)
+        await s.scroll_to(".fr__desk", 60, 0.01)
+        await s.wait(0.8)
+        name_js = "(document.querySelector('input[placeholder=\"your name\"]')||{}).value||''"
+        for _ in range(16):
+            await s.click("button", "borrow someone")
+            await s.until("[...document.querySelectorAll('.fr__slot img')].length >= 3", 20)
+            await s.wait(0.6)
+            got = (await s.js(name_js) or "").strip().lower()
+            print(f"  borrowed {got}", flush=True)
+            if not who or got == who.lower():
+                break
+        s.mark("desk")
+        # linger: the cursor drifts over the photos, then the note, then produce
+        slots = await s.js("[...document.querySelectorAll('.fr__slot img')].map(e=>{const r=e.getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2]})")
+        for x, y in (slots or [])[:5]:
+            await s.glide(x, y, 0.55)
+            await s.wait(0.5)
+        note = await s.rect(".fr__note-in, .fr__note input, .fr__desk textarea")
+        if note:
+            await s.glide(note["x"], note["y"], 0.6)
+        await s.wait(2.0)
+        s.mark("produce")
+        await s.click("button", "produce my day")
+        await s.hide_cursor()
+        await s.until("!!document.querySelector('.room')", 30)
+        s.mark("room")
+        checks = {
+            "seen": "!!document.querySelector('.rm-call[data-mode=audition]')",
+            "genre": "!!document.querySelector('.rm-call[data-mode=call]')",
+            "cover": "!!document.querySelector('.rm-sleeve')",
+            "take1": "document.querySelectorAll('.rm-take:not([data-status=armed]):not([data-status=rec])').length >= 1",
+            "kept": "!!document.querySelector('.rm-take[data-status=kept]')",
+            "video": "!!document.querySelector('[data-surface=video]')",
+        }
+        t0 = time.time()
+        while time.time() - t0 < 330 and "video" not in s.marks:  # every mark is checked on every tick, none blocks
+            state = await s.js("({" + ",".join(f"{json.dumps(k)}: {v}" for k, v in checks.items()) + "})") or {}
+            for k, v in state.items():
+                if v and k not in s.marks:
+                    s.mark(k)
+            await asyncio.sleep(0.25)
+        await s.wait(12)
+    return live
 
 
 def render_shot(tid: str, at: float | None, hold: float):
@@ -292,25 +309,35 @@ async def how(s: Shot):
     await s.wait(21.0)
 
 
-def journal_entries() -> list[dict]:
-    """the releases this machine made live, newest first, as the front door's journal keeps them"""
+def journal_entries(hero: str | None = None) -> list[dict]:
+    """a discography as the front door's journal keeps it: one release per day (the hero's own, else the best the A&R
+    heard), the hero first, then newest first"""
     tapes = ROOT / "server" / "data" / "tapes"
-    shelf = set(json.loads((ROOT / "server" / "data" / "samples.json").read_text()))
-    out = []
+    best: dict[str, tuple[float, dict]] = {}
     for d in tapes.iterdir():
         f = d / "tape.json"
-        if not f.exists() or d.name in shelf:
+        if not f.exists():
             continue
-        t = json.loads(f.read_text())
-        if not t.get("cover") or not t.get("catalog"):
+        t = json.loads(f.read_text(encoding="utf-8"))
+        if not t.get("cover") or not t.get("catalog") or not t.get("name"):
             continue
-        out.append({"id": t["id"], "title": t["title"], "genre": t.get("genre"), "cover": t["cover"],
-                    "catalog": t["catalog"], "at": t["createdAt"]})
-    return sorted(out, key=lambda e: e["at"], reverse=True)[:8]
+        kept = next((k for k in t.get("takes") or [] if k.get("kept")), {})
+        score = 99.0 if t["id"] == hero else float(kept.get("score") or 0)
+        e = {"id": t["id"], "title": t["title"], "genre": t.get("genre"), "cover": t["cover"],
+             "catalog": t["catalog"], "at": t["createdAt"]}
+        day = t["name"].lower()
+        if day not in best or score > best[day][0]:
+            best[day] = (score, e)
+    out = sorted((e for _, e in best.values()), key=lambda e: e["at"], reverse=True)
+    out.sort(key=lambda e: e["id"] != hero)
+    return out[:8]
+
+
+JOURNAL_HERO: str | None = None
 
 
 async def journal(s: Shot):
-    entries = json.dumps(journal_entries())
+    entries = json.dumps(journal_entries(JOURNAL_HERO))
     await s.js(f"localStorage.setItem('songbird.journal.v1', JSON.stringify({entries})); location.reload(); 1")
     await s.wait(2.5)
     await s.until("!!document.querySelector('.fr__mine')", 20)
@@ -321,7 +348,7 @@ async def journal(s: Shot):
 
 
 HOW = (Path(__file__).with_name("demo_how.html")).as_uri()
-SHOTS = {"front": (SITE, front, 120), "live": (SITE, live, 420), "how": (HOW, how, 60), "journal": (LOCAL, journal, 60)}
+SHOTS = {"front": (SITE, front, 120), "live": (SITE, live_for(None), 420), "how": (HOW, how, 60), "journal": (LOCAL, journal, 60)}
 
 
 if __name__ == "__main__":
@@ -334,6 +361,12 @@ if __name__ == "__main__":
             q, script = render_shot(tid, at, hold)
             name = f"v_{tid}" + (f"_{int(at)}" if at else "")
             asyncio.run(run(name, LOCAL + q, script, limit=hold + 90))
+        elif arg.startswith("journal:"):  # journal:<tid> -> the discography, that release first
+            JOURNAL_HERO = arg.split(":", 1)[1]
+            asyncio.run(run("journal", LOCAL, journal, 60))
+        elif arg.startswith("live:"):  # live:<name> -> borrow that person's day
+            who = arg.split(":", 1)[1]
+            asyncio.run(run(f"live_{who}", SITE, live_for(who), 480))
         else:
             url, script, limit = SHOTS[arg]
             asyncio.run(run(arg, url, script, limit))

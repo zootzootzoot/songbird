@@ -15,8 +15,6 @@ finished single.
 
 ## The script
 
-(The day lines below are for **Kemi**. If you pick someone else, swap the two marked lines; alternatives are at the end.)
-
 **1 · the problem** *(over the front door's sky)*
 > We take two trillion photos a year, and we almost never look at them again.
 > A camera roll remembers what a day looked like. It forgets how it felt.
@@ -26,8 +24,8 @@ finished single.
 > So I built Songbird. A music journal, where every day you live becomes a single.
 
 **3 · the day** *(the desk)* ✱
-> This is Kemi's day. Five photos from Dami's wedding, and one line: "I cried at the speech, and again at the
-> cake." Let's make it a song.
+> This is Maya's day. First day at a new job. Five photos, and one line: "Didn't get lost once. OK, once."
+> Let's make it a song.
 
 **4 · the room, first half** *(look, cut, produce)*
 > This is the control room. Every lamp is a Meta model, and it only lights while it's actually working.
@@ -41,7 +39,7 @@ finished single.
 > every line was really sung, and MMS times every word.
 
 **6 · the result** ✱ *(then the song plays)*
-> Three minutes later, Kemi has a single.
+> Under four minutes later, Maya has a single.
 
 **7 · how it works**
 > Under the hood, that's eleven jobs. Ten of them are done by eight Meta models, and three run on open weights, on my
@@ -50,18 +48,8 @@ finished single.
 > decisions is in the log.
 
 **8 · every day**
-> And every day has a genre. A first day at work is an arcade anthem. A bakery night shift is eurodance.
+> And every day has a genre. A night shift at the bakery is eurodance. A first half marathon is heavy metal.
 > Save it as a vertical video for the group chat, and it stays in your discography. One day, one song.
 
 **9 · the close**
 > Songbird. Your days, on record. It's live right now. Make one.
-
-## If you pick someone else
-
-| who | line 3 | line 6 |
-|---|---|---|
-| Maya | This is Maya's day. Five photos from a first day at a new job, and one line: "Didn't get lost once. OK, once." Let's make it a song. | Three minutes later, Maya has a single. |
-| Priya | This is Priya's day. Five photos from a first half marathon, and one line: "Two fourteen. Legs are gone." Let's make it a song. | Three minutes later, Priya has a single. |
-| Dev | This is Dev's day. Five photos from pitch day, and one line: "Spilled coffee on my laptop twenty minutes before the pitch. Pitched anyway." Let's make it a song. | Three minutes later, Dev has a single. |
-
-If it's Maya, part 8 becomes: "A night shift at the bakery is eurodance. A first half marathon is heavy metal."

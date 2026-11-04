@@ -268,7 +268,7 @@ export function Receipt({
                   <b>muse image</b> paints the sleeve. the tape is pressed.
                 </li>
               </ol>
-              <p className="receipt__foot">about two minutes, start to finish. the studio lights go down while it works.</p>
+              <p className="receipt__foot">about three minutes, start to finish. the studio lights go down while it works.</p>
               {health && health.ok && health.band === false && (
                 <p className="receipt__warn">the session band has gone home. the back catalogue still plays.</p>
               )}

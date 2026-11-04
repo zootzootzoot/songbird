@@ -7,7 +7,7 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
 
 | Step | Model | What it does | Why a Meta model is the right tool |
 |---|---|---|---|
-| Look | **Muse Spark 1.3** (vision, structured output) | Looks at all photos/clips in one call: names each one's *hero* as a noun phrase SAM can find ("rubber duck", "red balloon"), what happened, 3 sensory details, time of day, and orders the day | One multimodal call sees the whole day at once, so it can order it (wet hair → bath is evening) and pick what a child would point at |
+| Look | **Muse Spark 1.3** (vision, structured output) | Looks at all photos/clips in one call: names each one's *hero* as a noun phrase SAM can find ("rubber duck", "red balloon"), what happened, 3 sensory details, time of day, and orders the day | One multimodal call sees the whole day at once, so it can order it (wet hair → bath is evening) and pick the one thing in each photo the day was about |
 | Cast | **SAM 3.1** (image) | Cuts each hero out as a clean sticker, from Spark's noun phrase. ~1–2 s per photo | Spark → SAM is a model-to-model handoff: one model decides *what* matters, the other cuts exactly that |
 | Cast | **SAM 3.1** (video) | For a clip, tracks the hero through every frame → an animated sticker that moves (45 frames in 3.5 s) | Text-prompted video tracking turns a 3-second phone clip into a moving band member |
 | Produce | **Muse Wonder 1.0** (structured output) | Picks the genre with conviction, writes the session notes, the lyrics (every verse line tied to a photo), band credits, liner notes. A mechanical checker (syllables, photo coverage, chorus repeats, banned clichés) sends it back until it passes | Wonder writes better songs than Spark (see build log); the checker loop makes it reliable |
@@ -161,3 +161,13 @@ as a tool to make a decision or to test our own work. Numbers are measured, not 
     21-shot list were done while the band was still on take one, and MMS timed 18 of 20 lines in 5 s after the A&R
     verdict.
 
+
+24. **Spark 1.2's ear chose the single in the demo (Nov 4).** We filmed Maya's day going through the live site to be
+    the demo's hero. The first run came out as 1975 salsa dura, and the A&R scored the best surviving take 5.15:
+    *"this is lobby music with a cowbell you found in the hallway."* It also took 4:53, because a 158 s song takes
+    longer to record. The shelf's good singles score 7.3-8.5, so we trusted the ear and ran the same five photos
+    again. The second run called 1989 new jack swing; the tuner cut two of four takes (74% and 70% in key), Spark 1.2
+    kept one at 7.35 (*"oat milk and lanyards ain't exactly a coronation bop my dude"*), MMS timed 16 of 20 lines,
+    and it was done 3:40 after "produce". That release (SB-0040) is the one in the demo and on the shelf. The demo's
+    subtitles, and the rings that find each lamp as the voiceover names its model, are timed by the same MMS
+    aligner, run on the narration.

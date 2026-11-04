@@ -3,28 +3,39 @@
 **A music journal. Every day you live becomes a single.**
 
 Drop in a few photos from today. Songbird works out what kind of day it was and calls its genre, so a first day at a
-new job comes out as a 1987 arcade chiptune anthem. It turns the things in your photos into the band, records the song and cuts the music
-video. It takes about two minutes, and the result is yours to keep and send.
+new job comes out as a 1989 new jack swing coronation jam. It turns the things in your photos into the band, records the song and cuts the music
+video. It takes about three minutes, and the result is yours to keep and send.
 
 People take more than two trillion photos a year and look back at almost none of them. A camera roll keeps what a day
 looked like, but a song keeps how it felt, and songs are the one memory format people never lose. Songbird turns the
 most-used, least-revisited archive people own into something they will play again. See [PRODUCT.md](PRODUCT.md).
 
+## For judges
+
+- **Watch:** the 3-minute demo (link in the submission form). It was filmed from the live site, not mocked up.
+- **Try it:** <https://zootzootzoot.github.io/songbird/>. Scroll to the desk, press **borrow someone's day** (or drop
+  in your own photos), then **produce my day**. About three minutes later you have a single, a sleeve and a music
+  video, and **Save the video** gives you a 9:16 MP4. The studio is one GPU, so a release can queue behind another.
+- **Look at:** the control room while it works. Eleven lamps, one per job, and a lamp is lit only while that model
+  is really working. Ten of the eleven jobs are done by eight Meta models.
+- **Read:** [docs/META_LOG.md](docs/META_LOG.md), every decision a Meta model made or measured while we built this,
+  with the numbers. The commit history runs from Oct 26 to Nov 4.
+
 ## How a day becomes a single
 
-| step | model | what it does |
+| lamp | model | what it does |
 |---|---|---|
-| look | Muse Spark 1.3 | reads every photo and finds what the day was about |
-| cut | SAM 3.1 | cuts the things in the photos out of them |
-| produce | Muse Wonder 1.0 | calls the genre, casts the band, writes the song |
-| cast | Muse Image 1.0 + SAM 3.1 | dresses each thing as its band role, in the genre's wardrobe |
-| record | ACE-Step 1.5 XL (open weights, local GPU) | records four takes |
-| tune | Demucs (open weights, local GPU) | splits the vocal out and cuts any take under 75% in key |
-| check | Muse Voice Transcribe | listens to the isolated vocal and finds which lyric lines were actually sung |
-| time | MMS forced aligner (Meta, open weights, local GPU) | places every sung word on the vocal to the 20 ms frame, for the video's lyrics |
-| A&R | Muse Spark 1.2 (audio in) | hears the surviving takes and keeps one |
-| press | Muse Image 1.0 | paints a genre-authentic sleeve |
-| direct | Muse Spark 1.3 | writes the video's shot list from the lyrics, the band and the genre |
+| LOOK | Muse Spark 1.3 | reads every photo at once, finds what the day was about and the order it happened in |
+| CUT | SAM 3.1 | cuts the one thing Spark named out of each photo: these become the band |
+| PRODUCE | Muse Wonder 1.0 | calls the genre (with a reason), casts the band, writes the song, a line per photo |
+| DRESS | Muse Image 1.0 + SAM 3.1 | redraws each cut-out as its band role, in the genre's wardrobe |
+| SLEEVE | Muse Image 1.0 | paints a genre-authentic sleeve from the day's own cut-outs |
+| DIRECT | Muse Spark 1.3 | writes the video's shot list from the lyrics, the band and the genre |
+| RECORD | ACE-Step 1.5 XL (open weights, local GPU) | records four takes, while the three jobs above run |
+| TUNE | Demucs (Meta, open weights, local GPU) | splits the singer from the band and cuts any take under 75% in key |
+| A&R | Muse Spark 1.2 (audio in) | listens to the takes that passed and keeps one, with a verdict |
+| CHECK | Muse Voice Transcribe | hears the kept vocal and finds which lyric lines were really sung |
+| TIME | MMS forced aligner (Meta, open weights, local GPU) | places every sung word to the 20 ms frame, so the video's lyrics land on the beat |
 
 Everything a model decided is in the tape and on screen: the genre and why, the band roles, each take's tuner reading
 and the A&R verdict. [docs/META_LOG.md](docs/META_LOG.md) records every problem the Meta models solved while building it.
