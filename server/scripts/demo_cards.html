@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112,100..800&display=block" rel="stylesheet">
+<style>
+  :root { --ink: #0c1424; --ink2: #3b414d; --live: #1fbf5b; --vu: #ffb21e; }
+  html, body { margin: 0; width: 1920px; height: 1080px; background: transparent; overflow: hidden; }
+  body { font-family: "Archivo", sans-serif; -webkit-font-smoothing: antialiased; }
+  .wrap { position: absolute; inset: 0; }
+
+  /* lower-third caption: a frosted ink pill, a model tag, one or two lowercase lines */
+  .cap { position: absolute; left: 64px; bottom: 64px; max-width: 1040px; display: flex; flex-direction: column;
+         gap: 10px; align-items: flex-start; }
+  .cap.right { left: auto; right: 72px; align-items: flex-end; text-align: right; }
+  .cap.top { bottom: auto; top: 150px; }
+  .cap.mid { bottom: auto; top: 50%; transform: translateY(-50%); }
+  .cap.wide .line { font-size: 46px; line-height: 1.12; padding: 18px 26px 20px; }
+  .tag { display: inline-flex; align-items: center; gap: 10px; padding: 9px 16px 9px 14px; border-radius: 999px;
+         background: #fff; color: var(--ink); font: 600 16px/1 "Martian Mono", monospace; letter-spacing: .01em;
+         font-variation-settings: "wdth" 88; box-shadow: 0 8px 30px rgba(0,0,0,.25); }
+  .tag i { width: 10px; height: 10px; border-radius: 50%; background: var(--live); box-shadow: 0 0 10px var(--live); }
+  .tag.vu i { background: var(--vu); box-shadow: 0 0 10px var(--vu); }
+  .line { padding: 13px 22px 15px; border-radius: 20px; background: rgba(10, 14, 22, .8);
+          backdrop-filter: blur(14px); color: #fff; font-weight: 620; font-size: 35px; line-height: 1.16;
+          letter-spacing: -.025em; font-variation-settings: "wdth" 104; box-shadow: 0 18px 60px rgba(0,0,0,.35); }
+  .line b { font-weight: 800; color: #fff; }
+  .line em { font-style: normal; color: #ffd37a; }
+
+  /* full-frame cards */
+  .card { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center;
+          padding: 0 150px; box-sizing: border-box; }
+  .card.day { background: rgba(255,255,255,.0); color: var(--ink); }
+  .card.night { background: #0b0b0d; color: #fff; }
+  .big { font-weight: 760; font-size: 104px; line-height: .98; letter-spacing: -.05em; font-variation-settings: "wdth" 110;
+         margin: 0; text-wrap: balance; }
+  .big .soft { color: var(--ink2); opacity: .7; }
+  .night .big .soft { color: #9aa0aa; opacity: 1; }
+  .src { margin-top: 34px; font: 500 22px/1.3 "Martian Mono", monospace; color: var(--ink2); font-variation-settings: "wdth" 88; }
+  .night .src { color: #8b9099; }
+  .halo { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(250,250,248,.97) 0%, rgba(250,250,248,.94) 62%, rgba(250,250,248,.82) 100%); }
+
+  .mark { font-weight: 800; font-variation-settings: "wdth" 112; letter-spacing: -.045em; font-size: 200px; line-height: .9; margin: 0; }
+  .hook { font-weight: 700; font-size: 58px; letter-spacing: -.035em; margin: 18px 0 0; }
+
+  /* the close: what it is, measured */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 54px; max-width: 1620px; }
+  .stat { border: 1px solid #26272c; border-radius: 26px; padding: 30px 32px 28px; background: #121216; }
+  .stat .n { font: 700 64px/1 "Martian Mono", monospace; font-variation-settings: "wdth" 82; letter-spacing: -.04em; color: #fff; }
+  .stat .n small { font-size: 34px; color: #8b9099; }
+  .stat .t { margin-top: 16px; font-size: 27px; line-height: 1.25; color: #c8ccd3; letter-spacing: -.01em; }
+  .url { margin-top: 56px; display: flex; align-items: center; gap: 22px; }
+  .pill { display: inline-flex; align-items: center; gap: 12px; padding: 16px 28px; border-radius: 999px; background: #fff;
+          color: var(--ink); font-weight: 700; font-size: 34px; letter-spacing: -.02em; }
+  .pill i { width: 12px; height: 12px; border-radius: 50%; background: var(--live); }
+  .sign { font-size: 34px; color: #8b9099; letter-spacing: -.02em; }
+</style>
+</head>
+<body>
+<div class="wrap" id="w"></div>
+<script>
+  const spec = JSON.parse(decodeURIComponent(location.hash.slice(1) || "{}"));
+  const w = document.getElementById("w");
+  const esc = (s) => s; // trusted: written by demo_cut.py
+  if (spec.kind === "cap") {
+    w.innerHTML = `<div class="cap ${spec.pos || ""}">${spec.tag ? `<span class="tag ${spec.tone || ""}"><i></i>${esc(spec.tag)}</span>` : ""}
+      ${spec.text ? `<div class="line">${esc(spec.text)}</div>` : ""}</div>`;
+  } else if (spec.kind === "card") {
+    w.innerHTML = `<div class="card ${spec.tone || "day"}">${spec.tone === "day" ? '<div class="halo"></div>' : ""}
+      <div style="position:relative"><p class="big">${esc(spec.text)}</p>${spec.src ? `<div class="src">${esc(spec.src)}</div>` : ""}</div></div>`;
+  } else if (spec.kind === "brand") {
+    w.innerHTML = `<div class="card day"><div class="halo"></div><div style="position:relative">
+      <p class="mark">songbird</p><p class="hook">${esc(spec.text)}</p>${spec.src ? `<div class="src">${esc(spec.src)}</div>` : ""}</div></div>`;
+  } else if (spec.kind === "end") {
+    w.innerHTML = `<div class="card night"><div>
+      <p class="big">${esc(spec.text)}</p>
+      <div class="stats">${spec.stats.map(s => `<div class="stat"><div class="n">${s[0]}</div><div class="t">${s[1]}</div></div>`).join("")}</div>
+      <div class="url"><span class="pill"><i></i>${esc(spec.url)}</span><span class="sign">${esc(spec.sign)}</span></div>
+    </div></div>`;
+  }
+  document.fonts.ready.then(() => { document.body.dataset.ready = "1"; });
+</script>
+</body>
+</html>
