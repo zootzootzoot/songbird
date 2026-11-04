@@ -73,6 +73,15 @@ def speech_spans(wav: Path, min_gap: float = 1.25) -> list[tuple[float, float]]:
 def fit(spans, n):
     """merge the closest neighbours until there are exactly n parts (a long breath inside a part splits it)"""
     spans = list(spans)
+    while len(spans) > n:  # a fragment under 1.2 s ("Songbird." then a pause) belongs to its nearer neighbour
+        short = [i for i, (a, b) in enumerate(spans) if b - a < 1.2]
+        if not short:
+            break
+        i = short[0]
+        before = spans[i][0] - spans[i - 1][1] if i > 0 else 1e9
+        after = spans[i + 1][0] - spans[i][1] if i + 1 < len(spans) else 1e9
+        j = i - 1 if before <= after else i
+        spans[j:j + 2] = [(spans[j][0], spans[j + 1][1])]
     while len(spans) > n:
         gaps = [spans[i + 1][0] - spans[i][1] for i in range(len(spans) - 1)]
         i = gaps.index(min(gaps))
@@ -94,6 +103,56 @@ for p in job:
     out.append([None if w is None else [w[0], w[1], w[2]] for w in (r or [None] * len(words))])
 print(json.dumps(out))
 '''
+
+
+def inner_pauses(wav: str, min_gap: float = 0.6) -> list[tuple[float, float]]:
+    r = subprocess.run([FFMPEG, "-hide_banner", "-i", wav, "-af", f"silencedetect=n=-35dB:d={min_gap}", "-f", "null", "-"],
+                       capture_output=True, text=True)
+    st = [float(x) for x in re.findall(r"silence_start: ([\d.]+)", r.stderr)]
+    en = [float(x) for x in re.findall(r"silence_end: ([\d.]+)", r.stderr)]
+    return [(a, b) for a, b in zip(st, en) if a > 0.2]
+
+
+def realign_pauses(job, aligned, work: Path):
+    """MMS bunches the words before a long pause into the pause. Where a part pauses at a sentence end, align each side
+    of the pause on its own and stitch the times back together."""
+    out = list(aligned)
+    for k, (j, al) in enumerate(zip(job, aligned)):
+        words = j["text"].split()
+        ends = [i for i, w in enumerate(words[:-1]) if re.search(r"[.!?:][\"”]?$", w)]
+        cuts = []
+        for a, b in inner_pauses(j["wav"]):
+            near = [i for i in ends if al[i] is not None]
+            if not near:
+                continue
+            i = min(near, key=lambda i: abs(al[i][1] - a))
+            if abs(al[i][1] - a) < 1.2 and i not in [c[0] for c in cuts]:
+                cuts.append((i, max(a, b - 0.12)))  # the next piece starts as the speech does
+        if not cuts:
+            continue
+        cuts.sort()
+        bounds = [(-1, 0.0)] + cuts + [(len(words) - 1, None)]
+        sub = []
+        for (i0, t0), (i1, t1) in zip(bounds, bounds[1:]):
+            w = work / f"part{k + 1}_{len(sub)}.wav"
+            args = [FFMPEG, "-y", "-loglevel", "error", "-ss", f"{t0:.3f}"] + (["-to", f"{t1:.3f}"] if t1 else []) + [
+                "-i", j["wav"], str(w)]
+            subprocess.run(args, check=True)
+            sub.append({"wav": str(w), "text": " ".join(words[i0 + 1:i1 + 1]), "t0": t0})
+        jf = work / "job_sub.json"
+        jf.write_text(json.dumps(sub), encoding="utf-8")
+        r = subprocess.run([str(ACE_PY), "-c", ALIGN, str(ROOT / "server" / "songbird"), str(jf)],
+                           capture_output=True, text=True, encoding="utf-8")
+        if r.returncode:
+            continue
+        got = json.loads(r.stdout.strip().splitlines()[-1])
+        merged = []
+        for piece, ws in zip(sub, got):
+            merged += [None if w is None else [w[0] + piece["t0"], w[1] + piece["t0"], w[2]] for w in ws]
+        if len(merged) == len(words):
+            out[k] = merged
+            print(f"part {k + 1}: realigned around {len(cuts)} pause(s)")
+    return out
 
 
 def main():
@@ -121,6 +180,7 @@ def main():
     if r.returncode:
         raise SystemExit(r.stderr[-2000:])
     aligned = json.loads(r.stdout.strip().splitlines()[-1])
+    aligned = realign_pauses(job, aligned, work)
     out = []
     for k, ((s, e), text, al) in enumerate(zip(spans, parts, aligned)):
         ws = text.split()

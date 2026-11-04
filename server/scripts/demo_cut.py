@@ -134,27 +134,58 @@ def spoken(n: int, phrase: str) -> float | None:
     return None
 
 
-def subtitle_lines(n: int, at: float) -> list[tuple[str, float, float]]:
-    """part n, said at timeline second `at`, as subtitle lines of up to ~44 characters, broken at punctuation"""
-    p = VO[n - 1]
-    lines, cur = [], []
-    for w in p["words"]:
+WEAK = {"the", "a", "an", "and", "or", "of", "to", "in", "on", "from", "with", "for", "its", "their", "every", "our",
+        "is", "at", "that", "it", "so", "but", "as", "by", "my", "your", "which", "while"}
+
+
+def _phrases(words: list[dict], most: int = 50) -> list[list[dict]]:
+    """clauses at the punctuation, short ones joined, long ones split near the middle at a natural break"""
+    text = lambda ws: " ".join(x["w"] for x in ws)
+    clauses, cur = [], []
+    for w in words:
         cur.append(w)
-        text = " ".join(x["w"] for x in cur)
-        if len(text) >= 44 or (re.search(r"[.,;:!?][\"”]?$", w["w"]) and len(text) >= 20):
-            lines.append(cur)
+        if re.search(r"[.,;:!?][\"”]?$", w["w"]):
+            clauses.append(cur)
             cur = []
     if cur:
-        if lines and len(" ".join(x["w"] for x in cur)) < 12:
-            lines[-1] += cur
+        clauses.append(cur)
+    joined = []
+    for c in clauses:
+        ends = joined and re.search(r"[.!?][\"”]?$", joined[-1][-1]["w"])  # never join across a sentence end
+        if joined and not ends and (len(text(joined[-1])) < 18 or len(text(c)) < 10) and len(text(joined[-1] + c)) <= most:
+            joined[-1] = joined[-1] + c
         else:
-            lines.append(cur)
+            joined.append(c)
+    out = []
+
+    def split(ws):
+        if len(text(ws)) <= most or len(ws) < 4:
+            out.append(ws)
+            return
+        mid = len(text(ws)) / 2
+        best, score = None, 1e9
+        for i in range(2, len(ws) - 1):  # break after ws[i-1]
+            at = len(text(ws[:i]))
+            pen = abs(at - mid) + (40 if ws[i - 1]["w"].lower().strip(",.") in WEAK else 0)
+            if pen < score:
+                best, score = i, pen
+        split(ws[:best])
+        split(ws[best:])
+    for c in joined:
+        split(c)
+    return out
+
+
+def subtitle_lines(n: int, at: float) -> list[tuple[str, float, float]]:
+    """part n, said at timeline second `at`, as subtitles that follow the phrasing (clauses, never a dangling 'the')"""
+    lines = _phrases(VO[n - 1]["words"])
     out = []
     for k, ln in enumerate(lines):
-        t0 = at + _rel(n, ln[0]["start"]) - 0.08
-        end = at + _rel(n, ln[-1]["end"]) + 0.5
+        t0 = at + _rel(n, ln[0]["start"]) - 0.1
+        end = at + _rel(n, ln[-1]["end"]) + 0.45
+        end = max(end, t0 + 0.7)
         if k + 1 < len(lines):
-            end = min(end, at + _rel(n, lines[k + 1][0]["start"]) - 0.08)
+            end = min(end, at + _rel(n, lines[k + 1][0]["start"]) - 0.1)
         out.append((" ".join(x["w"] for x in ln), t0, end))
     return out
 
@@ -169,10 +200,10 @@ class Timeline:
         self.music: list[dict] = []
         self.voice: list[tuple[int, float]] = []
 
-    def clip(self, src, ss, dur, speed=1.0, crop=None, clock=None, fix=None):
+    def clip(self, src, ss, dur, speed=1.0, crop=None, clock=None, fix=None, fin=0.0, fout=0.0, src_fps=60):
         """clock: the footage second that the studio clock reads 0:00 at (shown over sped-up live footage)"""
         self.clips.append({"src": str(src), "ss": ss, "dur": dur, "speed": speed, "crop": crop, "at": self.t, "clock": clock,
-                           "fix": fix})
+                           "fix": fix, "fin": fin, "fout": fout, "src_fps": src_fps})
         self.t += dur
 
     def still(self, color, dur):
@@ -206,8 +237,18 @@ def render_clip(k: int, c: dict, overlays) -> Path:
         chain += "," + c["fix"]
     if c.get("crop"):
         x, y, w, h = c["crop"]
-        chain += f",crop={w}:{h}:{x}:{y},scale=1920:1080:flags=lanczos"
-    f.append(f"[0:v]{chain},fps={FPS},format=yuv420p[b]")
+        chain += f",crop={w}:{h}:{x}:{y}"
+    if "color" not in c and c.get("src_fps", 60) * c["speed"] < 55:
+        # 30 fps footage at (near) real speed: drop its repeated frames, then draw the in-betweens from the real ones
+        chain += ",mpdecimate=hi=64*4:lo=64*2:frac=0.1,minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"
+    if c.get("crop"):
+        chain += ",scale=1920:1080:flags=lanczos"
+    chain += f",fps={FPS}"
+    if c.get("fin"):  # a dip through white between scenes
+        chain += f",fade=t=in:d={c['fin']}:color=white"
+    if c.get("fout"):
+        chain += f",fade=t=out:st={max(0.0, c['dur'] - c['fout']):.3f}:d={c['fout']}:color=white"
+    f.append(f"[0:v]{chain},format=yuv420p[b]")
     v = "[b]"
     for i, (p, t0, t1) in enumerate(mine):
         d = 0.16
@@ -253,7 +294,7 @@ def mix(tl: Timeline, total: float) -> Path:
     f.append("".join(f"[m{i}]" for i in range(nm)) + f"amix=inputs={nm}:normalize=0:duration=longest,apad=whole_dur={total:.3f}[music]")
     f.append("".join(f"[s{k}]" for k in range(len(tl.voice))) +
              f"amix=inputs={len(tl.voice)}:normalize=0:duration=longest,apad=whole_dur={total:.3f},asplit=2[vo][key]")
-    f.append("[music][key]sidechaincompress=threshold=0.015:ratio=7:attack=30:release=500[duck]")
+    f.append("[music][key]sidechaincompress=threshold=0.1:ratio=2:knee=4:attack=80:release=900[duck]")
     f.append(f"[duck][vo]amix=inputs=2:normalize=0:duration=first,atrim=duration={total:.3f},"
              "loudnorm=I=-15:TP=-1.2:LRA=9[out]")
     args += ["-filter_complex", ";".join(f), "-map", "[out]", "-ar", "48000", "-ac", "2", str(out)]
@@ -301,7 +342,7 @@ def main():
     cold = cfg["cold_clip"]
     d0 = cfg.get("cold_len", 7.5)
     specs["a1"] = cap(f"{cfg['catalog']} · {who.upper()}'S DAY", f"{day}, as a <b>{genre}</b>.")
-    tl.clip(FILM / f"{cold}.mp4", 0.5, d0)
+    tl.clip(FILM / f"{cold}.mp4", 0.5, d0, fout=0.55)
     tl.over("a1", 0.6, d0 - 0.35)
     tl.song(hero_song, song_at(cold, 0.5), 0.0, d0, vol=1.0, fout=0.7)
 
@@ -314,13 +355,13 @@ def main():
     fm = json.loads((FILM / "front.json").read_text())["marks"]
     s2 = s1[1]["start"] + 0.5 if len(s1) > 1 else 3.0  # "A camera roll remembers..."
     src1 = max(0.0, fm.get("hoverA", 5.0) - 0.25 - s2)  # the label is up as the sentence starts
-    tl.clip(front, src1, third - 0.15)
+    tl.clip(front, src1, third - 0.15, fin=0.6)
     tl.clip(front, fm.get("shelf", 14.2) + 0.2, d1 - (third - 0.15))
     specs["b1"] = {"kind": "card", "tone": "day", "text": "two trillion photos a year.<br><span class='soft'>almost none looked at again.</span>",
                    "src": "petapixel, 2025"}
     specs["b4"] = {"kind": "card", "tone": "night", "text": "but you still know every word<br>of a song you loved at fifteen.",
                    "src": "memories cued by music are rated more vivid than those cued by faces · belfi, karlan & tranel, memory, 2016"}
-    tl.over("b1", t1 + 0.4 + s1[0]["start"], t1 + 0.5 + s1[0]["end"] + 0.35)
+    tl.over("b1", t1 + 0.25, t1 + 0.5 + s1[0]["end"] + 0.35)
     if len(s1) > 2:
         tl.over("b4", t1 + third - 0.15, t1 + d1)
     tl.say(1, t1 + 0.5)
@@ -353,16 +394,16 @@ def main():
             dur = max(0.3, y - x)
             sp = max(slowest[k], min(2.4, (b - a) / dur))
             start = max(src[0], b - sp * dur) if keep_end[k] else a  # never before the desk (an earlier day)
-            tl.clip(live, start, dur, speed=sp, crop=tuple(cfg["desk_crop"]))
+            tl.clip(live, start, dur, speed=sp, crop=tuple(cfg["desk_crop"]), src_fps=30)
     else:
         sp = max(0.55, min(1.6, (click - desk0) / d3))
-        tl.clip(live, desk0, d3, speed=sp, crop=tuple(cfg["desk_crop"]))
+        tl.clip(live, desk0, d3, speed=sp, crop=tuple(cfg["desk_crop"]), src_fps=30)
     tl.say(3, t3 + say3)
     dusk = marks["room"] + 0.08  # cut on the click, straight into the falling sky
     dusk_src = cfg.get("dusk_len", 1.2)  # how long the sky takes to fall in the footage, played over two seconds
     t_dusk = tl.t
     cur = cfg.get("dusk_cursor")  # the stand-in cursor lingers on the button while the sky comes down
-    tl.clip(live, dusk, 2.0, speed=dusk_src / 2.0, fix=f"delogo=x={cur[0] - 20}:y={cur[1] - 20}:w=40:h=40" if cur else None)
+    tl.clip(live, dusk, 2.0, speed=dusk_src / 2.0, fix=f"delogo=x={cur[0] - 20}:y={cur[1] - 20}:w=40:h=40" if cur else None, src_fps=30)
 
     # 4 + 5 · the control room, speed-ramped onto the voice
     room0 = dusk + dusk_src
@@ -372,9 +413,9 @@ def main():
     slow_a = [(room0, room0 + 3.0), (g - 0.2, g + 3.6)]
     fast_a = (room0 + 3.0, g - 0.2)
     out_a = max(1.5, a_len - sum(e - s for s, e in slow_a))
-    tl.clip(live, slow_a[0][0], slow_a[0][1] - slow_a[0][0], clock=prod)
-    tl.clip(live, fast_a[0], out_a, speed=(fast_a[1] - fast_a[0]) / out_a, clock=prod)
-    tl.clip(live, slow_a[1][0], slow_a[1][1] - slow_a[1][0], clock=prod)
+    tl.clip(live, slow_a[0][0], slow_a[0][1] - slow_a[0][0], clock=prod, src_fps=30)
+    tl.clip(live, fast_a[0], out_a, speed=(fast_a[1] - fast_a[0]) / out_a, clock=prod, src_fps=30)
+    tl.clip(live, slow_a[1][0], slow_a[1][1] - slow_a[1][0], clock=prod, src_fps=30)
     tl.say(4, t4 + 0.35)
     t5 = tl.t
     b_len = vo_len(5) + 0.9
@@ -383,10 +424,10 @@ def main():
     out_b = max(2.0, b_len - sum(e - s for s, e in slow_b))
     share = max(0.2, (f1[1] - f1[0]) / ((f1[1] - f1[0]) + (f2[1] - f2[0])))
     o1, o2 = out_b * share, out_b * (1 - share)
-    tl.clip(live, f1[0], o1, speed=(f1[1] - f1[0]) / o1, clock=prod)
-    tl.clip(live, slow_b[0][0], slow_b[0][1] - slow_b[0][0], clock=prod)
-    tl.clip(live, f2[0], o2, speed=(f2[1] - f2[0]) / o2, clock=prod)
-    tl.clip(live, slow_b[1][0], slow_b[1][1] - slow_b[1][0], clock=prod)
+    tl.clip(live, f1[0], o1, speed=(f1[1] - f1[0]) / o1, clock=prod, src_fps=30)
+    tl.clip(live, slow_b[0][0], slow_b[0][1] - slow_b[0][0], clock=prod, src_fps=30)
+    tl.clip(live, f2[0], o2, speed=(f2[1] - f2[0]) / o2, clock=prod, src_fps=30)
+    tl.clip(live, slow_b[1][0], slow_b[1][1] - slow_b[1][0], clock=prod, src_fps=30)
     specs["clock"] = {"kind": "clock"}
     tl.over("clock", t4, tl.t)
     tl.say(5, t5 + 0.35)
@@ -446,7 +487,7 @@ def main():
     specs["f_b"] = cap(tag_b, txt_b)
     tl.over("f_b", t8 + b2 + 0.1, t8 + b3 - 0.1)
     tl.song(TAPES / tid_b / "song.mp3", song_at(n_b, 0.7), t8 + b2, b3 - b2, vol=0.85, fin=0.05, fout=0.15)
-    tl.clip(FILM / "share_g.mp4", 0.0, b4 - b3)
+    tl.clip(FILM / "share_g.mp4", 0.0, b4 - b3, src_fps=30)
     specs["g1"] = cap("SAVE THE VIDEO", "1080×1920, with the song,<br>for reels, stories, the group chat", pos="right mid wide")
     tl.over("g1", t8 + b3 + 0.1, t8 + b4 - 0.05)
     tl.song(hero_song, cfg["share_song_at"], t8 + b3, d8 - b3 + 0.3, vol=0.8, fin=0.05, fout=0.35)  # on under the discography

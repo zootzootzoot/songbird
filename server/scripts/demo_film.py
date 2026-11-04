@@ -216,8 +216,10 @@ async def run(shot_name: str, url: str, script, limit: float = 420):
         lines.append(f"file '{(frames_dir / frames[-1][1]).as_posix()}'")
         (frames_dir / "list.txt").write_text("\n".join(lines))
         out = OUT / f"{shot_name}.mp4"
+        rate = len(frames) / max(0.1, end - t0)  # what the browser managed to paint
+        smooth = "fps=60" if rate >= 55 else "minterpolate=fps=60:mi_mode=mci:mc_mode=aobmc:me_mode=bidir:vsbmc=1"  # else: in-between frames from the real frame times
         subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(frames_dir / "list.txt"),
-                        "-vf", f"scale={W}:{H}:flags=lanczos,fps=60,format=yuv420p", "-c:v", "libx264", "-preset", "medium",
+                        "-vf", f"scale={W}:{H}:flags=lanczos,{smooth},format=yuv420p", "-c:v", "libx264", "-preset", "medium",
                         "-crf", "16", "-t", f"{end - t0:.2f}", str(out)], check=True)
         meta = {"marks": {k: round(v - t0, 3) for k, v in s.marks.items()}, "length": round(end - t0, 3),
                 "sb": json.loads(sb or "{}"), "t0": t0, "url": url}
