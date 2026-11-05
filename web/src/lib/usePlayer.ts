@@ -96,8 +96,13 @@ export function usePlayer(tape: Tape | null) {
     sound.setDucked(true);
     const from = time >= durRef.current - 0.2 ? 0 : time;
     const el = audio.current;
-    if (el && !failed.current) {
+    if (el) {
       try {
+        // a phone that refused once (no tap yet, or the file was still loading) gets another go on every play
+        if (failed.current || el.error) {
+          failed.current = false;
+          el.load();
+        }
         el.currentTime = from;
         // starting mid-song (the cold open, or a resume): a short fade so the music doesn't start on a click
         el.volume = from > 0.5 ? 0 : 1;
