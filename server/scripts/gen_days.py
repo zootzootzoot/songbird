@@ -79,7 +79,7 @@ BORROW = {
     "a mini roundabout seen through a car windscreen, wipers mid-sweep",
     "a driving test pass certificate held in one hand against the bonnet of a car, thumb in shot",
     "a drive-through milkshake in a car cupholder at night, dashboard lights glowing"]},
- "power-cut": {"name": "hana", "note": "power cut on the whole street. cooked everything in the freezer before it melted.", "photos": [
+ "power-cut": {"name": "hana", "note": "power went out on the whole street. cooked everything in the freezer before it melted.", "photos": [
     "a row of lit candles in jars on a dark kitchen counter",
     "a camping gas stove on a back step with a frying pan of sizzling dumplings, night",
     "a melting tub of ice cream on a garden wall with several spoons stuck in it",
@@ -91,19 +91,19 @@ BORROW = {
     "a pint glass of water standing on top of a guitar amp, red stage light",
     "a tiny pub stage seen from the back of the room, warm light, a handful of people's backs",
     "a stack of folded band t-shirts and a cash tin on a trestle table after the show"]},
- "snow-day": {"name": "nadia", "note": "snowed in. office shut. built something that was meant to be a snowman.", "photos": [
+ "snow-day": {"name": "nadia", "note": "snowed in. office closed. built something that was meant to be a snowman.", "photos": [
     "a row of parked cars buried under thick fresh snow on a quiet street, early light",
     "deep boot prints in untouched snow leading to a front gate",
     "a lopsided small snowman with a carrot nose and a woolly hat in a back garden",
     "wet mittens and a scarf drying on a radiator under a steamed-up window",
     "a mug of hot chocolate piled with marshmallows on a windowsill, snow falling outside"]},
- "coast-ride": {"name": "felix", "note": "cycled to the coast. two punctures, one sea.", "photos": [
+ "coast-ride": {"name": "felix", "note": "biked forty miles to the beach. two flat tires. worth it.", "photos": [
     "a road bike leaning on a wooden farm gate on a country lane at sunrise",
     "a punctured inner tube, tyre levers and a mini pump on the grass verge",
     "a white road sign pointing to the coast, 12 miles, cow parsley around it",
     "a bicycle lying on a pebble beach at golden hour, the sea calm behind",
     "a paper tray of fish and chips with a wooden fork on a sea wall, a bike helmet beside it"]},
- "night-ward": {"name": "ines", "note": "twelve hours on the ward. somebody brought doughnuts at 4am.", "photos": [
+ "night-ward": {"name": "ines", "note": "twelve-hour night shift at the hospital. somebody brought doughnuts at 4am.", "photos": [
     "an empty hospital corridor at night, soft blue floor lights, no people",
     "an open box of glazed doughnuts on a break-room table next to a stethoscope",
     "a pair of comfortable clogs beside a staff locker, a lanyard hanging from the door",

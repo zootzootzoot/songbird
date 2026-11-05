@@ -14,7 +14,7 @@
  {
   "slug": "power-cut",
   "name": "hana",
-  "note": "power cut on the whole street. cooked everything in the freezer before it melted.",
+  "note": "power went out on the whole street. cooked everything in the freezer before it melted.",
   "photos": [
    "photo-01.jpg",
    "photo-02.jpg",
@@ -38,7 +38,7 @@
  {
   "slug": "snow-day",
   "name": "nadia",
-  "note": "snowed in. office shut. built something that was meant to be a snowman.",
+  "note": "snowed in. office closed. built something that was meant to be a snowman.",
   "photos": [
    "photo-01.jpg",
    "photo-02.jpg",
@@ -50,7 +50,7 @@
  {
   "slug": "coast-ride",
   "name": "felix",
-  "note": "cycled to the coast. two punctures, one sea.",
+  "note": "biked forty miles to the beach. two flat tires. worth it.",
   "photos": [
    "photo-01.jpg",
    "photo-02.jpg",
@@ -62,7 +62,7 @@
  {
   "slug": "night-ward",
   "name": "ines",
-  "note": "twelve hours on the ward. somebody brought doughnuts at 4am.",
+  "note": "twelve-hour night shift at the hospital. somebody brought doughnuts at 4am.",
   "photos": [
    "photo-01.jpg",
    "photo-02.jpg",
