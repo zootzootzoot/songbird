@@ -293,7 +293,7 @@ def mix(tl: Timeline, total: float) -> Path:
                  f"aformat=channel_layouts=stereo,afade=t=in:d=0.04,afade=t=out:st={vo_len(n) + 0.2:.3f}:d=0.15,adelay={ms}|{ms}[s{k}]")
     f.append("".join(f"[m{i}]" for i in range(nm)) + f"amix=inputs={nm}:normalize=0:duration=longest,apad=whole_dur={total:.3f}[music]")
     f.append("".join(f"[s{k}]" for k in range(len(tl.voice))) +
-             f"amix=inputs={len(tl.voice)}:normalize=0:duration=longest,apad=whole_dur={total:.3f},asplit=2[vo][key]")
+             f"amix=inputs={len(tl.voice)}:normalize=0:duration=longest,apad=whole_dur={total:.3f},asplit=2[vo0][key];[vo0]volume=1.41[vo]")
     f.append("[music][key]sidechaincompress=threshold=0.1:ratio=2:knee=4:attack=80:release=900[duck]")
     f.append(f"[duck][vo]amix=inputs=2:normalize=0:duration=first,atrim=duration={total:.3f},"
              "loudnorm=I=-15:TP=-1.2:LRA=9[out]")
@@ -442,7 +442,7 @@ def main():
                            "y": RACK_Y0, "h": RACK_Y1 - RACK_Y0}
             tl.over(name, t_part + at - 0.1, t_part + at + 1.6)
     # under 1-5: one of this release's own session takes, from its first note, crossfading out of the cold open
-    tl.song(bed, first_sound(bed), t1 - 0.7, tl.t - t1 + 0.7, vol=0.6, fin=0.7, fout=0.9)
+    tl.song(bed, first_sound(bed), t1 - 0.7, tl.t - t1 + 0.7, vol=0.38, fin=0.7, fout=0.9)
 
     # 6 · the result: the music video from its cold open, sound up
     t6 = tl.t
@@ -462,7 +462,7 @@ def main():
     how = FILM / "how.mp4"
     tl.clip(how, 0.0, d7, speed=(dur_of(how) - 0.2) / d7)
     tl.say(7, t7 + 0.5)
-    tl.song(hero_song, song_at(hero, 0.5) + d6 + 0.4, t7, d7, vol=0.55, fin=0.5, fout=0.9)
+    tl.song(hero_song, song_at(hero, 0.5) + d6 + 0.4, t7, d7, vol=0.35, fin=0.5, fout=0.9)
 
     # the 9:16 MP4 of this single, at its chorus, standing in the frame (the MP4 starts at the song's cold open)
     share_mp4 = TAPES / hero_tid / "share.mp4"
@@ -483,15 +483,15 @@ def main():
     tl.clip(FILM / f"{n_a}.mp4", 0.7, b2)
     specs["f_a"] = cap(tag_a, txt_a)
     tl.over("f_a", t8 + 0.15, t8 + b2 - 0.1)
-    tl.song(TAPES / tid_a / "song.mp3", song_at(n_a, 0.7), t8, b2, vol=0.85, fin=0.08, fout=0.15)
+    tl.song(TAPES / tid_a / "song.mp3", song_at(n_a, 0.7), t8, b2, vol=0.55, fin=0.08, fout=0.15)
     tl.clip(FILM / f"{n_b}.mp4", 0.7, b3 - b2)
     specs["f_b"] = cap(tag_b, txt_b)
     tl.over("f_b", t8 + b2 + 0.1, t8 + b3 - 0.1)
-    tl.song(TAPES / tid_b / "song.mp3", song_at(n_b, 0.7), t8 + b2, b3 - b2, vol=0.85, fin=0.05, fout=0.15)
+    tl.song(TAPES / tid_b / "song.mp3", song_at(n_b, 0.7), t8 + b2, b3 - b2, vol=0.55, fin=0.05, fout=0.15)
     tl.clip(FILM / "share_g.mp4", 0.0, b4 - b3, src_fps=30)
     specs["g1"] = cap("SAVE THE VIDEO", "1080×1920, with the song,<br>for reels, stories, the group chat", pos="right mid wide")
     tl.over("g1", t8 + b3 + 0.1, t8 + b4 - 0.05)
-    tl.song(hero_song, cfg["share_song_at"], t8 + b3, d8 - b3 + 0.3, vol=0.8, fin=0.05, fout=0.35)  # on under the discography
+    tl.song(hero_song, cfg["share_song_at"], t8 + b3, d8 - b3 + 0.3, vol=0.5, fin=0.05, fout=0.35)  # on under the discography
     shown = json.loads((FILM / "journal.json").read_text())["marks"]["shown"]  # the discography, already in view
     tl.clip(FILM / "journal.mp4", max(0.0, shown - 0.3), d8 - b4)
     tl.say(8, t8 + 0.5)
@@ -509,7 +509,7 @@ def main():
     tl.still("0x0b0b0d", d9)
     tl.over("h1", t9, t9 + d9)
     tl.say(9, t9 + 0.4)
-    tl.song(hero_song, cfg["close_song_at"], t9 - 0.35, d9 + 0.35, vol=0.7, fin=0.35, fout=2.8)
+    tl.song(hero_song, cfg["close_song_at"], t9 - 0.35, d9 + 0.35, vol=0.45, fin=0.35, fout=2.8)
 
     # subtitles: the voice's own words, as spoken (MMS word times)
     k = 0
