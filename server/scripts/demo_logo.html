@@ -28,7 +28,7 @@
   document.body.style.width = W + "px"; document.body.style.height = H + "px";
   const u = Math.min(W, H * 2.2) / 1000;            // type scales with the width, capped for wide banners
   const word = document.getElementById("word");
-  word.style.fontSize = (W / H > 1.6 ? 200 : 168) * u + "px";
+  word.style.fontSize = (+q.get("fs") || (W / H > 1.6 ? 200 : 168) * u) + "px";
   const dot = word.querySelector("i"); dot.style.width = dot.style.height = .14 * parseFloat(word.style.fontSize) + "px";
   dot.style.marginLeft = ".05em";
   const tag = document.getElementById("tag");
