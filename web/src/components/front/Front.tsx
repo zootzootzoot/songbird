@@ -224,10 +224,10 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
                 <button className="fr__card" onClick={() => onOpen(t.id)}>
                   <span className="fr__media">
                     {t.cover && <img src={t.cover} alt="" loading="lazy" />}
-                    {(k?.bandKey ?? t.key) && (
+                    {t.genre && (
                       <span className="fr__pill">
                         <i />
-                        in {k?.bandKey ?? t.key}
+                        {t.genre}
                       </span>
                     )}
                   </span>
@@ -236,7 +236,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
                       {t.name ?? "someone"} <em className="num">{t.catalog}</em>
                     </span>
                     {t.note && <span className="fr__note">“{t.note}”</span>}
-                    <span className="fr__verdict">{t.genre}</span>
+                    {(k?.bandKey ?? t.key) && <span className="fr__verdict">in {k?.bandKey ?? t.key}</span>}
                     <span className="fr__title-line">
                       <b>{t.title}</b>
                       <span className="fr__arrow" aria-hidden="true">
