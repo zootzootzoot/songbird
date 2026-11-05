@@ -10,6 +10,7 @@ import { Front } from "./components/front/Front";
 import { ControlRoom } from "./components/room/ControlRoom";
 import { Dusk } from "./components/room/Dusk";
 import { Video } from "./components/video/Video";
+import { Log } from "./components/log/Log";
 
 // the old deck's foley (paper, tape motor, bell) belongs to the retired cassette world
 sound.setMuted(true);
@@ -29,7 +30,19 @@ export const isMock = import.meta.env.DEV && new URLSearchParams(location.search
  * Three surfaces, one state machine (useDeck):
  *   front door (empty / loaded)  ->  control room (sending / working / error)  ->  the video (done)
  */
+/** `/log`: the build log page */
+function onLogPage(): boolean {
+  const p = location.pathname;
+  const path = (p.startsWith(BASE) ? p.slice(BASE.length) : p.replace(/^\//, "")).replace(/\/+$/, "");
+  return path === "log";
+}
+
 export default function App() {
+  if (onLogPage()) return <Log />;
+  return <Studio />;
+}
+
+function Studio() {
   const deck = useDeck();
   const { state } = deck;
   const tape = state.phase === "done" ? state.tape : null;

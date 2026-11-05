@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { getTape, type Health } from "../../lib/api";
-import { asset, media } from "../../lib/env";
+import { asset, BASE, media } from "../../lib/env";
 import type { Deck } from "../../lib/useDeck";
 import { useRecorder } from "../../lib/useRecorder";
 import type { Tape, TapeSummary } from "../../lib/types";
@@ -125,6 +125,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
           <a href="#shelf">the shelf</a>
           <a href="#why">why songs</a>
           <a href="#how">how it works</a>
+          <a href={`${BASE}log`}>the build log</a>
         </div>
         <button className="fr__cta fr__cta--sm" onClick={toMake}>
           <i data-status={status} aria-hidden="true" />
@@ -280,7 +281,12 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
       <section className="fr__how" id="how">
         <header className="fr__head">
           <h2>how a day becomes a single.</h2>
-          <p>nine models, ten jobs. three of them run on open weights, on our own GPU.</p>
+          <p>
+            nine models, ten jobs. three of them run on open weights, on our own GPU.{" "}
+            <a className="fr__loglink" href={`${BASE}log`}>
+              how meta's models made songbird →
+            </a>
+          </p>
         </header>
         <div className="fr__studio">
           <video
@@ -466,6 +472,9 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
       <footer className="fr__foot">
         <span className="fr__mark">songbird</span>
         <span>your days, on record.</span>
+        <a className="fr__loglink" href={`${BASE}log`}>
+          the build log
+        </a>
         <span className="fr__fine">
           the sample days on this page were photographed by Muse Image, so nobody's real photos are used. everything else
           (songs, bands, sleeves, videos) came out of the same pipeline as yours will.

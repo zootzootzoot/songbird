@@ -139,6 +139,8 @@ def main():
     index = WT / "index.html"  # link previews need absolute image urls
     index.write_text(index.read_text(encoding="utf-8").replace('content="og.jpg"', f'content="{SITE}og.jpg"'), encoding="utf-8")
     shutil.copy2(WT / "index.html", WT / "404.html")  # deep links fall back to the app
+    (WT / "log").mkdir(exist_ok=True)  # /log is a real page (200), not a 404 fallback
+    shutil.copy2(WT / "index.html", WT / "log" / "index.html")
     (WT / ".nojekyll").write_text("")
     shelf = copy_tapes()
     write_live(a.api)

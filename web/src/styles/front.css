@@ -1377,3 +1377,11 @@ button.fr__ghost {
 .fl:has(.fl__thing[data-hover="true"]) {
   z-index: 4;
 }
+
+.fr__loglink {
+  font-weight: 600;
+  text-decoration: underline !important;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  white-space: nowrap;
+}
