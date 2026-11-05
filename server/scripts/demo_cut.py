@@ -293,7 +293,7 @@ def mix(tl: Timeline, total: float) -> Path:
                  f"aformat=channel_layouts=stereo,afade=t=in:d=0.04,afade=t=out:st={vo_len(n) + 0.2:.3f}:d=0.15,adelay={ms}|{ms}[s{k}]")
     f.append("".join(f"[m{i}]" for i in range(nm)) + f"amix=inputs={nm}:normalize=0:duration=longest,apad=whole_dur={total:.3f}[music]")
     f.append("".join(f"[s{k}]" for k in range(len(tl.voice))) +
-             f"amix=inputs={len(tl.voice)}:normalize=0:duration=longest,apad=whole_dur={total:.3f},asplit=2[vo0][key];[vo0]volume=1.41[vo]")
+             f"amix=inputs={len(tl.voice)}:normalize=0:duration=longest,apad=whole_dur={total:.3f},asplit=2[vo0][key];[vo0]volume=2.0[vo]")
     f.append("[music][key]sidechaincompress=threshold=0.1:ratio=2:knee=4:attack=80:release=900[duck]")
     f.append(f"[duck][vo]amix=inputs=2:normalize=0:duration=first,atrim=duration={total:.3f},"
              "loudnorm=I=-15:TP=-1.2:LRA=9[out]")
@@ -327,7 +327,8 @@ def main():
     hero_tid = cfg["hero"]
     WORK.mkdir(parents=True, exist_ok=True)
     audio_only = "--audio" in sys.argv  # re-mix the sound onto the picture already cut
-    for old in ([] if audio_only else WORK.glob("*")):
+    only = next((set(int(x) for x in a.split("=", 1)[1].split(",")) for a in sys.argv if a.startswith("--only=")), None)
+    for old in ([] if audio_only or only else WORK.glob("*")):
         old.unlink()
     who, day, genre = cfg["who"], cfg["day"], cfg["genre"]
     live = FILM / cfg["live"]
@@ -352,7 +353,8 @@ def main():
     t1 = tl.t
     d1 = vo_len(1) + 1.3
     s1 = sentences(1)
-    third = s1[2]["start"] + 0.5 if len(s1) > 2 else d1 * 0.6
+    but = next((x for x in s1 if x["text"].lower().startswith("but ")), s1[-1] if len(s1) > 2 else None)
+    third = but["start"] + 0.5 if but else d1 * 0.6  # the black card lands on "But you still know..."
     fm = json.loads((FILM / "front.json").read_text())["marks"]
     s2 = s1[1]["start"] + 0.5 if len(s1) > 1 else 3.0  # "A camera roll remembers..."
     src1 = max(0.0, fm.get("hoverA", 5.0) - 0.25 - s2)  # the label is up as the sentence starts
@@ -363,7 +365,7 @@ def main():
     specs["b4"] = {"kind": "card", "tone": "night", "text": "but you still know every word<br>of a song you loved at fifteen.",
                    "src": "memories cued by music are rated more vivid than those cued by faces · belfi, karlan & tranel, memory, 2016"}
     tl.over("b1", t1 + 0.25, t1 + 0.5 + s1[0]["end"] + 0.35)
-    if len(s1) > 2:
+    if but:
         tl.over("b4", t1 + third - 0.15, t1 + d1)
     tl.say(1, t1 + 0.5)
 
@@ -522,7 +524,8 @@ def main():
     if not audio_only:
         asyncio.run(_shoot(specs))
         print(f"{len(specs)} overlays, {len(tl.clips)} clips, timeline {tl.t:.1f} s", flush=True)
-        vids = [render_clip(i, c, tl.overlays) for i, c in enumerate(tl.clips)]
+        vids = [render_clip(i, c, tl.overlays) if only is None or i in only else WORK / f"v{i:02d}.mp4"
+                for i, c in enumerate(tl.clips)]
         (WORK / "list.txt").write_text("\n".join(f"file '{v.as_posix()}'" for v in vids))
         subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(WORK / "list.txt"),
                         "-c", "copy", str(WORK / "picture.mp4")], check=True)
