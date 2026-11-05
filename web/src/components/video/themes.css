@@ -3722,10 +3722,3 @@
   --tc-bg: rgba(42, 20, 7, 0.5);
 }
 
-/* photosafe: the CRT glow drifts instead of flickering eight times a second */
-.fx-bit .fx-a,
-.fx-bit .fx-b,
-.fx-bit .fx-c {
-  animation-duration: 2.4s !important;
-  animation-timing-function: ease-in-out !important;
-}
