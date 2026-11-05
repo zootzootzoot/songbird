@@ -22,7 +22,6 @@ const CHAIN: { model: string; job: string; open?: boolean }[] = [
   { model: "Muse Spark 1.3", job: "directs the video, shot by shot" },
 ];
 
-const pct = (n: number) => `${Math.round(n * 100)}%`;
 const kept = (t: Tape) => t.takes?.find((k) => k.kept) ?? null;
 
 type Props = { deck: Deck; shelf: TapeSummary[]; health: Health | null; online: boolean; onOpen: (id: string) => void };
@@ -211,8 +210,6 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
         <ul className="fr__cards">
           {releases.map((t) => {
             const k = kept(t);
-            const takes = t.takes?.length ?? 0;
-            const cut = t.takes?.filter((x) => x.cut).length ?? 0;
             return (
               <li key={t.id} className="fr__card-li">
                 {(t.takes?.length ?? 0) >= 2 && (
@@ -242,12 +239,6 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
                       <span className="fr__arrow" aria-hidden="true">
                         ↗
                       </span>
-                    </span>
-                    <span className="fr__facts">
-                      <span>
-                        {takes} takes{cut ? `, ${cut} off key` : ""}, 1 kept
-                      </span>
-                      {k?.sung != null && <span>{k.sung >= 0.995 ? "every line sung" : `${pct(k.sung)} of lines sung`}</span>}
                     </span>
                     <span className="fr__roll" aria-hidden="true">
                       {t.photos.slice(0, 6).map((p, i) => (
