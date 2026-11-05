@@ -163,6 +163,9 @@ def realign_pauses(job, aligned, work: Path):
 def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     parts = script_parts()
+    said = FILM / "vo_said.json"  # what was actually said, where the read left the script (checked against Voice Transcribe)
+    if said.exists():
+        parts = json.loads(said.read_text(encoding="utf-8"))
     FILM.mkdir(parents=True, exist_ok=True)
     raw = Path(args[0]) if args else FILM / "vo_placeholder.wav"
     if "--placeholder" in sys.argv:

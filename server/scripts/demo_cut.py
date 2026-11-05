@@ -35,7 +35,7 @@ OUT = FILM / "songbird-demo.mp4"
 FPS = 60
 
 # the rack in the control room at 1920x1080: eleven lamps, left to right, and the words that name each one
-LAMPS = [("Muse Spark",), ("SAM",), ("Muse Wonder",), ("dresses",), ("Muse Image",), ("shot list",), ("band records",),
+LAMPS = [("Muse Spark",), ("SAM",), ("Muse Wonder",), ("dresses",), ("Muse Image",), ("shot list",), ("band records", "song's recording"),
          ("Demucs",), ("Spark 1.2",), ("Voice Transcribe",), ("MMS",)]
 RACK_X0, RACK_X1, RACK_Y0, RACK_Y1 = 24, 1896, 86, 132
 
@@ -176,9 +176,32 @@ def _phrases(words: list[dict], most: int = 50) -> list[list[dict]]:
     return out
 
 
+def _unstutter(words: list[dict]) -> list[dict]:
+    """a word or two said twice ("what what", "come back. come back.") is timed as said but subtitled once"""
+    norm = lambda w: re.sub(r"[^a-z0-9']", "", w["w"].lower())
+    out = []
+    for w in words:
+        if out and norm(out[-1]) == norm(w):
+            out[-1] = {**out[-1], "end": w["end"], "w": w["w"] if re.search(r"[.,;:!?]$", w["w"]) else out[-1]["w"]}
+            continue
+        if len(out) >= 3 and norm(out[-2]) == norm(out[-1]) == "" and False:
+            pass
+        out.append(w)
+    i = 0  # two-word repeats
+    res = []
+    while i < len(out):
+        if i + 3 < len(out) and norm(out[i]) == norm(out[i + 2]) and norm(out[i + 1]) == norm(out[i + 3]):
+            res += [out[i], {**out[i + 3], "start": out[i + 1]["start"]}]
+            i += 4
+            continue
+        res.append(out[i])
+        i += 1
+    return res
+
+
 def subtitle_lines(n: int, at: float) -> list[tuple[str, float, float]]:
     """part n, said at timeline second `at`, as subtitles that follow the phrasing (clauses, never a dangling 'the')"""
-    lines = _phrases(VO[n - 1]["words"])
+    lines = _phrases(_unstutter(VO[n - 1]["words"]))
     out = []
     for k, ln in enumerate(lines):
         t0 = at + _rel(n, ln[0]["start"]) - 0.1
@@ -435,8 +458,8 @@ def main():
     tl.over("clock", t4, tl.t)
     tl.say(5, t5 + 0.35)
     for n, t_part in ((4, t4 + 0.35), (5, t5 + 0.35)):  # a ring finds each lamp as it is named
-        for k, (phrase,) in enumerate(LAMPS):
-            at = spoken(n, phrase)
+        for k, phrases in enumerate(LAMPS):
+            at = next((x for x in (spoken(n, ph) for ph in phrases) if x is not None), None)
             if at is None:
                 continue
             name = f"ring{k}"
