@@ -6,6 +6,7 @@ import { useRecorder } from "../../lib/useRecorder";
 import type { Tape, TapeSummary } from "../../lib/types";
 import { Floaters, type Floater } from "./Floaters";
 import { day, readJournal } from "../../lib/journal";
+import { ThemeIcon, useTheme } from "../../lib/theme";
 
 /** how a day becomes a single: every model, in the order a release goes through it */
 const CHAIN: { model: string; job: string; open?: boolean }[] = [
@@ -34,6 +35,7 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
   const [over, setOver] = useState(false);
   const rec = useRecorder((text) => deck.setNote(text, true));
   const [mine] = useState(readJournal);
+  const theme = useTheme();
 
   // every release on the shelf, whole (the cards quote their real numbers)
   const [releases, setReleases] = useState<Tape[]>([]);
@@ -127,10 +129,20 @@ export function Front({ deck, shelf, health, online, onOpen }: Props) {
           <a href="#how">how it works</a>
           <a href={`${BASE}log`}>the build log</a>
         </div>
-        <button className="fr__cta fr__cta--sm" onClick={toMake}>
-          <i data-status={status} aria-hidden="true" />
-          make yours
-        </button>
+        <div className="fr__right">
+          <button
+            className="fr__theme"
+            onClick={theme.toggle}
+            aria-label={theme.theme === "dark" ? "switch to day mode" : "switch to night mode"}
+            title={theme.theme === "dark" ? "day mode" : "night mode"}
+          >
+            <ThemeIcon theme={theme.theme} />
+          </button>
+          <button className="fr__cta fr__cta--sm" onClick={toMake}>
+            <i data-status={status} aria-hidden="true" />
+            make yours
+          </button>
+        </div>
       </nav>
 
       {/* 1 · the sky: things from other people's days, each one a door into its single */}

@@ -327,3 +327,55 @@ body:has(.lg) {
     grid-template-columns: 1fr;
   }
 }
+
+html[data-theme="dark"] .lg {
+  --ink: #eceae4;
+  --ink-2: #b9bcc4;
+  --mute: #8b9099;
+  --paper: #111215;
+  --card: #1a1b20;
+  --line: #2b2c32;
+  color-scheme: dark;
+}
+
+html[data-theme="dark"] body:has(.lg) {
+  background: #111215;
+}
+
+html[data-theme="dark"] .lg__product li,
+html[data-theme="dark"] .lg__model {
+  background: #23252b;
+}
+
+html[data-theme="dark"] .lg__stat {
+  background: #000;
+}
+
+html[data-theme="dark"] .lg__cta {
+  background: #eceae4;
+  color: #0c0d10 !important;
+}
+
+.lg__right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.lg__theme {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(12, 20, 36, 0.06), 0 6px 18px rgba(12, 20, 36, 0.1);
+  cursor: pointer;
+}
+
+.lg__theme svg {
+  width: 17px;
+  height: 17px;
+}

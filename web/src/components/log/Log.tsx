@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { BASE } from "../../lib/env";
+import { ThemeIcon, useTheme } from "../../lib/theme";
 
 /**
  * "The log": the build decisions Meta's models made or measured, from docs/META_LOG.md, one card each.
@@ -156,6 +157,7 @@ const IN_PRODUCT: [string, string][] = [
 const REPO = "https://github.com/zootzootzoot/songbird/blob/main/docs/META_LOG.md";
 
 export function Log() {
+  const theme = useTheme();
   useEffect(() => {
     document.title = "the log · songbird";
     window.scrollTo(0, 0);
@@ -166,9 +168,14 @@ export function Log() {
         <a className="lg__mark" href={BASE}>
           songbird
         </a>
-        <a className="lg__back" href={BASE}>
-          ← back to the front door
-        </a>
+        <span className="lg__right">
+          <a className="lg__back" href={BASE}>
+            ← back to the front door
+          </a>
+          <button className="lg__theme" onClick={theme.toggle} aria-label="toggle night mode">
+            <ThemeIcon theme={theme.theme} />
+          </button>
+        </span>
       </nav>
 
       <header className="lg__head">
