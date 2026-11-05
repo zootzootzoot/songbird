@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,100..900&family=Martian+Mono:wdth,wght@75..112,100..800&display=block" rel="stylesheet">
+<style>
+  /* Songbird's logo tile and README banner, in the front door's daylight: ?w=&h=&tag=1 */
+  html, body { margin: 0; overflow: hidden; font-family: "Archivo", sans-serif; -webkit-font-smoothing: antialiased; }
+  .sky { position: absolute; inset: 0; background: #bcd3ee url(../../web/public/sky.jpg) center 40% / cover; }
+  .sky::after { content: ""; position: absolute; inset: 0;
+                background: radial-gradient(ellipse at 50% 55%, rgba(255,255,255,.38), rgba(255,255,255,0) 62%); }
+  .thing { position: absolute; filter: drop-shadow(0 18px 26px rgba(12,20,36,.22)); }
+  .mark { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -54%); text-align: center; white-space: nowrap; }
+  .word { margin: 0; color: #0c1424; font-weight: 800; letter-spacing: -.055em; line-height: .86;
+          font-variation-settings: "wdth" 112; }
+  .word i { display: inline-block; border-radius: 50%; background: #ff3d1f; box-shadow: 0 0 .25em rgba(255,61,31,.55);
+            vertical-align: baseline; }
+  .tag { margin-top: .9em; color: #0c1424; font-weight: 650; letter-spacing: -.02em; }
+</style>
+</head>
+<body>
+<div class="sky"></div>
+<div id="things"></div>
+<div class="mark"><p class="word" id="word">songbird<i></i></p><div class="tag" id="tag">every day has a genre.</div></div>
+<script>
+  const q = new URLSearchParams(location.search);
+  const W = +(q.get("w") || 1024), H = +(q.get("h") || 1024);
+  document.body.style.width = W + "px"; document.body.style.height = H + "px";
+  const u = Math.min(W, H * 2.2) / 1000;            // type scales with the width, capped for wide banners
+  const word = document.getElementById("word");
+  word.style.fontSize = (W / H > 1.6 ? 200 : 168) * u + "px";
+  const dot = word.querySelector("i"); dot.style.width = dot.style.height = .14 * parseFloat(word.style.fontSize) + "px";
+  dot.style.marginLeft = ".05em";
+  const tag = document.getElementById("tag");
+  tag.style.fontSize = 40 * u + "px";
+  if (q.get("tag") === "0") tag.remove();
+  // a few things from the days on the shelf, floating around the wordmark
+  const O = "../../web/public/objects/";
+  const square = [["first-day-1", 9, 15, 250, -10], ["lisbon-solo-1", 86, 14, 210, 8], ["rain-sunday-1", 12, 84, 260, -6],
+                  ["allotment-1", 86, 82, 230, 6], ["first-day-2", 50, 88, 150, 0], ["half-marathon-1", 52, 12, 170, -12]];
+  const wide = [["first-day-1", 7, 30, 230, -10], ["rain-sunday-1", 15, 76, 250, -6], ["lisbon-solo-1", 90, 26, 210, 8],
+                ["allotment-1", 86, 76, 240, 6], ["half-marathon-1", 28, 14, 150, -12], ["first-day-2", 52, 88, 130, 4],
+                ["the-wedding-1", 70, 86, 180, -14], ["pitch-day-1", 30, 88, 150, 0]];
+  const list = W / H > 1.6 ? wide : square;
+  const s = Math.min(W, H) / 1000;
+  document.getElementById("things").innerHTML = list.map(([f, x, y, size, r]) =>
+    `<img class="thing" src="${O}${f}.webp" style="left:${x}%;top:${y}%;width:${size * s * (W / H > 1.6 ? 1.15 : 1)}px;` +
+    `transform:translate(-50%,-50%) rotate(${r}deg)">`).join("");
+</script>
+</body>
+</html>

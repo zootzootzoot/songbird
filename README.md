@@ -1,10 +1,12 @@
+<p align="center"><img src="docs/brand/banner.png" alt="songbird: every day has a genre." width="100%"></p>
+
 # Songbird
 
 **A music journal. Every day you live becomes a single.**
 
 Drop in a few photos from today. Songbird works out what kind of day it was and calls its genre, so a first day at a
-new job comes out as a 1989 new jack swing coronation jam. It turns the things in your photos into the band, records the song and cuts the music
-video. It takes about three minutes, and the result is yours to keep and send.
+new job comes out as new jack swing. It turns the things in your photos into the band, records the song and cuts the music
+video. It takes a few minutes, and the result is yours to keep and send.
 
 People take more than two trillion photos a year and look back at almost none of them. A camera roll keeps what a day
 looked like, but a song keeps how it felt, and songs are the one memory format people never lose. Songbird turns the
