@@ -146,13 +146,13 @@ export function Video({
     t < cues[finished].until + 0.45
       ? finished
       : -1;
-  // the opening: title card, then the roll call (one member onto the stage per beat), then the first vocal
+  // the opening: a short title card, then the roll call (a member onto the stage every two beats), then the first vocal
   const inTitle = t < rollFrom && !ended;
   const inRoll = !ended && t >= rollFrom && t < titleEnd;
   const rollStep = Math.max(
     0.16,
     Math.min(
-      60 / bpm,
+      120 / bpm, // two beats each: long enough to read who they are
       (titleEnd - rollFrom) / Math.max(1, tape.photos.length + 0.5),
     ),
   );

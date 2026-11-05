@@ -191,12 +191,15 @@ export function buildTimeline(tape: Tape, duration: number): Timeline {
   // cut on a bar line; the title lands first, then the band is called onto the stage one member per beat
   const first = cues[0].start;
   const bar = spb * 4;
-  const bars = Math.max(1, Math.round(OPEN / bar));
+  // room for a short title and a roll call that gives each member two beats in the spotlight
+  const members = new Set(cues.map((c) => c.photo).filter((p) => p != null)).size || tape.photos.length;
+  const want = Math.min(9, Math.max(OPEN, 1.4 + (members + 0.5) * 2 * spb));
+  const bars = Math.max(1, Math.ceil(want / bar - 0.15));
   const openAt = first - bars * bar > 1.5 ? first - bars * bar : 0;
   const titleEnd = Math.max(first - 0.05, openAt + 2.5);
   const room = titleEnd - openAt;
-  // title for about 40% of the opening (at least 1.6 s), on a beat; the roll call needs at least 1.2 s
-  let rollFrom = openAt + Math.ceil(Math.max(1.6, room * 0.4) / spb) * spb;
+  // a short title (about a fifth of the opening, at least 1.2 s, on a beat); the rest is the roll call
+  let rollFrom = openAt + Math.ceil(Math.max(1.2, room * 0.2) / spb) * spb;
   if (titleEnd - rollFrom < 1.2) rollFrom = titleEnd;
   const last = cues[cues.length - 1];
   const creditsStart = clamp(Math.min(last.end + 0.6, end - 14), Math.min(titleEnd + 6, end - 4), end - 4);
