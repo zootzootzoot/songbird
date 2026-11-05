@@ -326,7 +326,8 @@ def main():
     cfg = json.loads((FILM / "cut.json").read_text(encoding="utf-8"))
     hero_tid = cfg["hero"]
     WORK.mkdir(parents=True, exist_ok=True)
-    for old in WORK.glob("*"):
+    audio_only = "--audio" in sys.argv  # re-mix the sound onto the picture already cut
+    for old in ([] if audio_only else WORK.glob("*")):
         old.unlink()
     who, day, genre = cfg["who"], cfg["day"], cfg["genre"]
     live = FILM / cfg["live"]
@@ -518,12 +519,13 @@ def main():
             tl.over(f"sub{k}", s0, s1_)
             k += 1
 
-    asyncio.run(_shoot(specs))
-    print(f"{len(specs)} overlays, {len(tl.clips)} clips, timeline {tl.t:.1f} s", flush=True)
-    vids = [render_clip(i, c, tl.overlays) for i, c in enumerate(tl.clips)]
-    (WORK / "list.txt").write_text("\n".join(f"file '{v.as_posix()}'" for v in vids))
-    subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(WORK / "list.txt"),
-                    "-c", "copy", str(WORK / "picture.mp4")], check=True)
+    if not audio_only:
+        asyncio.run(_shoot(specs))
+        print(f"{len(specs)} overlays, {len(tl.clips)} clips, timeline {tl.t:.1f} s", flush=True)
+        vids = [render_clip(i, c, tl.overlays) for i, c in enumerate(tl.clips)]
+        (WORK / "list.txt").write_text("\n".join(f"file '{v.as_posix()}'" for v in vids))
+        subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", str(WORK / "list.txt"),
+                        "-c", "copy", str(WORK / "picture.mp4")], check=True)
     total = dur_of(WORK / "picture.mp4")
     audio = mix(tl, total)
     subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", str(WORK / "picture.mp4"), "-i", str(audio),

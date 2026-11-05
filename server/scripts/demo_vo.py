@@ -46,11 +46,16 @@ def placeholder(out: Path, parts: list[str]):
     subprocess.run(["powershell", "-NoProfile", "-Command", ps], check=True)
 
 
+# a dark voice opened up: rumble and mud out, presence and air in (no low-pass, no denoiser: they dull it)
+VOICE_EQ = ("highpass=f=85,equalizer=f=220:t=q:w=1.1:g=-3.5,equalizer=f=3200:t=q:w=1.3:g=4.5,"
+            "treble=g=6:f=7500:t=s:w=0.6,acompressor=threshold=-20dB:ratio=2.5:attack=10:release=150,"
+            "loudnorm=I=-16:TP=-1.5:LRA=7")
+
+
 def clean(src: Path, dst: Path):
     """48 kHz mono, rumble cut, gentle compression and levelled, so a phone recording sits well over music"""
     subprocess.run([FFMPEG, "-y", "-loglevel", "error", "-i", str(src), "-ac", "1", "-ar", "48000", "-af",
-                    "highpass=f=80,lowpass=f=12000,afftdn=nf=-30,acompressor=threshold=-20dB:ratio=3:attack=8:release=120,"
-                    "loudnorm=I=-16:TP=-1.5:LRA=7", str(dst)], check=True)
+                    VOICE_EQ, str(dst)], check=True)
 
 
 def speech_spans(wav: Path, min_gap: float = 1.25) -> list[tuple[float, float]]:
