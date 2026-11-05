@@ -482,8 +482,23 @@ export function Video({
         <Fx theme={theme} />
       </div>
 
-      <div className="vwm" aria-hidden="true">
-        <span className="wordmark">songbird</span>
+      <div className="vwm">
+        {RENDER ? (
+          <span className="wordmark">songbird</span>
+        ) : (
+          <button
+            type="button"
+            className="wordmark vwm-home"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={(e) => {
+              e.stopPropagation();
+              onExit();
+            }}
+            title="Back to the front door"
+          >
+            songbird
+          </button>
+        )}
         <i className="vwm-dot" />
         <span className="num">{tape.catalog}</span>
       </div>

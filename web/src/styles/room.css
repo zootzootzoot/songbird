@@ -2249,3 +2249,15 @@ svg.rm-wave path {
 .rm-rec[data-on][data-replay] .rm-rec__tally i {
   background: #14110a;
 }
+
+.rm-brand__home {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.rm-brand__home:hover {
+  opacity: 0.8;
+}

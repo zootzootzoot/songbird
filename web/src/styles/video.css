@@ -1195,3 +1195,17 @@
   transition: opacity 90ms linear;
 }
 
+
+/* the wordmark takes you back to the front door */
+.vwm-home {
+  pointer-events: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.vwm:has(.vwm-home:hover) {
+  opacity: 1;
+}

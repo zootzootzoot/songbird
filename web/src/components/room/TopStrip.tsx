@@ -19,7 +19,13 @@ export function TopStrip({ live, halted, session, day, started, timecode, progre
   return (
     <header className="rm-top">
       <div className="rm-brand">
-        <span className="wordmark rm-brand__mark">songbird</span>
+        {replay ? (
+          <button type="button" className="wordmark rm-brand__mark rm-brand__home" onClick={onStop} title="Back to the front door">
+            songbird
+          </button>
+        ) : (
+          <span className="wordmark rm-brand__mark">songbird</span>
+        )}
         <i className="rm-brand__dot" data-on={live || undefined} />
       </div>
 
