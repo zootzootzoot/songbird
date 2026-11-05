@@ -18,6 +18,8 @@ export const Transport = memo(function Transport({
   video,
   onExit,
   onReplay,
+  volume,
+  onVolume,
 }: {
   show: boolean;
   playing: boolean;
@@ -35,6 +37,8 @@ export const Transport = memo(function Transport({
   video: { label: string; busy: boolean; ask: () => void };
   onExit: () => void;
   onReplay?: () => void;
+  volume?: number;
+  onVolume?: (v: number) => void;
 }) {
   const bar = useRef<HTMLDivElement | null>(null);
   const drag = useRef(false);
@@ -106,6 +110,33 @@ export const Transport = memo(function Transport({
         </div>
       </div>
       {silent && playing && <span className="vx-silent label">no audio</span>}
+      {onVolume && volume != null && (
+        <label className="vx-vol" title="Volume">
+          <button
+            type="button"
+            className="vx-vol-icon"
+            onClick={() => onVolume(volume > 0 ? 0 : 1)}
+            aria-label={volume > 0 ? "Mute" : "Unmute"}
+          >
+            <svg viewBox="0 0 16 16" aria-hidden="true">
+              <path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor" />
+              {volume > 0 && <path d="M11 5.5a3.5 3.5 0 0 1 0 5" fill="none" stroke="currentColor" strokeWidth="1.5" />}
+              {volume > 0.5 && <path d="M12.8 3.5a6 6 0 0 1 0 9" fill="none" stroke="currentColor" strokeWidth="1.5" />}
+              {volume === 0 && <path d="M11 6l4 4M15 6l-4 4" stroke="currentColor" strokeWidth="1.5" />}
+            </svg>
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={1}
+            step={0.01}
+            value={volume}
+            onChange={(e) => onVolume(Number(e.target.value))}
+            aria-label="Volume"
+            style={{ ["--v" as string]: `${volume * 100}%` }}
+          />
+        </label>
+      )}
       <button className="vx-btn vx-video" data-busy={video.busy ? 1 : 0} onClick={video.ask} title="A 9:16 MP4 of this video with the song, for Reels, Stories and chats">
         <span className="label">{video.label}</span>
       </button>

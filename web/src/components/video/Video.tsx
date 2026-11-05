@@ -581,6 +581,8 @@ export function Video({
             }}
             onExit={onExit}
             onReplay={onReplay}
+            volume={player.volume}
+            onVolume={player.setVolume}
           />
         </div>
       )}

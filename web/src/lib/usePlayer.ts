@@ -11,6 +11,16 @@ export function usePlayer(tape: Tape | null) {
   const [playing, setPlaying] = useState(false);
   const [time, setTime] = useState(0);
   const [silent, setSilent] = useState(false);
+  // the listener's volume, kept per device; fades and the cold open scale to it
+  const [volume, setVolumeState] = useState(() => {
+    try {
+      const v = Number(localStorage.getItem("songbird.volume"));
+      return Number.isFinite(v) && v > 0 && v <= 1 ? v : 1;
+    } catch {
+      return 1;
+    }
+  });
+  const vol = useRef(volume);
   const audio = useRef<HTMLAudioElement | null>(null);
   const failed = useRef(false);
   const clock = useRef<{ startedAt: number; offset: number } | null>(null);
@@ -105,13 +115,13 @@ export function usePlayer(tape: Tape | null) {
         }
         el.currentTime = from;
         // starting mid-song (the cold open, or a resume): a short fade so the music doesn't start on a click
-        el.volume = from > 0.5 ? 0 : 1;
+        el.volume = from > 0.5 ? 0 : vol.current;
         await el.play();
         if (from > 0.5) {
           const t0 = performance.now();
           const up = () => {
             const k = Math.min(1, (performance.now() - t0) / 420);
-            el.volume = k * k;
+            el.volume = k * k * vol.current;
             if (k < 1) requestAnimationFrame(up);
           };
           requestAnimationFrame(up);
@@ -160,7 +170,19 @@ export function usePlayer(tape: Tape | null) {
 
   useEffect(() => () => cancelAnimationFrame(raf.current), []);
 
-  return { playing, time, duration, silent, play, stop, seek, reset };
+  const setVolume = useCallback((v: number) => {
+    const x = Math.max(0, Math.min(1, v));
+    vol.current = x;
+    setVolumeState(x);
+    if (audio.current) audio.current.volume = x;
+    try {
+      localStorage.setItem("songbird.volume", String(x || 0.0001));
+    } catch {
+      /* storage blocked */
+    }
+  }, []);
+
+  return { playing, time, duration, silent, volume, setVolume, play, stop, seek, reset };
 }
 
 export type Player = ReturnType<typeof usePlayer>;

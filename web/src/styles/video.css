@@ -1209,3 +1209,66 @@
 .vwm:has(.vwm-home:hover) {
   opacity: 1;
 }
+
+/* volume (desktop: phones use their own buttons, and iOS ignores page volume) */
+.vx-vol {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 10px 0 6px;
+  border: 1px solid var(--hair);
+  border-radius: var(--radius);
+  background: rgba(20, 18, 15, 0.86);
+  color: var(--bone);
+}
+
+.vx-vol-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.vx-vol-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.vx-vol input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 84px;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--bone) var(--v, 100%), rgba(255, 255, 255, 0.22) var(--v, 100%));
+  cursor: pointer;
+}
+
+.vx-vol input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bone);
+  border: 0;
+}
+
+.vx-vol input[type="range"]::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bone);
+  border: 0;
+}
+
+@media (max-width: 720px), (hover: none) {
+  .vx-vol {
+    display: none;
+  }
+}
