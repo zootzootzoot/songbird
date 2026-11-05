@@ -537,9 +537,18 @@ def main():
     tl.song(hero_song, cfg["close_song_at"], t9 - 0.35, d9 + 0.35, vol=0.45, fin=0.35, fout=2.8)
 
     # subtitles: the voice's own words, as spoken (MMS word times)
+    STOP = {"a", "an", "the", "and", "of", "to", "at", "is", "it", "in", "on", "we", "you", "that", "be", "as", "with",
+            "its", "but", "so", "this", "them", "for", "by", "every", "might", "never", "still"}
+    words = lambda t: {w for w in re.findall(r"[a-z0-9]+", re.sub(r"<[^>]+>", " ", t.lower())) if w not in STOP}
+    shown = [(words(" ".join(str(sp.get(x) or "") for x in ("tag", "text"))), t0, t1) for name, t0, t1 in tl.overlays
+             if (sp := specs.get(name)) and sp.get("kind") in ("card", "cap", "brand", "end")]
     k = 0
     for n, at in tl.voice:
         for text, s0, s1_ in subtitle_lines(n, at):
+            said = words(text)
+            mid = (s0 + s1_) / 2
+            if said and any(t0 <= mid <= t1 and len(said & ws) / len(said) >= 0.5 for ws, t0, t1 in shown):
+                continue  # the screen already says it
             specs[f"sub{k}"] = {"kind": "sub", "text": text}
             tl.over(f"sub{k}", s0, s1_)
             k += 1
